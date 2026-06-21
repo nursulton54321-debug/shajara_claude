@@ -732,6 +732,26 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     }
   })
 
+  // Farzandsiz juftlar: families ma'lumotidan foydalanib, turmush o'rtog'ini
+  // sherigining avlodiga joylashtirish (coupleInfo da yo'q holat)
+  persons.forEach(p => {
+    if (hiddenP.has(p.id) || marriedInSet.has(p.id)) return
+    if (!isEffectiveRoot(p.id)) return  // o'z ota-onasi bor — odatiy tartib
+    ;(p.families || []).forEach(f => {
+      const partnerId = f.partner_id
+      if (!partnerId || !pm[partnerId] || hiddenP.has(partnerId)) return
+      if (marriedInSet.has(p.id)) return
+      if (!isEffectiveRoot(partnerId)) {
+        // Sherigining ota-ona juft-markazi
+        const partnerParentCC = childCouple[partnerId]
+        if (partnerParentCC && g.hasNode(partnerParentCC) && !orphanedCC.has(partnerParentCC)) {
+          marriedInOf[partnerId] = marriedInOf[partnerId] || { spouseId: p.id, parentCC: partnerParentCC }
+          marriedInSet.add(p.id)
+        }
+      }
+    })
+  })
+
   persons.forEach(p => {
     if (hiddenP.has(p.id)) return
     if (marriedInSet.has(p.id)) return
