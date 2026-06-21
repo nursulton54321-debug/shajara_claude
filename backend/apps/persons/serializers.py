@@ -6,11 +6,15 @@ from .models import Person, Reminder, Family, AuditLog, Invite
 def _photo_url(person, request):
     if not person:
         return None
+    # ImageKit CDN URL — har doim ustuvor
     if getattr(person, 'photo_url', ''):
         return person.photo_url
+    # Lokal fayl — faqat disk da mavjud bo'lsa
     if person.photo and request:
         try:
-            return request.build_absolute_uri(person.photo.url)
+            import os
+            if os.path.exists(person.photo.path):
+                return request.build_absolute_uri(person.photo.url)
         except Exception:
             pass
     return None
