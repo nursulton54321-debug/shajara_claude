@@ -265,6 +265,13 @@ class FamilyListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         instance = serializer.save(created_by=self.request.user)
         log_action(self.request, 'create', instance)
+        if instance.wedding_date and instance.husband:
+            Reminder.objects.get_or_create(
+                person=instance.husband,
+                type='wedding',
+                date=instance.wedding_date,
+                defaults={'note': f"To'y kuni — {instance.wife.full_name if instance.wife else ''}", 'created_by': self.request.user}
+            )
 
 
 class FamilyDetailView(generics.RetrieveUpdateDestroyAPIView):
