@@ -766,6 +766,28 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
 
   dagre.layout(g)
 
+  // Farzandsiz juftlar: families asosida vizual couple center hisoblash
+  const childlessCouples = []
+  const _seenFC = new Set()
+  persons.forEach(p => {
+    ;(p.families || []).forEach(f => {
+      const partnerId = f.partner_id
+      if (!partnerId || !pm[partnerId] || hiddenP.has(p.id) || hiddenP.has(partnerId)) return
+      const fatherId = p.gender === 'male' ? p.id : partnerId
+      const motherId = p.gender === 'male' ? partnerId : p.id
+      const fcKey = `${Math.min(fatherId, motherId)}-${Math.max(fatherId, motherId)}`
+      if (_seenFC.has(fcKey)) return
+      _seenFC.add(fcKey)
+      const ccId = `cc-${fcKey}`
+      if (coupleInfo[ccId]) return  // farzandlari bor, allaqachon boshqarilgan
+      if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+      const fN = g.node(`p-${fatherId}`), mN = g.node(`p-${motherId}`)
+      if (!fN || !mN) return
+      childlessCouples.push({ cid: ccId, fatherId, motherId,
+        cx: (fN.x + mN.x) / 2, cy: (fN.y + mN.y) / 2 })
+    })
+  })
+
   // Force each couple pair to the same Y level.
   // Dagre can place a "married-in" spouse at a higher rank than their partner
   // (especially in focus mode). Snapping both to max(Y) fixes the misalignment
@@ -901,7 +923,29 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
+  // Farzandsiz juft nodelarini qo'shish
+  childlessCouples.forEach(({ cid, fatherId, motherId, cx, cy }) => {
+    nodes.push({
+      id: cid, type: 'coupleNode',
+      data: { fatherId, motherId, collapsed: false, childCount: 0, onToggle: toggleFn },
+      position: { x: cx - CW / 2, y: cy - CW / 2 },
+    })
+  })
+
   const edges = []
+
+  // Farzandsiz juft chiziqlari
+  childlessCouples.forEach(({ cid, fatherId, motherId, cy }) => {
+    const fN = g.node(`p-${fatherId}`), mN = g.node(`p-${motherId}`)
+    if (!fN || !mN) return
+    const [leftId, rightId] = fN.x <= mN.x ? [fatherId, motherId] : [motherId, fatherId]
+    edges.push({
+      id: `e-couple-${cid}`,
+      source: `p-${leftId}`, sourceHandle: 'right',
+      target: `p-${rightId}`, targetHandle: 'left',
+      type: 'coupleEdge', data: { ccTopY: cy - CW / 2 }, zIndex: -1,
+    })
+  })
 
   const drawnCouple = new Set()
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
