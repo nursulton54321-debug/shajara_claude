@@ -943,18 +943,9 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
-  // Farzandsiz juft nodelarini qo'shish
-  childlessCouples.forEach(({ cid, fatherId, motherId, cx, cy }) => {
-    nodes.push({
-      id: cid, type: 'coupleNode',
-      data: { fatherId, motherId, collapsed: false, childCount: 0, onToggle: toggleFn },
-      position: { x: cx - CW / 2, y: cy - CW / 2 },
-    })
-  })
-
   const edges = []
 
-  // Farzandsiz juft chiziqlari
+  // Farzandsiz juft chiziqlari (coupleEdge o'zi ⚭ belgisini chizadi, alohida node shart emas)
   childlessCouples.forEach(({ cid, fatherId, motherId, cy }) => {
     const fN = g.node(`p-${fatherId}`), mN = g.node(`p-${motherId}`)
     if (!fN || !mN) return
