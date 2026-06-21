@@ -31,11 +31,9 @@ def _upload_to_imagekit(instance):
         return  # ImageKit sozlanmagan — lokal fayldan foydalaniladi
 
     try:
-        from imagekitio import ImageKit
-        from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
-        import io as _io
+        import io as _io, requests as _req
+        log = __import__('logging').getLogger(__name__)
 
-        # Faylni o'qib, JPEG sifatida siqamiz (max 800px)
         path = instance.photo.path
         if not os.path.exists(path):
             return
@@ -46,23 +44,25 @@ def _upload_to_imagekit(instance):
             img.save(buf, 'JPEG', quality=85, optimize=True)
             buf.seek(0)
 
-        ik = ImageKit(private_key=pk, public_key=pub, url_endpoint=url_ep)
         fname = f"person_{instance.pk}.jpg"
-        result = ik.upload_file(
-            file=buf.read(),
-            file_name=fname,
-            options=UploadFileRequestOptions(folder='/shajara/photos/'),
+        resp = _req.post(
+            'https://upload.imagekit.io/api/v1/files/upload',
+            auth=(pk, ''),  # private key = username, password bo'sh
+            files={'file': (fname, buf.getvalue(), 'image/jpeg')},
+            data={'fileName': fname, 'folder': '/shajara/photos/'},
+            timeout=30,
         )
-        url = getattr(result, 'url', None)
-        if url:
-            instance.photo_url = url
-            from .models import Person
-            Person.objects.filter(pk=instance.pk).update(photo_url=url)
-            import logging
-            logging.getLogger(__name__).info(f"[ImageKit] yuklandi: {url}")
+        log.info(f"[ImageKit] status={resp.status_code} body={resp.text[:200]}")
+        if resp.status_code == 200:
+            url = resp.json().get('url', '')
+            if url:
+                instance.photo_url = url
+                from .models import Person
+                Person.objects.filter(pk=instance.pk).update(photo_url=url)
+                log.info(f"[ImageKit] OK: {url}")
     except Exception as e:
         import logging
-        logging.getLogger(__name__).warning(f"[ImageKit] upload xato: {e}")
+        logging.getLogger(__name__).warning(f"[ImageKit] xato: {e}")
 
 
 class PersonListCreateView(generics.ListCreateAPIView):
