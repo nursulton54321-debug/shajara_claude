@@ -1,0 +1,14 @@
+[Unit]
+Description=Shajara — Telegram Bot
+After=network.target shajara.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/var/www/shajara/backend
+EnvironmentFile=/var/www/shajara/backend/.env
+ExecStart=/var/www/shajara/venv/bin/python manage.py runbot
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
