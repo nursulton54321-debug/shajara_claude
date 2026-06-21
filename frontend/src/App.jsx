@@ -52,7 +52,7 @@ export default function App() {
   useEffect(() => {
     const refresh = sessionStorage.getItem('refresh')
     if (user && refresh && !api.defaults.headers.Authorization) {
-      axios.post('/api/auth/refresh/', { refresh })
+      api.post('/auth/refresh/', { refresh })
         .then(res => {
           api.defaults.headers.Authorization = `Bearer ${res.data.access}`
         })

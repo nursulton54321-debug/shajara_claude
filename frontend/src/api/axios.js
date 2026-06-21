@@ -34,7 +34,7 @@ api.interceptors.response.use(
       if (refresh) {
         _refreshing = true
         try {
-          const res = await axios.post('/api/auth/refresh/', { refresh })
+          const res = await api.post('/auth/refresh/', { refresh })
           const newToken = res.data.access
 
           // Zustand store ni yangilash (import qilmasdan localStorage orqali)
