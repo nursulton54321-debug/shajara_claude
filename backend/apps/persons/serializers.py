@@ -4,8 +4,15 @@ from .models import Person, Reminder, Family, AuditLog, Invite
 
 # ── Yordamchi: rasm URL ──────────────────────────────────────────
 def _photo_url(person, request):
-    if person and person.photo and request:
-        return request.build_absolute_uri(person.photo.url)
+    if not person:
+        return None
+    if getattr(person, 'photo_url', ''):
+        return person.photo_url
+    if person.photo and request:
+        try:
+            return request.build_absolute_uri(person.photo.url)
+        except Exception:
+            pass
     return None
 
 

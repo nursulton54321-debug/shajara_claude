@@ -13,6 +13,7 @@ dj-database-url==3.1.2
 
 # Images
 Pillow==10.4.0
+imagekitio==3.2.0
 
 # Production server
 gunicorn==22.0.0

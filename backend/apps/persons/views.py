@@ -17,30 +17,48 @@ from .audit import log_action, instance_to_dict, _diff
 from apps.users.permissions import IsAdmin
 
 
-def _compress_photo(field, max_px=800, quality=85):
-    """Person.photo ni resize (max_px) va JPEG siqish bilan qayta saqlaydi."""
-    if not field:
+def _upload_to_imagekit(instance):
+    """
+    Person.photo ni o'qib, ImageKit ga yuklaydi va instance.photo_url ni yangilaydi.
+    ImageKit sozlanmagan bo'lsa — lokal fayl saqlanadi (fallback).
+    """
+    if not instance.photo:
         return
+    pk = getattr(settings, 'IMAGEKIT_PRIVATE_KEY', '')
+    pub = getattr(settings, 'IMAGEKIT_PUBLIC_KEY', '')
+    url_ep = getattr(settings, 'IMAGEKIT_URL_ENDPOINT', '')
+    if not (pk and pub and url_ep):
+        return  # ImageKit sozlanmagan — lokal fayldan foydalaniladi
+
     try:
-        path = field.path
+        from imagekitio import ImageKit
+        import io as _io
+
+        # Faylni o'qib, JPEG sifatida qayta siqamiz (max 800px)
+        path = instance.photo.path
         if not os.path.exists(path):
             return
         with PilImage.open(path) as img:
             img = img.convert('RGB')
-            w, h = img.size
-            if w > max_px or h > max_px:
-                img.thumbnail((max_px, max_px), PilImage.LANCZOS)
-            # Bir xil path ga JPEG sifatida qayta yoz
-            new_path = os.path.splitext(path)[0] + '.jpg'
-            img.save(new_path, 'JPEG', quality=quality, optimize=True)
-            # Agar kengaytma o'zgargan bo'lsa eski faylni o'chir
-            if new_path != path:
-                os.remove(path)
-                # DB field nomini yangilash
-                rel = os.path.relpath(new_path, settings.MEDIA_ROOT)
-                field.name = rel
-    except Exception:
-        pass  # rasm bo'lmasa yoki buzilgan bo'lsa — o'tkazib yuborish
+            img.thumbnail((800, 800), PilImage.LANCZOS)
+            buf = _io.BytesIO()
+            img.save(buf, 'JPEG', quality=85, optimize=True)
+            buf.seek(0)
+
+        ik = ImageKit(private_key=pk, public_key=pub, url_endpoint=url_ep)
+        fname = f"person_{instance.pk}_{os.path.basename(path).split('.')[0]}.jpg"
+        result = ik.upload_file(
+            file=buf.read(),
+            file_name=fname,
+            options={'folder': '/shajara/photos/'}
+        )
+        if result and result.url:
+            instance.photo_url = result.url
+            from .models import Person
+            Person.objects.filter(pk=instance.pk).update(photo_url=instance.photo_url)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"[ImageKit] upload xato: {e}")
 
 
 class PersonListCreateView(generics.ListCreateAPIView):
@@ -54,7 +72,7 @@ class PersonListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         instance = serializer.save(created_by=self.request.user)
-        _compress_photo(instance.photo)
+        _upload_to_imagekit(instance)
         log_action(self.request, 'create', instance)
 
     def get_queryset(self):
@@ -87,7 +105,7 @@ class PersonDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         old = instance_to_dict(serializer.instance)
         instance = serializer.save()
-        _compress_photo(instance.photo)
+        _upload_to_imagekit(instance)
         new = instance_to_dict(instance)
         changes = _diff(old, new)
         if changes:

@@ -104,6 +104,11 @@ GROQ_API_KEY   = config('GROQ_API_KEY',   default='')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ImageKit
+IMAGEKIT_PRIVATE_KEY = config('IMAGEKIT_PRIVATE_KEY', default='')
+IMAGEKIT_PUBLIC_KEY  = config('IMAGEKIT_PUBLIC_KEY',  default='')
+IMAGEKIT_URL_ENDPOINT = config('IMAGEKIT_URL_ENDPOINT', default='')
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

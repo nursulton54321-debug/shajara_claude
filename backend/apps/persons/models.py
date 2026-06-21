@@ -21,6 +21,7 @@ class Person(models.Model):
     birth_place = models.CharField(max_length=200, blank=True, help_text="Tug'ilgan joy (viloyat, shahar)")
 
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
+    photo_url = models.URLField(blank=True, default='')  # ImageKit CDN URL
     phone = models.CharField(max_length=20, blank=True)
 
     father = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='children_as_father')
