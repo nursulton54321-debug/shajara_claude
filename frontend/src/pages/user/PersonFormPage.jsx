@@ -1044,7 +1044,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
                         }}>
                         <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-lg flex-shrink-0"
                           style={{ background: isDark ? '#1e1b4b' : '#e0e7ff' }}>
-                          {partner.photo ? <img src={partner.photo} className="w-full h-full object-cover" alt="" /> : '👤'}
+                          {(partner.photo_url || partner.photo) ? <img src={partner.photo_url || partner.photo} className="w-full h-full object-cover" alt="" /> : '👤'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-bold text-gray-700 truncate">{fi+1}. {partner.name}</div>

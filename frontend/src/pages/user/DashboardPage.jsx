@@ -875,8 +875,8 @@ function BdayRow({ p, navigate, isDark }) {
         transition:'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)',
         transform: hov ? 'scale(1.12)' : 'scale(1)',
       }}>
-        {p.photo
-          ? <img src={p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
+        {(p.photo_url || p.photo)
+          ? <img src={p.photo_url || p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
           : (p.gender==='male'?'👨':'👩')}
       </div>
       <div style={{ flex:1, minWidth:0 }}>

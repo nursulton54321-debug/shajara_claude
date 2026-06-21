@@ -51,7 +51,7 @@ export default function AdminLink() {
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 transition ${selected?.id === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
                 <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                   style={{ background: p.gender === 'male' ? 'linear-gradient(135deg,#3b82f6,#6366f1)' : 'linear-gradient(135deg,#ec4899,#db2777)' }}>
-                  {p.photo ? <img src={p.photo} className="w-full h-full object-cover" alt="" /> : (p.gender === 'male' ? '👨' : '👩')}
+                  {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} className="w-full h-full object-cover" alt="" /> : (p.gender === 'male' ? '👨' : '👩')}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-700 text-sm truncate">{p.full_name}</div>
@@ -76,7 +76,7 @@ export default function AdminLink() {
               <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'linear-gradient(135deg,#eff6ff,#f0f9ff)' }}>
                 <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center text-white text-lg font-bold"
                   style={{ background: selected.gender === 'male' ? 'linear-gradient(135deg,#3b82f6,#6366f1)' : 'linear-gradient(135deg,#ec4899,#db2777)' }}>
-                  {selected.photo ? <img src={selected.photo} className="w-full h-full object-cover" alt="" /> : (selected.gender === 'male' ? '👨' : '👩')}
+                  {(selected.photo_url || selected.photo) ? <img src={selected.photo_url || selected.photo} className="w-full h-full object-cover" alt="" /> : (selected.gender === 'male' ? '👨' : '👩')}
                 </div>
                 <div>
                   <div className="font-bold text-gray-800">{selected.full_name}</div>

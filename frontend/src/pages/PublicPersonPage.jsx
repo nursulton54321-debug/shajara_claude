@@ -170,8 +170,8 @@ export default function PublicPersonPage() {
                       <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden',
                         flexShrink: 0, background: r.gender === 'male' ? '#e0e7ff' : '#fce7f3',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                        {r.photo
-                          ? <img src={r.photo} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
+                        {(r.photo_url || r.photo)
+                          ? <img src={r.photo_url || r.photo} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
                           : <span>{ROLE_ICONS[r.role] || '👤'}</span>}
                       </div>
 

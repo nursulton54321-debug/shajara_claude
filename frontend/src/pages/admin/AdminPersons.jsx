@@ -393,8 +393,8 @@ export default function AdminPersons() {
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                         style={{ background: p.gender === 'male' ? 'linear-gradient(135deg,#3b82f6,#6366f1)' : 'linear-gradient(135deg,#ec4899,#db2777)' }}>
-                        {p.photo
-                          ? <img src={p.photo} className="w-full h-full object-cover" alt="" />
+                        {(p.photo_url || p.photo)
+                          ? <img src={p.photo_url || p.photo} className="w-full h-full object-cover" alt="" />
                           : (p.gender === 'male' ? '👨' : '👩')}
                       </div>
                       <div>

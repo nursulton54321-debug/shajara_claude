@@ -337,7 +337,7 @@ export default function AdminDashboard() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ width: 34, height: 34, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: p.gender === 'male' ? '#3b82f6' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14 }}>
-                          {p.photo ? <img src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (p.gender === 'male' ? '👨' : '👩')}
+                          {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (p.gender === 'male' ? '👨' : '👩')}
                         </div>
                         <span style={{ fontSize: 14, fontWeight: 700, color: textPrimary }}>{p.full_name}</span>
                       </div>
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
                   <div key={p.id} onClick={() => navigate(`/admin/persons/${p.id}`)}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 12, cursor: 'pointer', background: 'linear-gradient(135deg,#fef3c7,#fef9c3)', border: '1px solid #fde68a' }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: p.gender === 'male' ? '#3b82f6' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
-                      {p.photo ? <img src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
+                      {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</div>
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
                       onMouseEnter={e => e.currentTarget.style.background = isDark ? '#334155' : '#f8fafc'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: p.gender === 'male' ? '#6366f1' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
-                        {p.photo ? <img src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
+                        {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</div>
