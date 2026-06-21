@@ -391,6 +391,26 @@ function PersonNode({ data }) {
 function CoupleNode({ id, data }) {
   const isCollapsed = data.collapsed
   const cnt         = data.childCount || 0
+  const hasChildren = cnt > 0
+
+  if (!hasChildren) {
+    // Farzand yo'q — faqat er-xotin belgisi, bosilmaydi
+    return (
+      <div style={{
+        width: CW, height: CW, borderRadius: '50%',
+        background: 'linear-gradient(135deg,#f43f5e,#e11d48)',
+        color: 'white', fontSize: 14,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 3px 12px rgba(244,63,94,0.55)',
+        border: '2.5px solid white', userSelect: 'none',
+      }}>
+        💍
+        <Handle type="target" position={Position.Top}    style={{ opacity:0, top:-4 }} />
+        <Handle type="source" position={Position.Bottom} style={{ opacity:0, bottom:-4 }} />
+      </div>
+    )
+  }
+
   return (
     <div
       className="node-enter-fast"
@@ -402,7 +422,7 @@ function CoupleNode({ id, data }) {
           ? 'linear-gradient(135deg,#10b981,#059669)'
           : 'linear-gradient(135deg,#f97316,#dc6803)',
         color: 'white',
-        fontSize: isCollapsed && cnt > 0 ? 10 : 18,
+        fontSize: isCollapsed ? 10 : 18,
         fontWeight: 900,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer',
@@ -412,10 +432,10 @@ function CoupleNode({ id, data }) {
         border: '2.5px solid white', userSelect: 'none',
         transition: 'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',
         minWidth: isCollapsed && cnt > 9 ? 40 : CW,
-        paddingInline: isCollapsed && cnt > 0 ? 5 : 0,
+        paddingInline: isCollapsed ? 5 : 0,
         whiteSpace: 'nowrap', letterSpacing: '-0.3px',
       }}>
-      {isCollapsed && cnt > 0 ? `+${cnt}` : '−'}
+      {isCollapsed ? `+${cnt}` : '−'}
       <Handle type="target" position={Position.Top}    style={{ opacity:0, top:-4 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity:0, bottom:-4 }} />
     </div>
