@@ -32,9 +32,10 @@ def _upload_to_imagekit(instance):
 
     try:
         from imagekitio import ImageKit
+        from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
         import io as _io
 
-        # Faylni o'qib, JPEG sifatida qayta siqamiz (max 800px)
+        # Faylni o'qib, JPEG sifatida siqamiz (max 800px)
         path = instance.photo.path
         if not os.path.exists(path):
             return
@@ -46,16 +47,19 @@ def _upload_to_imagekit(instance):
             buf.seek(0)
 
         ik = ImageKit(private_key=pk, public_key=pub, url_endpoint=url_ep)
-        fname = f"person_{instance.pk}_{os.path.basename(path).split('.')[0]}.jpg"
+        fname = f"person_{instance.pk}.jpg"
         result = ik.upload_file(
             file=buf.read(),
             file_name=fname,
-            options={'folder': '/shajara/photos/'}
+            options=UploadFileRequestOptions(folder='/shajara/photos/'),
         )
-        if result and result.url:
-            instance.photo_url = result.url
+        url = getattr(result, 'url', None)
+        if url:
+            instance.photo_url = url
             from .models import Person
-            Person.objects.filter(pk=instance.pk).update(photo_url=instance.photo_url)
+            Person.objects.filter(pk=instance.pk).update(photo_url=url)
+            import logging
+            logging.getLogger(__name__).info(f"[ImageKit] yuklandi: {url}")
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning(f"[ImageKit] upload xato: {e}")
