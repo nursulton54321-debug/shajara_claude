@@ -819,17 +819,17 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
             <div className="grid grid-cols-3 gap-3 pf-grid3">
               <Field label="Familiya *" error={fieldErrors.last_name}>
                 <input type="text" value={form.last_name} onChange={e => setField('last_name', e.target.value)}
-                  className="form-input" placeholder="Karimov" required
+                  className="form-input" placeholder="Dilmonov" required
                   style={fieldErrors.last_name ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
               </Field>
               <Field label="Ism *" error={fieldErrors.first_name}>
                 <input type="text" value={form.first_name} onChange={e => setField('first_name', e.target.value)}
-                  className="form-input" placeholder="Abdulloh" required
+                  className="form-input" placeholder="Nursulton" required
                   style={fieldErrors.first_name ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
               </Field>
               <Field label="Otasining ismi">
                 <input type="text" value={form.middle_name} onChange={e => set('middle_name', e.target.value)}
-                  className="form-input" placeholder="Alievich" />
+                  className="form-input" placeholder="Elyorovich" />
               </Field>
             </div>
 
@@ -883,8 +883,18 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
                 style={(fieldErrors.child_number || childNumWarning) ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
             </Field>
             <Field label="📞 Telefon" error={fieldErrors.phone}>
-              <input type="tel" value={form.phone} onChange={e => setField('phone', e.target.value)}
-                className="form-input" placeholder="+998 90 123 45 67"
+              <input type="tel" value={form.phone}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '')
+                  const n = digits.startsWith('998') ? digits : ('998' + digits).slice(0, 12)
+                  let r = '+998'
+                  if (n.length > 3)  r += ' ' + n.slice(3, 5)
+                  if (n.length > 5)  r += ' ' + n.slice(5, 8)
+                  if (n.length > 8)  r += '-' + n.slice(8, 10)
+                  if (n.length > 10) r += '-' + n.slice(10, 12)
+                  setField('phone', digits.length ? r : '')
+                }}
+                className="form-input" placeholder="+998 XX XXX-XX-XX"
                 style={fieldErrors.phone ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
             </Field>
             <Field label="📍 Tug'ilgan joy">
