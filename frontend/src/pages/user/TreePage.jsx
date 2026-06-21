@@ -460,9 +460,10 @@ function GenLabelNode({ data }) {
 
 // ── CoupleEdge ─────────────────────────────────────────────────
 function CoupleEdge({ sourceX, sourceY, targetX, targetY, data }) {
-  const midX     = (sourceX + targetX) / 2
-  const ccTopY   = data?.ccTopY
-  const stemEndY = ccTopY ?? sourceY + 10
+  const midX      = (sourceX + targetX) / 2
+  const ccTopY    = data?.ccTopY
+  const childless = data?.childless
+  const stemEndY  = childless ? sourceY : (ccTopY ?? sourceY + 10)
   return (
     <>
       <path d={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`}
@@ -470,8 +471,10 @@ function CoupleEdge({ sourceX, sourceY, targetX, targetY, data }) {
       <path d={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`}
         stroke="#fca5a5" strokeWidth={2} fill="none"
         strokeDasharray="7 4" strokeLinecap="round" className="tree-edge-spouse" />
-      <path d={`M ${midX} ${sourceY} L ${midX} ${stemEndY}`}
-        stroke="#f97316" strokeWidth={2.2} fill="none" opacity={0.75} />
+      {!childless && (
+        <path d={`M ${midX} ${sourceY} L ${midX} ${stemEndY}`}
+          stroke="#f97316" strokeWidth={2.2} fill="none" opacity={0.75} />
+      )}
       <rect x={midX - 13} y={sourceY - 11} width={26} height={22} rx={7}
         fill="white" stroke="#fca5a5" strokeWidth={1.5}
         style={{ filter:'drop-shadow(0 1px 4px rgba(244,63,94,0.14))' }} />
@@ -954,7 +957,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       id: `e-couple-${cid}`,
       source: `p-${leftId}`, sourceHandle: 'right',
       target: `p-${rightId}`, targetHandle: 'left',
-      type: 'coupleEdge', data: { ccTopY: cy - CW / 2 }, zIndex: -1,
+      type: 'coupleEdge', data: { ccTopY: cy - CW / 2, childless: true }, zIndex: -1,
     })
   })
 
