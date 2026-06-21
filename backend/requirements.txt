@@ -8,8 +8,7 @@ django-cors-headers==4.4.0
 python-decouple==3.8
 
 # Database
-psycopg2-binary==2.9.9; python_version < "3.13"
-psycopg[binary]==3.2.9; python_version >= "3.13"
+psycopg[binary]>=3.1.0
 dj-database-url==3.1.2
 
 # Images
