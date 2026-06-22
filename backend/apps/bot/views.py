@@ -67,16 +67,12 @@ def telegram_webhook(request):
 
     try:
         from telegram import Update
-        from telegram.ext import PicklePersistence
 
         async def process():
-            # Persistence: conversation holati /tmp ga saqlanadi
-            persistence = PicklePersistence(filepath='/tmp/bot_conv_state')
             app = (
                 Application.builder()
                 .token(getattr(settings, 'TELEGRAM_BOT_TOKEN', ''))
                 .updater(None)
-                .persistence(persistence)
                 .build()
             )
             _register_handlers(app)

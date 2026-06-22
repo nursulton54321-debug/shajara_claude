@@ -836,5 +836,4 @@ def get_add_person_conversation():
         per_message=False,
         name='add_person',
         allow_reentry=True,
-        persistent=True,
     )
