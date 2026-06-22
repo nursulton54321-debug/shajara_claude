@@ -43,20 +43,32 @@ TEXT_ROLE = (190, 200, 230)
 
 # ── Font helpers ─────────────────────────────────────────────────────────────
 def _font(size, bold=False):
-    candidates = (
-        ['C:/Windows/Fonts/segoeuib.ttf', 'C:/Windows/Fonts/calibrib.ttf',
-         'C:/Windows/Fonts/arialbd.ttf']
-        if bold else
-        ['C:/Windows/Fonts/segoeui.ttf',  'C:/Windows/Fonts/calibri.ttf',
-         'C:/Windows/Fonts/arial.ttf']
-    )
+    if bold:
+        candidates = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf',
+            'C:/Windows/Fonts/segoeuib.ttf', 'C:/Windows/Fonts/calibrib.ttf',
+            'C:/Windows/Fonts/arialbd.ttf',
+        ]
+    else:
+        candidates = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+            'C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/calibri.ttf',
+            'C:/Windows/Fonts/arial.ttf',
+        ]
     for p in candidates:
         if os.path.exists(p):
             try:
                 return ImageFont.truetype(p, size)
             except Exception:
                 pass
-    return ImageFont.load_default()
+    try: return ImageFont.load_default(size=max(size, 10))
+    except: return ImageFont.load_default()
 
 
 def _text_w(draw, text, font):
@@ -624,13 +636,26 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
 
     # ── Load photos (2x o'lchamda) ──────────────────────────────────────────
     from django.conf import settings as dj_settings
+    import urllib.request, tempfile
     photo_cache = {}
     for p in persons:
-        if p.photo:
+        img = None
+        # 1) ImageKit CDN URL dan yukla
+        photo_url = getattr(p, 'photo_url', '') or ''
+        if photo_url:
+            try:
+                with urllib.request.urlopen(photo_url, timeout=8) as resp:
+                    data = resp.read()
+                img = _load_circular_photo(io.BytesIO(data), sc_photo)
+            except Exception:
+                img = None
+        # 2) Lokal MEDIA_ROOT dan yukla
+        if img is None and p.photo:
             path = os.path.join(dj_settings.MEDIA_ROOT, str(p.photo))
-            img = _load_circular_photo(path, sc_photo)
-            if img:
-                photo_cache[p.id] = img
+            if os.path.exists(path):
+                img = _load_circular_photo(path, sc_photo)
+        if img:
+            photo_cache[p.id] = img
 
     pmap = {p.id: p for p in persons}
 

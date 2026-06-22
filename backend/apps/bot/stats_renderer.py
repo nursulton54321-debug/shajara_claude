@@ -33,15 +33,30 @@ MONTHS_UZ = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun',
 
 # ── Font ─────────────────────────────────────────────────────────────────────
 def _font(size, bold=False):
-    paths = (['C:/Windows/Fonts/segoeuib.ttf', 'C:/Windows/Fonts/calibrib.ttf',
-              'C:/Windows/Fonts/arialbd.ttf'] if bold else
-             ['C:/Windows/Fonts/segoeui.ttf',  'C:/Windows/Fonts/calibri.ttf',
-              'C:/Windows/Fonts/arial.ttf'])
+    if bold:
+        paths = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf',
+            'C:/Windows/Fonts/segoeuib.ttf', 'C:/Windows/Fonts/calibrib.ttf',
+            'C:/Windows/Fonts/arialbd.ttf',
+        ]
+    else:
+        paths = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+            'C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/calibri.ttf',
+            'C:/Windows/Fonts/arial.ttf',
+        ]
     for p in paths:
         if os.path.exists(p):
             try: return ImageFont.truetype(p, size)
             except: pass
-    return ImageFont.load_default()
+    try: return ImageFont.load_default(size=max(size, 10))
+    except: return ImageFont.load_default()
 
 def _tw(draw, text, font):
     bb = draw.textbbox((0,0), text, font=font)
