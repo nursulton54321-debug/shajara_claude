@@ -434,6 +434,16 @@ async def edit_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await p.photo.asave(filename, File(f), save=False)
     await p.asave(update_fields=['photo'])
 
+    # ImageKit CDN ga yuklash
+    try:
+        import asyncio as _asyncio
+        from apps.persons.views import _upload_to_imagekit
+        loop = _asyncio.get_event_loop()
+        await loop.run_in_executor(None, _upload_to_imagekit, p)
+        logger.info(f"[Bot] edit_photo: person {p.id} ImageKit ga yuklandi")
+    except Exception as ik_err:
+        logger.warning(f"[Bot] edit_photo ImageKit xato: {ik_err}")
+
     context.user_data.pop('persons_cache', None)
 
     await update.message.reply_text(
