@@ -1,56 +1,67 @@
 """
 Telegram webhook view — polling o'rniga webhook rejimi.
+Global persistent app + background event loop — ConversationHandler holati saqlanadi.
 """
 import json
 import logging
 import asyncio
+import threading
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.conf import settings
-from telegram.ext import Application
 
 logger = logging.getLogger(__name__)
 
-_app = None
+# ── Global bot event loop va app (bir marta yaratiladi) ──────────────────────
+_bot_loop: asyncio.AbstractEventLoop | None = None
+_bot_app = None
+_bot_lock = threading.Lock()
 
 
-def _get_app():
-    global _app
-    if _app is not None:
-        return _app
-    try:
+def _get_bot_loop() -> asyncio.AbstractEventLoop:
+    """Fon threadda doimiy ishlaydigan event loop."""
+    global _bot_loop
+    if _bot_loop is None or _bot_loop.is_closed():
+        _bot_loop = asyncio.new_event_loop()
+        t = threading.Thread(target=_bot_loop.run_forever, daemon=True)
+        t.start()
+        logger.info("[Bot] background event loop started")
+    return _bot_loop
+
+
+def _ensure_app():
+    """Global Application — bir marta init, keyin qayta ishlatiladi."""
+    global _bot_app
+    if _bot_app is not None:
+        return _bot_app
+    with _bot_lock:
+        if _bot_app is not None:
+            return _bot_app
         from telegram.ext import Application
-        from apps.bot.bot import build_app
 
-        # updater=None — faqat webhook uchun, Updater (polling) o'chiriladi
-        token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
-        _app = build_app()
+        async def _build():
+            token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+            app = (
+                Application.builder()
+                .token(token)
+                .updater(None)
+                .build()
+            )
+            _register_handlers(app)
+            await app.initialize()
+            logger.info("[Bot] global app initialized")
+            return app
 
-        async def _init():
-            await _app.initialize()
-
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(_init())
-        loop.close()
-        logger.info("[Bot] initialized (webhook mode)")
-    except Exception as e:
-        logger.error(f"[Bot] init xato: {e}")
-        _app = None
-    return _app
-
-
-def _build_webhook_app():
-    """Updater o'chirilgan holda Application yaratish (webhook uchun)."""
-    from telegram.ext import Application
-    token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
-    return (
-        Application.builder()
-        .token(token)
-        .updater(None)   # ← polling Updater shart emas
-        .build()
-    )
+        loop = _get_bot_loop()
+        future = asyncio.run_coroutine_threadsafe(_build(), loop)
+        try:
+            _bot_app = future.result(timeout=30)
+        except Exception as e:
+            logger.error(f"[Bot] app init xato: {e}", exc_info=True)
+            _bot_app = None
+    return _bot_app
 
 
 @csrf_exempt
@@ -68,20 +79,19 @@ def telegram_webhook(request):
     try:
         from telegram import Update
 
+        app = _ensure_app()
+        if app is None:
+            return JsonResponse({'error': 'bot ishga tushmadi'}, status=500)
+
+        loop = _get_bot_loop()
+
         async def process():
-            app = (
-                Application.builder()
-                .token(getattr(settings, 'TELEGRAM_BOT_TOKEN', ''))
-                .updater(None)
-                .build()
-            )
-            _register_handlers(app)
-            await app.initialize()
             update = Update.de_json(data, app.bot)
             await app.process_update(update)
-            await app.shutdown()
 
-        asyncio.run(process())
+        future = asyncio.run_coroutine_threadsafe(process(), loop)
+        future.result(timeout=30)
+
     except Exception as e:
         logger.error(f"[Bot] update xato: {e}", exc_info=True)
         return JsonResponse({'error': str(e)[:200]}, status=500)
@@ -110,7 +120,6 @@ def _register_handlers(app):
         reminders_filter_callback, reminders_person_callback,
     )
 
-    # /start — oddiy CommandHandler (ConversationHandler emas)
     app.add_handler(get_start_conversation())
     app.add_handler(get_add_person_conversation())
     app.add_handler(CallbackQueryHandler(approve_callback,       pattern=r'^approve_\d+$'))
@@ -197,11 +206,10 @@ async def _dispatch_text(update, context):
 
 def set_webhook(request):
     """GET /api/bot/set-webhook/ — avval o'chirib, keyin qayta ro'yxatdan o'tkazish."""
-    import urllib.request, urllib.parse
+    import urllib.request, urllib.parse, os
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     if not token:
         return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yo\'q'}, status=400)
-    import os
     backend_url = (
         getattr(settings, 'BACKEND_URL', '')
         or os.environ.get('RENDER_EXTERNAL_URL', '')
@@ -213,13 +221,11 @@ def set_webhook(request):
 
     api = f"https://api.telegram.org/bot{token}"
     try:
-        # 1) Avval webhook o'chirish (xato holatni tozalash)
         del_url = f"{api}/deleteWebhook?drop_pending_updates=true"
         with urllib.request.urlopen(del_url, timeout=10) as r:
             del_result = json.loads(r.read())
         logger.info(f"[Bot] deleteWebhook: {del_result}")
 
-        # 2) Yangi webhook o'rnatish
         set_url = (f"{api}/setWebhook"
                    f"?url={urllib.parse.quote(webhook_url, safe='')}"
                    f"&allowed_updates=%5B%22message%22%2C%22callback_query%22%5D"
