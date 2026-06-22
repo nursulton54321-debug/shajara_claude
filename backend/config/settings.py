@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 # ── Telegram Bot ────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
 WEB_BASE_URL       = config('WEB_BASE_URL', default='https://shajara.uz')
+BACKEND_URL        = config('BACKEND_URL', default='')
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
