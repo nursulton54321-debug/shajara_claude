@@ -196,21 +196,33 @@ async def _dispatch_text(update, context):
 
 
 def set_webhook(request):
-    """GET /api/bot/set-webhook/ — webhookni Telegram ga ro'yxatdan o'tkazish."""
-    import urllib.request
+    """GET /api/bot/set-webhook/ — avval o'chirib, keyin qayta ro'yxatdan o'tkazish."""
+    import urllib.request, urllib.parse
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     if not token:
         return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yo\'q'}, status=400)
-    # Backend URL ni requestdan aniqlaymiz — WEB_BASE_URL ga bog'liq emas
     backend_url = getattr(settings, 'BACKEND_URL', '').rstrip('/')
     if not backend_url:
-        backend_url = request.build_absolute_uri('/').rstrip('/')
+        return JsonResponse({'error': 'BACKEND_URL env yo\'q. Render environment ga qo\'shing.'}, status=400)
     webhook_url = f"{backend_url}/api/bot/webhook/"
-    url = f"https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}&allowed_updates=%5B%22message%22%2C%22callback_query%22%5D"
+
+    api = f"https://api.telegram.org/bot{token}"
     try:
-        with urllib.request.urlopen(url, timeout=10) as r:
+        # 1) Avval webhook o'chirish (xato holatni tozalash)
+        del_url = f"{api}/deleteWebhook?drop_pending_updates=true"
+        with urllib.request.urlopen(del_url, timeout=10) as r:
+            del_result = json.loads(r.read())
+        logger.info(f"[Bot] deleteWebhook: {del_result}")
+
+        # 2) Yangi webhook o'rnatish
+        set_url = (f"{api}/setWebhook"
+                   f"?url={urllib.parse.quote(webhook_url, safe='')}"
+                   f"&allowed_updates=%5B%22message%22%2C%22callback_query%22%5D"
+                   f"&drop_pending_updates=true")
+        with urllib.request.urlopen(set_url, timeout=10) as r:
             result = json.loads(r.read())
-        logger.info(f"[Bot] setWebhook: {result}")
+        logger.info(f"[Bot] setWebhook: {result} → {webhook_url}")
+        result['webhook_url'] = webhook_url
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
