@@ -668,58 +668,45 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   .tree-toolbar-right { margin-left: auto !important; flex-wrap: nowrap !important; gap: 4px !important; }
 }
 
-/* Mobile bottom nav — gorizontal scroll, hammasi ko'rinsin */
+/* Mobile bottom nav — hammasi ko'rinsin, space-around */
 @media (max-width: 640px) {
   .mobile-bottom-nav {
-    justify-content: flex-start !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 3px 4px env(safe-area-inset-bottom) !important;
+    justify-content: space-around !important;
+    padding: 4px 2px env(safe-area-inset-bottom) !important;
     gap: 0 !important;
+    min-height: 52px;
   }
-  .mobile-bottom-nav::-webkit-scrollbar { display: none; }
-  .mobile-bottom-nav > a,
-  .mobile-bottom-nav > div:last-child { flex-shrink: 0; }
-  .mobile-bottom-nav > a > div,
-  .mobile-bottom-nav > div {
-    padding: 3px 6px !important;
-    min-width: 0 !important;
-    width: auto !important;
-    gap: 1px !important;
-    border-radius: 8px !important;
-  }
-  .mobile-bottom-nav > a > div > span:first-child,
-  .mobile-bottom-nav > div > span:first-child { font-size: 16px !important; }
-  .mobile-bottom-nav > a > div > span:last-child,
-  .mobile-bottom-nav > div > span:last-child  { font-size: 7px !important; letter-spacing: 0; white-space: nowrap; }
-  .mobile-main-pad { padding-bottom: 54px !important; }
+  .mobile-main-pad { padding-bottom: 56px !important; }
 }
 
-/* Stats ribbon — mobilda kichikroq (faqat chap statistika, aforizm va oila nomi yashiriladi) */
+/* Stats ribbon — mobilda kichik va ixcham */
 @media (max-width: 640px) {
   .stats-ribbon {
     min-height: 0 !important;
+    height: auto !important;
     grid-template-columns: 1fr !important;
+    overflow: hidden !important;
   }
   .stats-ribbon .rb-center,
   .stats-ribbon .rb-right { display: none !important; }
   .stats-ribbon .rb-left {
-    overflow-x: auto !important;
-    scrollbar-width: none;
+    justify-content: space-around !important;
+    flex-wrap: nowrap !important;
   }
-  .stats-ribbon .rb-left::-webkit-scrollbar { display: none; }
   .stats-ribbon .rb-stat {
-    padding: 0 10px !important;
-    min-height: 42px !important;
-    flex-shrink: 0;
+    padding: 6px 8px !important;
+    min-height: 0 !important;
+    gap: 6px !important;
+    flex: 1 !important;
+    border-right: none !important;
+    justify-content: center !important;
   }
   .stats-ribbon .rb-stat > div:first-child {
-    width: 24px !important; height: 24px !important; font-size: 12px !important; border-radius: 7px !important;
+    width: 22px !important; height: 22px !important; font-size: 11px !important;
+    border-radius: 6px !important; flex-shrink: 0 !important;
   }
-  .stats-ribbon .rb-val { font-size: 15px !important; }
-  .stats-ribbon .rb-stat > div:last-child > div:last-child { font-size: 8px !important; }
+  .stats-ribbon .rb-val { font-size: 14px !important; letter-spacing: 0 !important; }
+  .stats-ribbon .rb-stat > div:last-child > div:last-child { font-size: 7.5px !important; margin-top: 1px !important; }
 }
 
 /* ── Person profile responsive grid ── */

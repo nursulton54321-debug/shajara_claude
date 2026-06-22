@@ -1822,28 +1822,7 @@ function MobileListView({ rawPersons, onPersonClick, toolbarSearch = '', user })
     <div style={{ flex:1, overflowY:'auto', padding:'10px 12px',
       background: isDark ? '#0f172a' : '#f8fafc', display:'flex', flexDirection:'column', gap:10 }}>
 
-      {/* Search */}
-      <div style={{ position:'relative' }}>
-        <svg style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', left:10,
-          width:15, height:15, color:'#94a3b8', pointerEvents:'none' }}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <input value={q} onChange={e => setQ(e.target.value)}
-          placeholder="Ism yoki tug'ilgan joy bo'yicha qidiring..."
-          style={{ width:'100%', padding:'10px 12px 10px 32px', borderRadius:12, fontSize:13,
-            border:`1.5px solid ${q ? '#6366f1' : border}`,
-            background:cardBg, color:textPrimary, outline:'none', boxSizing:'border-box',
-            transition:'border-color .15s' }}/>
-        {q && (
-          <button onClick={() => setQ('')}
-            style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)',
-              background:'none', border:'none', cursor:'pointer', color:'#94a3b8', fontSize:14 }}>✕</button>
-        )}
-      </div>
-
-      {/* Result count */}
+      {/* Result count — faqat qidiruv faol bo'lganda */}
       {activeQ && (
         <div style={{ fontSize:11.5, color:textSecondary, fontWeight:600 }}>
           🔍 "{activeQ}" bo'yicha {filtered.length} ta natija
@@ -2974,7 +2953,7 @@ function TreeFlow({ rawPersons, stats }) {
           <Background variant="dots" color={isDark ? '#4f46e580' : '#c7d2fe'} gap={30} size={1.4} />
           {/* Custom silliq Controls */}
           <div style={{
-            position: 'absolute', bottom: isMobile ? 12 : 24, left: isMobile ? 10 : 16, zIndex: 5,
+            position: 'absolute', bottom: isMobile ? 66 : 24, left: isMobile ? 10 : 16, zIndex: 5,
             display: 'flex', flexDirection: 'column', gap: isMobile ? 3 : 4,
           }}>
             {[
@@ -3042,6 +3021,36 @@ function TreeFlow({ rawPersons, stats }) {
             />
           )}
           {/* Focus mode exit banner — ReactFlow Panel ichida, har doim overlay'lardan ustida */}
+          {/* Mobile: Shajara nomi — faqat mobil ekranda ko'rinadi */}
+          {isMobile && !loading && rawPersons.length > 0 && (
+            <Panel position="top-center" style={{ marginTop: 8 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                background: isDark
+                  ? 'rgba(30,27,75,0.88)'
+                  : 'rgba(255,255,255,0.92)',
+                border: `1.5px solid rgba(99,102,241,0.35)`,
+                borderRadius: 20, padding: '5px 14px',
+                backdropFilter: 'blur(12px)',
+                boxShadow: isDark
+                  ? '0 4px 20px rgba(0,0,0,0.5)'
+                  : '0 4px 20px rgba(99,102,241,0.18)',
+              }}>
+                <span style={{ fontSize: 14, lineHeight: 1 }}>🌳</span>
+                <span style={{
+                  fontSize: 12, fontWeight: 900,
+                  background: 'linear-gradient(135deg,#818cf8,#c084fc)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.2px', whiteSpace: 'nowrap',
+                }}>Matayev &amp; Abdumannonovlar</span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.12em',
+                  textTransform: 'uppercase', color: '#f59e0b', opacity: 0.9,
+                }}>✦ Shajarasi ✦</span>
+              </div>
+            </Panel>
+          )}
+
           {focusId && !loading && (
             <Panel position="bottom-center" style={{ marginBottom: 8 }}>
               <div style={{

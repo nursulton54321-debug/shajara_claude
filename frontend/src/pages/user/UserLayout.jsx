@@ -497,27 +497,29 @@ export default function UserLayout() {
         <nav className="mobile-bottom-nav">
           {navItems.map(({ to, label, icon, end }) => {
             const isActive = end ? location.pathname===to : location.pathname.startsWith(to)
+            const shortLabel = label.split(' ')[0].substring(0, 7)
             return (
-              <NavLink key={to} to={to} end={end} style={{ textDecoration:'none' }}>
+              <NavLink key={to} to={to} end={end} style={{ textDecoration:'none', flexShrink:0 }}>
                 <div style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:2,
-                  padding:'6px 10px', borderRadius:12, minWidth:52,
-                  color: isActive ? '#3b82f6' : 'var(--text-muted)',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+                  padding:'4px 8px', borderRadius:10,
+                  color: isActive ? '#6366f1' : 'var(--text-muted)',
+                  background: isActive ? 'rgba(99,102,241,0.1)' : 'transparent',
                   transition:'all 0.15s',
                 }}>
-                  <span style={{ fontSize:20 }}>{icon}</span>
-                  <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.02em' }}>{label}</span>
+                  <span style={{ fontSize:18, lineHeight:1 }}>{icon}</span>
+                  <span style={{ fontSize:8, fontWeight:700, whiteSpace:'nowrap' }}>{shortLabel}</span>
                 </div>
               </NavLink>
             )
           })}
           <div onClick={toggle} style={{
-            display:'flex', flexDirection:'column', alignItems:'center', gap:2,
-            padding:'6px 10px', borderRadius:12, minWidth:52, cursor:'pointer',
+            display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+            padding:'4px 8px', borderRadius:10, cursor:'pointer', flexShrink:0,
             color:'var(--text-muted)',
           }}>
-            <span style={{ fontSize:20 }}>{isDark ? '☀️' : '🌙'}</span>
-            <span style={{ fontSize:9, fontWeight:700 }}>Rejim</span>
+            <span style={{ fontSize:18, lineHeight:1 }}>{isDark ? '☀️' : '🌙'}</span>
+            <span style={{ fontSize:8, fontWeight:700 }}>Rejim</span>
           </div>
         </nav>
       </div>
