@@ -201,9 +201,14 @@ def set_webhook(request):
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     if not token:
         return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yo\'q'}, status=400)
-    backend_url = getattr(settings, 'BACKEND_URL', '').rstrip('/')
+    import os
+    backend_url = (
+        getattr(settings, 'BACKEND_URL', '')
+        or os.environ.get('RENDER_EXTERNAL_URL', '')
+        or os.environ.get('BACKEND_URL', '')
+    ).rstrip('/')
     if not backend_url:
-        return JsonResponse({'error': 'BACKEND_URL env yo\'q. Render environment ga qo\'shing.'}, status=400)
+        return JsonResponse({'error': 'BACKEND_URL topilmadi'}, status=400)
     webhook_url = f"{backend_url}/api/bot/webhook/"
 
     api = f"https://api.telegram.org/bot{token}"
