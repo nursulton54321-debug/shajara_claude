@@ -97,13 +97,15 @@ export default function PersonsListPage() {
   const inputBg = isDark ? '#1e293b' : '#ffffff'
 
   return (
-    <div style={{ padding: '24px', background: bg, minHeight: '100vh' }}>
+    <div className="persons-page" style={{ padding: '20px 16px', background: bg, minHeight: '100vh', paddingBottom: 80 }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div className="persons-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: text, margin: 0 }}>Shaxslar ro'yxati</h1>
-          <div style={{ fontSize: 12, color: muted, marginTop: 3 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 900, color: text, margin: 0, letterSpacing: '-0.3px' }}>
+            👥 Shaxslar
+          </h1>
+          <div style={{ fontSize: 11, color: muted, marginTop: 2 }}>
             Jami: <AnimCount to={persons.length} /> ta shaxs
           </div>
         </div>
@@ -112,25 +114,27 @@ export default function PersonsListPage() {
           style={{
             background: 'linear-gradient(135deg,#3b82f6,#6366f1)',
             color: 'white', border: 'none', borderRadius: 12,
-            padding: '10px 18px', fontSize: 13, fontWeight: 700,
+            padding: '9px 16px', fontSize: 12, fontWeight: 800,
             cursor: 'pointer', boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+            display: 'flex', alignItems: 'center', gap: 5,
+            whiteSpace: 'nowrap',
           }}>
-          + Shaxs qo'shish
+          <span style={{ fontSize: 15 }}>＋</span> Qo'shish
         </button>
       </div>
 
       {/* ── Filter + Sort bar ── */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div className="persons-filters" style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         {/* Search */}
         <input
           type="text"
-          placeholder="Qidirish (ism, familiya)..."
+          placeholder="Ism, familiya..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            flex: 1, minWidth: 200,
-            border: `1.5px solid ${border}`, borderRadius: 12,
-            padding: '9px 14px', fontSize: 13, outline: 'none',
+            flex: 1, minWidth: 120,
+            border: `1.5px solid ${border}`, borderRadius: 10,
+            padding: '8px 12px', fontSize: 13, outline: 'none',
             background: inputBg, color: text,
           }}
         />
@@ -140,8 +144,8 @@ export default function PersonsListPage() {
           value={gender}
           onChange={e => setGender(e.target.value)}
           style={{
-            border: `1.5px solid ${border}`, borderRadius: 12,
-            padding: '9px 12px', fontSize: 13, outline: 'none',
+            border: `1.5px solid ${border}`, borderRadius: 10,
+            padding: '8px 10px', fontSize: 12, outline: 'none',
             background: inputBg, color: text, cursor: 'pointer',
           }}>
           <option value="">Barcha</option>
@@ -154,16 +158,16 @@ export default function PersonsListPage() {
           <button
             onClick={() => setShowSort(v => !v)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              border: `1.5px solid ${showSort ? '#6366f1' : border}`, borderRadius: 12,
-              padding: '9px 14px', fontSize: 13, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: `1.5px solid ${showSort ? '#6366f1' : border}`, borderRadius: 10,
+              padding: '8px 12px', fontSize: 12, fontWeight: 600,
               background: showSort ? (isDark ? '#1e1b4b' : '#eef2ff') : inputBg,
               color: showSort ? '#6366f1' : text, cursor: 'pointer', outline: 'none',
               whiteSpace: 'nowrap',
             }}>
             <span>{currentSort?.icon}</span>
-            <span>{currentSort?.label}</span>
-            <span style={{ fontSize: 10, opacity: 0.6 }}>{showSort ? '▲' : '▼'}</span>
+            <span className="sort-label-text">{currentSort?.label}</span>
+            <span style={{ fontSize: 9, opacity: 0.6 }}>{showSort ? '▲' : '▼'}</span>
           </button>
 
           {showSort && (
@@ -199,10 +203,10 @@ export default function PersonsListPage() {
 
       {/* ── Results count ── */}
       {!loading && (
-        <div style={{ fontSize: 12, color: muted, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, color: muted, marginBottom: 8 }}>
           {sorted.length} ta natija
-          {search && ` · "${search}" uchun`}
-          {' · '}<span style={{ fontWeight: 700, color: '#6366f1' }}>{currentSort?.label}</span> bo'yicha saralangan
+          {search && ` · "${search}"`}
+          {' · '}<span style={{ fontWeight: 700, color: '#6366f1' }}>{currentSort?.label}</span>
         </div>
       )}
 
@@ -233,9 +237,10 @@ export default function PersonsListPage() {
               <div
                 key={p.id}
                 onClick={() => navigate(`/persons/${p.id}`)}
+                className="persons-card-row"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '12px 18px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 14px', cursor: 'pointer',
                   borderTop: i !== 0 ? `1px solid ${border}` : 'none',
                   transition: 'background 0.15s',
                 }}
@@ -244,16 +249,16 @@ export default function PersonsListPage() {
 
                 {/* Avatar */}
                 <div style={{
-                  width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+                  width: 46, height: 46, borderRadius: 13, flexShrink: 0,
                   overflow: 'hidden',
                   background: male
                     ? 'linear-gradient(135deg,#3b82f6,#6366f1)'
                     : 'linear-gradient(135deg,#ec4899,#f43f5e)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white', fontWeight: 800, fontSize: 15,
+                  color: 'white', fontWeight: 800, fontSize: 17,
                   boxShadow: male
-                    ? '0 2px 8px rgba(99,102,241,0.3)'
-                    : '0 2px 8px rgba(236,72,153,0.3)',
+                    ? '0 3px 10px rgba(99,102,241,0.35)'
+                    : '0 3px 10px rgba(236,72,153,0.35)',
                 }}>
                   {p.photo_url
                     ? <img src={p.photo_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
@@ -262,54 +267,54 @@ export default function PersonsListPage() {
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.full_name}
                   </div>
-                  <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-                    {birthYear || '—'}
-                    {deathYear ? ` – ${deathYear}` : ''}
-                    {p.age != null ? ` · ${p.age} yosh` : ''}
-                    {p.child_number ? ` · ${p.child_number}-farzand` : ''}
-                    {p.birth_place ? ` · ${p.birth_place}` : ''}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
+                    {/* Gender badge */}
+                    <span style={{
+                      padding: '1px 7px', borderRadius: 20, fontSize: 10, fontWeight: 700,
+                      background: male ? (isDark ? '#1e3a8a' : '#eff6ff') : (isDark ? '#500724' : '#fdf2f8'),
+                      color: male ? (isDark ? '#93c5fd' : '#1d4ed8') : (isDark ? '#f9a8d4' : '#be185d'),
+                    }}>
+                      {male ? '👨' : '👩'} {male ? 'Erkak' : 'Ayol'}
+                    </span>
+                    {/* Year range */}
+                    <span style={{ fontSize: 11, color: muted }}>
+                      {birthYear || '—'}{deathYear ? `–${deathYear}` : p.age != null ? ` · ${p.age}y` : ''}
+                    </span>
+                    {p.death_date && (
+                      <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280',
+                        background: isDark ? '#1f2937' : '#f3f4f6', padding: '1px 7px', borderRadius: 20 }}>
+                        Vafot
+                      </span>
+                    )}
+                    {p.birth_place && (
+                      <span className="persons-place" style={{ fontSize: 10, color: muted }}>
+                        📍 {p.birth_place}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Badges */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-                  <span style={{
-                    padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                    background: male ? (isDark ? '#1e3a8a' : '#eff6ff') : (isDark ? '#500724' : '#fdf2f8'),
-                    color: male ? (isDark ? '#93c5fd' : '#1d4ed8') : (isDark ? '#f9a8d4' : '#be185d'),
-                  }}>
-                    {male ? 'Erkak' : 'Ayol'}
-                  </span>
-                  {p.death_date && (
-                    <span style={{
-                      padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: isDark ? '#1f2937' : '#f3f4f6', color: muted,
-                    }}>
-                      Vafot etgan
-                    </span>
-                  )}
-                  {/* Edit */}
-                  <button
-                    onClick={e => { e.stopPropagation(); navigate(`/persons/${p.id}/edit`) }}
-                    style={{
-                      width: 32, height: 32, borderRadius: 9, border: 'none',
-                      background: isDark ? '#292524' : '#fffbeb',
-                      color: '#d97706', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, transition: 'transform 0.15s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.12)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                    title="Tahrirlash">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                </div>
+                {/* Edit button */}
+                <button
+                  onClick={e => { e.stopPropagation(); navigate(`/persons/${p.id}/edit`) }}
+                  style={{
+                    width: 34, height: 34, borderRadius: 10, border: 'none',
+                    background: isDark ? '#292524' : '#fffbeb',
+                    color: '#d97706', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, transition: 'transform 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  title="Tahrirlash">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
               </div>
             )
           })}

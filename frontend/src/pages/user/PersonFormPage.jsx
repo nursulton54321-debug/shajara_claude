@@ -536,7 +536,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
         </div>
       </div>
     )}
-    <div className="h-screen flex flex-col overflow-hidden tree-bg">
+    <div className="h-screen flex flex-col overflow-hidden tree-bg pf-outer">
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-100 shadow-sm flex-shrink-0 pf-topbar">
         <div className="flex items-center gap-3">
@@ -575,8 +575,11 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
       {/* Form body - no scroll */}
       <style>{`
         @media (max-width: 640px) {
-          .pf-layout   { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; }
-          .pf-left     { border-right: none !important; border-bottom: 1px solid #f1f5f9; flex-direction: row !important; align-items: center !important; padding: 12px 16px !important; gap: 16px !important; }
+          .pf-outer    { height: auto !important; min-height: 100vh; overflow: visible !important; display: flex; flex-direction: column; }
+          .pf-form     { overflow: visible !important; height: auto !important; flex: unset !important; }
+          .pf-right    { overflow: visible !important; }
+          .pf-layout   { grid-template-columns: 1fr !important; grid-template-rows: auto auto !important; }
+          .pf-left     { border-right: none !important; border-bottom: 1px solid #f1f5f9; flex-direction: row !important; align-items: center !important; padding: 10px 14px !important; gap: 14px !important; }
           .pf-topbar   { flex-wrap: wrap; gap: 6px !important; padding: 8px 12px !important; }
           .pf-topbar h1 { font-size: 13px !important; }
           .pf-topbar p  { display: none; }
@@ -584,6 +587,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           .pf-topbtns button { padding: 5px 8px !important; font-size: 11px !important; }
           .pf-grid3    { grid-template-columns: 1fr 1fr !important; }
           .pf-grid4    { grid-template-columns: 1fr 1fr !important; }
+          .pf-right    { padding: 14px !important; padding-bottom: 80px !important; }
         }
       `}</style>
       {/* ── 16. OCR taklif modali ── */}
@@ -702,7 +706,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
       )}
 
       <form id="person-form" ref={formRef} onSubmit={handleSubmit} noValidate
-        className="flex-1 overflow-auto grid pf-layout"
+        className="flex-1 overflow-auto grid pf-layout pf-form"
         style={{ gridTemplateColumns: '200px 1fr', gap: 0 }}>
 
         {/* LEFT: Photo upload */}
@@ -811,7 +815,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
         </div>
 
         {/* RIGHT: Fields */}
-        <div className="overflow-hidden p-5 grid" style={{ gridTemplateRows: 'auto auto auto auto auto', gap: '14px', alignContent: 'start' }}>
+        <div className="overflow-hidden p-5 grid pf-right" style={{ gridTemplateRows: 'auto auto auto auto auto', gap: '14px', alignContent: 'start' }}>
 
           {/* Row 1: Name fields */}
           <div>

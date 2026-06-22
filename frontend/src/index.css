@@ -1004,3 +1004,32 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   }
   .dash-quicklinks-grid button span:first-child { font-size: 18px !important; }
 }
+
+/* ── Persons List — mobile ──────────────────────────────────── */
+@media (max-width: 640px) {
+  .persons-page { padding: 14px 12px !important; }
+  .persons-header h1 { font-size: 18px !important; }
+  .persons-filters { gap: 6px !important; }
+  .sort-label-text { display: none; }
+  .persons-place { display: none; }
+}
+
+/* ── PersonForm — mobile scroll fix ────────────────────────── */
+@media (max-width: 640px) {
+  .pf-outer {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  .pf-form {
+    overflow: visible !important;
+    height: auto !important;
+    flex: none !important;
+    display: block !important;
+  }
+  .pf-right {
+    overflow: visible !important;
+    padding-bottom: 80px !important;
+  }
+}
