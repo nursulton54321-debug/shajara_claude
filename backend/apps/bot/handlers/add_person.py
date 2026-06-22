@@ -727,22 +727,8 @@ async def addp_approve_callback(update: Update, context: ContextTypes.DEFAULT_TY
         photo_id = req.get('photo_file_id')
         if photo_id:
             try:
-                import os, asyncio
-                from django.conf import settings as djs
-                tg_file = await context.bot.get_file(photo_id)
-                fpath   = os.path.join(djs.MEDIA_ROOT, 'photos', f"bot_{person.id}.jpg")
-                os.makedirs(os.path.dirname(fpath), exist_ok=True)
-                await tg_file.download_to_drive(fpath)
-                person.photo = f"photos/bot_{person.id}.jpg"
-                await person.asave(update_fields=['photo'])
-                # ImageKit CDN ga yuklash (web sahifada ko'rinishi uchun)
-                try:
-                    from apps.persons.views import _upload_to_imagekit
-                    loop = asyncio.get_event_loop()
-                    await loop.run_in_executor(None, _upload_to_imagekit, person)
-                    logger.info(f"[Bot] person {person.id} rasm ImageKit ga yuklandi: {person.photo_url}")
-                except Exception as ik_err:
-                    logger.warning(f"[Bot] ImageKit yuklash xato: {ik_err}")
+                from apps.bot.photo_utils import save_person_photo
+                await save_person_photo(context.bot, photo_id, person)
             except Exception as e:
                 logger.warning(f"Rasm saqlash: {e}")
 

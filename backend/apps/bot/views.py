@@ -128,8 +128,10 @@ def _register_handlers(app):
         reminders_filter_callback, reminders_person_callback,
     )
 
+    from telegram.ext import CommandHandler as CmdHandler
     app.add_handler(get_start_conversation())
     app.add_handler(get_add_person_conversation())
+    app.add_handler(CmdHandler('fix_photos', _fix_photos_cmd))
     app.add_handler(CallbackQueryHandler(approve_callback,       pattern=r'^approve_\d+$'))
     app.add_handler(CallbackQueryHandler(reject_callback,        pattern=r'^reject_\d+$'))
     app.add_handler(CallbackQueryHandler(addp_approve_callback,  pattern=r'^addp_approve_'))
@@ -156,6 +158,51 @@ def _register_handlers(app):
         filters.TEXT & ~filters.COMMAND & filters.Regex(r'^(?!.*➕ Shaxs)'),
         _dispatch_text,
     ))
+
+
+async def _fix_photos_cmd(update, context):
+    """
+    /fix_photos — faqat admin: photo_url bo'sh, photo bor shaxslarni
+    ImageKit ga qayta yuklaydi (bir martalik tuzatish).
+    """
+    from apps.bot.models import TelegramUser
+    from apps.bot.handlers.start import _is_admin
+    tg_id = update.effective_user.id
+    try:
+        tg_user = await TelegramUser.objects.select_related('user').aget(telegram_id=tg_id)
+    except TelegramUser.DoesNotExist:
+        return
+    if not _is_admin(tg_user):
+        await update.message.reply_text("❌ Ruxsat yo'q.")
+        return
+
+    from apps.persons.models import Person
+    from apps.persons.views import _upload_to_imagekit
+    import asyncio
+
+    await update.message.reply_text("⏳ Rasmlar ImageKit ga yuklanmoqda...")
+    fixed, failed, skipped = 0, 0, 0
+
+    async for person in Person.objects.filter(photo_url='').exclude(photo=''):
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, _upload_to_imagekit, person)
+            if person.photo_url:
+                fixed += 1
+            else:
+                failed += 1
+        except Exception as e:
+            logger.warning(f"fix_photos: person {person.id}: {e}")
+            failed += 1
+
+    # photo_url bor bo'lmagan va photo ham bo'lmagan — skip
+    skipped = await Person.objects.filter(photo_url='', photo='').acount()
+
+    await update.message.reply_text(
+        f"✅ Tuzatildi: {fixed}\n"
+        f"❌ Xato: {failed}\n"
+        f"⏭️ Rasmsiz: {skipped}"
+    )
 
 
 async def _dispatch_photo(update, context):

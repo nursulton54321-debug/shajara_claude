@@ -391,58 +391,18 @@ async def edit_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     photo = update.message.photo[-1]  # eng katta o'lcham
 
     from apps.persons.models import Person
-    import os, uuid
-    from django.conf import settings as django_settings
-
     try:
         p = await Person.objects.aget(id=person_id)
     except Person.DoesNotExist:
         await update.message.reply_text("❌ Shaxs topilmadi.")
         return True
 
-    # Eski rasmni o'chirish
-    if p.photo:
-        old_path = p.photo.path if hasattr(p.photo, 'path') else None
-        if old_path and os.path.exists(old_path):
-            try:
-                os.remove(old_path)
-            except Exception:
-                pass
-
-    # Rasmni yuklab olish
-    tg_file = await context.bot.get_file(photo.file_id)
-    ext = 'jpg'
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    upload_dir = os.path.join(django_settings.MEDIA_ROOT, 'persons')
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, filename)
-    await tg_file.download_to_drive(file_path)
-
-    # Pillow bilan siqish va resize
-    try:
-        from PIL import Image as PilImage
-        with PilImage.open(file_path) as img:
-            img = img.convert('RGB')
-            img.thumbnail((800, 800), PilImage.LANCZOS)
-            img.save(file_path, 'JPEG', quality=85, optimize=True)
-    except Exception as ex:
-        logger.warning(f"Rasm siqishda xato: {ex}")
-
-    # Modelga saqlash
-    from django.core.files import File
-    with open(file_path, 'rb') as f:
-        await p.photo.asave(filename, File(f), save=False)
-    await p.asave(update_fields=['photo'])
-
-    # ImageKit CDN ga yuklash
-    try:
-        import asyncio as _asyncio
-        from apps.persons.views import _upload_to_imagekit
-        loop = _asyncio.get_event_loop()
-        await loop.run_in_executor(None, _upload_to_imagekit, p)
-        logger.info(f"[Bot] edit_photo: person {p.id} ImageKit ga yuklandi")
-    except Exception as ik_err:
-        logger.warning(f"[Bot] edit_photo ImageKit xato: {ik_err}")
+    # Rasmni ImageKit ga yuklash (disk ishlatilmaydi)
+    from apps.bot.photo_utils import save_person_photo
+    ok = await save_person_photo(context.bot, photo.file_id, p)
+    if not ok:
+        await update.message.reply_text("❌ Rasm yuklanmadi. Qayta urinib ko'ring.")
+        return True
 
     context.user_data.pop('persons_cache', None)
 
