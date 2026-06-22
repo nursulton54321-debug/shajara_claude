@@ -450,14 +450,25 @@ async def got_father(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _parent_kb(opp, "Onasi ma'lum emas")
-    msg = await query.message.reply_text(
-        f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   {'🟩'*11}{'⬜'*2} <b>11/{TOTAL}</b>\n"
-        "━━━━━━━━━━━━━━━\n\n"
-        "Shaxsning <b>onasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>",
-        parse_mode='HTML',
-    )
-    context.user_data['qmsg_11'] = msg.message_id
-    await query.message.reply_text(f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇", reply_markup=kb)
+    logger.info(f"[add_person] got_father -> S_MOTHER, chat_id={chat_id}")
+    try:
+        msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   {'🟩'*11}{'⬜'*2} <b>11/{TOTAL}</b>\n"
+                "━━━━━━━━━━━━━━━\n\n"
+                "Shaxsning <b>onasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>"
+            ),
+            parse_mode='HTML',
+        )
+        context.user_data['qmsg_11'] = msg.message_id
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇",
+            reply_markup=kb,
+        )
+    except Exception as e:
+        logger.error(f"[add_person] got_father xabar yuborishda xato: {e}", exc_info=True)
     return S_MOTHER
 
 
@@ -466,6 +477,7 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query   = update.callback_query
     await query.answer()
     chat_id = query.message.chat_id
+    logger.info(f"[add_person] got_mother chaqirildi, chat_id={chat_id}, data={query.data}")
 
     if query.data != 'psel_skip':
         pid = int(query.data.split('_')[1])
@@ -483,14 +495,24 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _spouse_kb(opp)
-    msg = await query.message.reply_text(
-        f"💍  <b>Turmush o'rtog'i</b>   {'🟩'*12}{'⬜'*1} <b>12/{TOTAL}</b>\n"
-        "━━━━━━━━━━━━━━━\n\n"
-        "Turmush o'rtog'ini tanlang:\n<i>(Bo'lmasa o'tkazib yuboring)</i>",
-        parse_mode='HTML',
-    )
-    context.user_data['qmsg_12'] = msg.message_id
-    await query.message.reply_text(f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇", reply_markup=kb)
+    try:
+        msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"💍  <b>Turmush o'rtog'i</b>   {'🟩'*12}{'⬜'*1} <b>12/{TOTAL}</b>\n"
+                "━━━━━━━━━━━━━━━\n\n"
+                "Turmush o'rtog'ini tanlang:\n<i>(Bo'lmasa o'tkazib yuboring)</i>"
+            ),
+            parse_mode='HTML',
+        )
+        context.user_data['qmsg_12'] = msg.message_id
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇",
+            reply_markup=kb,
+        )
+    except Exception as e:
+        logger.error(f"[add_person] got_mother xabar yuborishda xato: {e}", exc_info=True)
     return S_SPOUSE
 
 
@@ -499,6 +521,7 @@ async def got_spouse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query   = update.callback_query
     await query.answer()
     chat_id = query.message.chat_id
+    logger.info(f"[add_person] got_spouse chaqirildi, chat_id={chat_id}, data={query.data}")
 
     if query.data != 'psel_skip':
         pid = int(query.data.split('_')[1])
@@ -514,15 +537,21 @@ async def got_spouse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception: pass
     await _delete_step_msg(context, chat_id, 12)
 
-    msg = await query.message.reply_text(
-        f"📸  <b>Rasm</b>   <code>{'▓'*13} 13/{TOTAL}</code>\n"
-        "━━━━━━━━━━━━━━━\n\n"
-        "Shaxsning <b>rasmini</b> yuboring:\n\n"
-        "<i>(Ixtiyoriy — o'tkazib yuborish mumkin)</i>",
-        parse_mode='HTML',
-        reply_markup=_kb_skip(),
-    )
-    context.user_data['qmsg_13'] = msg.message_id
+    try:
+        msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"📸  <b>Rasm</b>   {'🟩'*13} <b>13/{TOTAL}</b>\n"
+                "━━━━━━━━━━━━━━━\n\n"
+                "Shaxsning <b>rasmini</b> yuboring:\n\n"
+                "<i>(Ixtiyoriy — o'tkazib yuborish mumkin)</i>"
+            ),
+            parse_mode='HTML',
+            reply_markup=_kb_skip(),
+        )
+        context.user_data['qmsg_13'] = msg.message_id
+    except Exception as e:
+        logger.error(f"[add_person] got_spouse xabar yuborishda xato: {e}", exc_info=True)
     return S_PHOTO
 
 
