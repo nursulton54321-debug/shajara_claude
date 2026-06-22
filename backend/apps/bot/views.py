@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.conf import settings
+from telegram.ext import Application
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +67,18 @@ def telegram_webhook(request):
 
     try:
         from telegram import Update
-        from apps.bot.bot import build_app
+        from telegram.ext import PicklePersistence
 
         async def process():
-            # Har safar yangi app — oddiy va ishonchli
-            app = _build_webhook_app()
-            # Handlerlarni qo'shish
+            # Persistence: conversation holati /tmp ga saqlanadi
+            persistence = PicklePersistence(filepath='/tmp/bot_conv_state')
+            app = (
+                Application.builder()
+                .token(getattr(settings, 'TELEGRAM_BOT_TOKEN', ''))
+                .updater(None)
+                .persistence(persistence)
+                .build()
+            )
             _register_handlers(app)
             await app.initialize()
             update = Update.de_json(data, app.bot)
