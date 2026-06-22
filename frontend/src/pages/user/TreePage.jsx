@@ -2102,6 +2102,7 @@ function TreeFlow({ rawPersons, stats }) {
   const [loading, setLoading]            = useState(true)
   const [selectedPersonId, setSelectedPersonId] = useState(null)
   const [exporting, setExporting]        = useState(false)
+  const [isMobile, setIsMobile]          = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [focusId, setFocusId]            = useState(null)
   const [focusGen, setFocusGen]          = useState(3)
   // Mobil ko'rinish: 'tree' | 'list'
@@ -2126,6 +2127,13 @@ function TreeFlow({ rawPersons, stats }) {
       if (userPickedView.current) return
       setViewMode(e.matches ? 'list' : 'tree')
     }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const handler = (e) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
@@ -2411,7 +2419,7 @@ function TreeFlow({ rawPersons, stats }) {
 
       {/* Stats ribbon */}
       {stats && (
-        <div style={{
+        <div className="stats-ribbon" style={{
           display: 'grid',
           gridTemplateColumns: 'auto 1fr auto',
           alignItems: 'center',
@@ -2444,7 +2452,7 @@ function TreeFlow({ rawPersons, stats }) {
             background:'radial-gradient(circle,rgba(168,85,247,0.2) 0%,transparent 70%)', pointerEvents:'none' }}/>
 
           {/* ── LEFT: 4 stat ── */}
-          <div style={{ display:'flex', alignItems:'stretch' }}>
+          <div className="rb-left" style={{ display:'flex', alignItems:'stretch' }}>
             {[
               { icon:'👥', label:"Jami a'zolar", value:stats.total,         suffix:'',      glow:'rgba(255,255,255,0.18)' },
               { icon:'💚', label:'Tiriklar',      value:stats.alive,         suffix:'',      glow:'rgba(16,185,129,0.3)'  },
@@ -2479,7 +2487,7 @@ function TreeFlow({ rawPersons, stats }) {
           </div>
 
           {/* ── CENTER: Aforizm ── */}
-          <div style={{
+          <div className="rb-center" style={{
             display:'flex', alignItems:'center', justifyContent:'center',
             padding:'0 28px', color:'white',
             borderLeft:'1px solid rgba(255,255,255,0.1)',
@@ -2507,7 +2515,7 @@ function TreeFlow({ rawPersons, stats }) {
           </div>
 
           {/* ── RIGHT: Oila nomi ── */}
-          <div style={{
+          <div className="rb-right" style={{
             display:'flex', alignItems:'center', gap:12,
             padding:'0 24px', minHeight:60,
             position:'relative', overflow:'hidden',
@@ -2549,7 +2557,7 @@ function TreeFlow({ rawPersons, stats }) {
       )}
 
       {/* Toolbar */}
-      <div style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:8, padding:'8px 12px',
+      <div className="tree-toolbar-row" style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:8, padding:'8px 12px',
         background: isDark ? '#1e293b' : 'white',
         borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
         boxShadow: isDark ? '0 1px 10px rgba(0,0,0,0.3)' : '0 1px 10px rgba(0,0,0,0.05)',
@@ -2606,7 +2614,7 @@ function TreeFlow({ rawPersons, stats }) {
         </div>
 
         {/* Right side buttons */}
-        <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto', flexWrap:'wrap' }}>
+        <div className="tree-toolbar-right" style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto', flexWrap:'wrap' }}>
           {/* Reset view */}
           <button onClick={() => fitView({ padding:0.12, duration:400 })} title="Ko'rinishni tiklash"
             style={{ width:30, height:30, borderRadius:9, background:'#f1f5f9', color:'#475569',
@@ -2633,12 +2641,13 @@ function TreeFlow({ rawPersons, stats }) {
 
           {/* Export PNG */}
           <button onClick={handleExport} disabled={exporting}
+            className="png-export-btn"
             style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px',
               borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
               background: exporting ? '#e2e8f0' : 'linear-gradient(135deg,#3b82f6,#6366f1)',
               color: exporting ? '#94a3b8' : 'white',
               boxShadow: exporting ? 'none' : '0 3px 10px rgba(59,130,246,0.35)' }}>
-            {exporting ? '⏳' : '📷'} <span className="hide-mobile">{exporting ? 'Export...' : 'PNG'}</span>
+            {exporting ? '⏳' : '📷'} <span>{exporting ? 'Export...' : 'PNG'}</span>
           </button>
 
           {/* Export PDF */}
@@ -2965,8 +2974,8 @@ function TreeFlow({ rawPersons, stats }) {
           <Background variant="dots" color={isDark ? '#4f46e580' : '#c7d2fe'} gap={30} size={1.4} />
           {/* Custom silliq Controls */}
           <div style={{
-            position: 'absolute', bottom: 24, left: 16, zIndex: 5,
-            display: 'flex', flexDirection: 'column', gap: 4,
+            position: 'absolute', bottom: isMobile ? 12 : 24, left: isMobile ? 10 : 16, zIndex: 5,
+            display: 'flex', flexDirection: 'column', gap: isMobile ? 3 : 4,
           }}>
             {[
               { icon: '+', title: "Kattalashtirish",  onClick: () => zoomIn({ duration: 350 }) },
@@ -3010,26 +3019,28 @@ function TreeFlow({ rawPersons, stats }) {
               </button>
             ))}
           </div>
-          <MiniMap
-            nodeColor={n => {
-              if (n.type === 'coupleNode') return '#f97316'
-              if (n.type === 'genLabel')   return '#6366f1'
-              return n.data?.gender === 'male' ? '#818cf8' : '#f472b6'
-            }}
-            nodeStrokeWidth={0}
-            maskColor={isDark ? 'rgba(15,23,42,0.72)' : 'rgba(241,245,253,0.72)'}
-            style={{
-              right: 14, bottom: 120, top: 'auto',
-              width: 130, height: 80,
-              borderRadius: 12,
-              background: isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.88)',
-              backdropFilter: 'blur(10px)',
-              border: isDark ? '1px solid rgba(99,102,241,0.25)' : '1px solid rgba(99,102,241,0.18)',
-              boxShadow: isDark
-                ? '0 4px 20px rgba(0,0,0,0.45)'
-                : '0 4px 20px rgba(99,102,241,0.15)',
-            }}
-          />
+          {!isMobile && (
+            <MiniMap
+              nodeColor={n => {
+                if (n.type === 'coupleNode') return '#f97316'
+                if (n.type === 'genLabel')   return '#6366f1'
+                return n.data?.gender === 'male' ? '#818cf8' : '#f472b6'
+              }}
+              nodeStrokeWidth={0}
+              maskColor={isDark ? 'rgba(15,23,42,0.72)' : 'rgba(241,245,253,0.72)'}
+              style={{
+                right: 14, bottom: 120, top: 'auto',
+                width: 130, height: 80,
+                borderRadius: 12,
+                background: isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.88)',
+                backdropFilter: 'blur(10px)',
+                border: isDark ? '1px solid rgba(99,102,241,0.25)' : '1px solid rgba(99,102,241,0.18)',
+                boxShadow: isDark
+                  ? '0 4px 20px rgba(0,0,0,0.45)'
+                  : '0 4px 20px rgba(99,102,241,0.15)',
+              }}
+            />
+          )}
           {/* Focus mode exit banner — ReactFlow Panel ichida, har doim overlay'lardan ustida */}
           {focusId && !loading && (
             <Panel position="bottom-center" style={{ marginBottom: 8 }}>
