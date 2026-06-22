@@ -32,6 +32,24 @@ MONTHS_UZ = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun',
 
 
 # ── Font ─────────────────────────────────────────────────────────────────────
+def _find_system_font_path(bold=False):
+    """fc-match orqali tizimda mavjud fontni topadi (Linux)."""
+    try:
+        import subprocess
+        style = 'Bold' if bold else 'Regular'
+        r = subprocess.run(
+            ['fc-match', '-f', '%{file}', f'sans:style={style}'],
+            capture_output=True, text=True, timeout=3
+        )
+        if r.returncode == 0:
+            p = r.stdout.strip()
+            if p and os.path.exists(p):
+                return p
+    except Exception:
+        pass
+    return None
+
+
 def _font(size, bold=False):
     if bold:
         paths = [
@@ -55,6 +73,11 @@ def _font(size, bold=False):
         if os.path.exists(p):
             try: return ImageFont.truetype(p, size)
             except: pass
+    # fc-match orqali tizimdan topishga urinish
+    sys_path = _find_system_font_path(bold)
+    if sys_path:
+        try: return ImageFont.truetype(sys_path, size)
+        except: pass
     try: return ImageFont.load_default(size=max(size, 10))
     except: return ImageFont.load_default()
 

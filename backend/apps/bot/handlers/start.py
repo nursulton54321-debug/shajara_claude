@@ -325,4 +325,6 @@ def get_start_conversation():
         },
         fallbacks=[CommandHandler('start', start)],
         per_chat=True,
+        persistent=True,
+        name='start_conv',
     )

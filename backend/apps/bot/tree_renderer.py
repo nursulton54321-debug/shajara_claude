@@ -42,6 +42,23 @@ TEXT_ROLE = (190, 200, 230)
 
 
 # ── Font helpers ─────────────────────────────────────────────────────────────
+def _find_system_font_path(bold=False):
+    try:
+        import subprocess
+        style = 'Bold' if bold else 'Regular'
+        r = subprocess.run(
+            ['fc-match', '-f', '%{file}', f'sans:style={style}'],
+            capture_output=True, text=True, timeout=3
+        )
+        if r.returncode == 0:
+            p = r.stdout.strip()
+            if p and os.path.exists(p):
+                return p
+    except Exception:
+        pass
+    return None
+
+
 def _font(size, bold=False):
     if bold:
         candidates = [
@@ -67,6 +84,10 @@ def _font(size, bold=False):
                 return ImageFont.truetype(p, size)
             except Exception:
                 pass
+    sys_path = _find_system_font_path(bold)
+    if sys_path:
+        try: return ImageFont.truetype(sys_path, size)
+        except: pass
     try: return ImageFont.load_default(size=max(size, 10))
     except: return ImageFont.load_default()
 
