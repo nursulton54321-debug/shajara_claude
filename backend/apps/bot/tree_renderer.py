@@ -33,8 +33,8 @@ DEAD_BG   = (24, 28, 40)
 DEAD_BDR  = (71, 78, 98)
 DEAD_ACC  = (100, 110, 135)
 
-LINE_COL  = (80, 100, 180, 160)
-COUPLE_LINE = (200, 180, 80, 200)
+LINE_COL  = (120, 160, 255, 230)
+COUPLE_LINE = (200, 180, 80, 220)
 
 TEXT_NAME = (230, 238, 255)
 TEXT_YEAR = (200, 215, 245)   # yorqinroq
@@ -681,7 +681,7 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
     pmap = {p.id: p for p in persons}
 
     # ── Draw connection lines ────────────────────────────────────────────────
-    lw = SCALE * 2   # chiziq qalinligi
+    lw = SCALE * 3   # chiziq qalinligi (oshirildi)
     for pid, (px, py) in sc_pos.items():
         person = pmap.get(pid)
         if not person:
@@ -689,26 +689,33 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
 
         # Couple line (husband ↔ wife)
         sp = layout.spouse_map.get(pid)
-        if sp and sp in sc_pos and sp in layout.spouse_only:
+        has_couple = sp and sp in sc_pos and sp in layout.spouse_only
+        if has_couple:
             sx, sy = sc_pos[sp]
             lx1 = px + sc_card_w
             lx2 = sx
             ly  = py + sc_card_h // 2
             draw.line([(lx1, ly), (lx2, ly)], fill=COUPLE_LINE, width=lw)
             mx = (lx1 + lx2) // 2
-            draw.rounded_rectangle([mx - 10, ly - 6, mx + 10, ly + 6],
-                                    radius=4, fill=(50, 60, 100))
+            draw.rounded_rectangle([mx - 10 * SCALE, ly - 6 * SCALE,
+                                    mx + 10 * SCALE, ly + 6 * SCALE],
+                                    radius=4 * SCALE, fill=(50, 60, 100))
             fn_hrt = _font(10 * SCALE)
-            draw.text((mx - 6, ly - 9 * SCALE // 2), '♥', font=fn_hrt,
+            draw.text((mx - 6 * SCALE, ly - 5 * SCALE), '♥', font=fn_hrt,
                       fill=(220, 80, 120))
 
-        # Parent → children: FAQAT otaning karta markazidan
+        # Parent → children: juft bo'lsa o'rta nuqtadan, aks holda karta markazidan
         children = [c for c in layout.children_map.get(pid, [])
                     if c not in layout.spouse_only]
         if not children:
             continue
 
-        parent_cx = int(px + sc_card_w // 2)
+        if has_couple:
+            # Er-xotin juftining o'rta nuqtasidan chiziq boshlanadi
+            sp_x, _ = sc_pos[sp]
+            parent_cx = int((px + sc_card_w // 2 + sp_x + sc_card_w // 2) // 2)
+        else:
+            parent_cx = int(px + sc_card_w // 2)
         parent_cy = int(py + sc_card_h)
 
         child_tops = []
@@ -735,7 +742,7 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
                       fill=LINE_COL, width=lw)
 
         # Drop lines + arrows
-        aw = 6 * SCALE
+        aw = 7 * SCALE
         for child_cx, child_cy in child_tops:
             draw.line([(child_cx, stem_y), (child_cx, child_cy)],
                       fill=LINE_COL, width=lw)
@@ -743,7 +750,7 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
                 (child_cx,      child_cy),
                 (child_cx - aw, child_cy - aw * 2),
                 (child_cx + aw, child_cy - aw * 2),
-            ], fill=(100, 120, 200))
+            ], fill=(140, 170, 255))
 
     # ── Draw cards (2x koordinatalar) ───────────────────────────────────────
     for pid, (px, py) in sc_pos.items():
