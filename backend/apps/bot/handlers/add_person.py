@@ -92,9 +92,9 @@ async def _delete_all_steps(context, chat_id):
 
 async def _send_step(reply_fn, context, step_n: int, icon: str, title: str, body: str, kb):
     """Qadam xabarini yuboradi va message_id ni saqlaydi."""
-    bar  = "▓" * step_n + "░" * (TOTAL - step_n)
+    bar  = "🟩" * step_n + "⬜" * (TOTAL - step_n)
     text = (
-        f"{icon}  <b>{title}</b>   <code>{bar} {step_n}/{TOTAL}</code>\n"
+        f"{icon}  <b>{title}</b>   {bar} <b>{step_n}/{TOTAL}</b>\n"
         f"━━━━━━━━━━━━━━━\n\n"
         f"{body}"
     )
@@ -416,7 +416,7 @@ async def got_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     kb  = await _parent_kb('male', "Otasi ma'lum emas")
     msg = await update.message.reply_text(
-        f"👨  <b>Otasi</b>   <code>{'▓'*10}{'░'*3} 10/{TOTAL}</code>\n"
+        f"👨  <b>Otasi</b>   {'🟩'*10}{'⬜'*3} <b>10/{TOTAL}</b>\n"
         "━━━━━━━━━━━━━━━\n\n"
         "Shaxsning <b>otasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>",
         parse_mode='HTML',
@@ -451,7 +451,7 @@ async def got_father(update: Update, context: ContextTypes.DEFAULT_TYPE):
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _parent_kb(opp, "Onasi ma'lum emas")
     msg = await query.message.reply_text(
-        f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   <code>{'▓'*11}{'░'*2} 11/{TOTAL}</code>\n"
+        f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   {'🟩'*11}{'⬜'*2} <b>11/{TOTAL}</b>\n"
         "━━━━━━━━━━━━━━━\n\n"
         "Shaxsning <b>onasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>",
         parse_mode='HTML',
@@ -484,7 +484,7 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _spouse_kb(opp)
     msg = await query.message.reply_text(
-        f"💍  <b>Turmush o'rtog'i</b>   <code>{'▓'*12}{'░'*1} 12/{TOTAL}</code>\n"
+        f"💍  <b>Turmush o'rtog'i</b>   {'🟩'*12}{'⬜'*1} <b>12/{TOTAL}</b>\n"
         "━━━━━━━━━━━━━━━\n\n"
         "Turmush o'rtog'ini tanlang:\n<i>(Bo'lmasa o'tkazib yuboring)</i>",
         parse_mode='HTML',

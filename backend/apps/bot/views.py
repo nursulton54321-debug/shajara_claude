@@ -16,18 +16,26 @@ logger = logging.getLogger(__name__)
 
 # ── Global bot event loop va app (bir marta yaratiladi) ──────────────────────
 _bot_loop: asyncio.AbstractEventLoop | None = None
+_bot_loop_thread: threading.Thread | None = None
 _bot_app = None
 _bot_lock = threading.Lock()
 
 
 def _get_bot_loop() -> asyncio.AbstractEventLoop:
-    """Fon threadda doimiy ishlaydigan event loop."""
-    global _bot_loop
-    if _bot_loop is None or _bot_loop.is_closed():
+    """Fon threadda doimiy ishlaydigan event loop. Thread o'lsa qayta yaratadi."""
+    global _bot_loop, _bot_loop_thread, _bot_app
+    if (_bot_loop is None or _bot_loop.is_closed()
+            or _bot_loop_thread is None or not _bot_loop_thread.is_alive()):
+        if _bot_loop and not _bot_loop.is_closed():
+            try:
+                _bot_loop.call_soon_threadsafe(_bot_loop.stop)
+            except Exception:
+                pass
         _bot_loop = asyncio.new_event_loop()
-        t = threading.Thread(target=_bot_loop.run_forever, daemon=True)
-        t.start()
-        logger.info("[Bot] background event loop started")
+        _bot_loop_thread = threading.Thread(target=_bot_loop.run_forever, daemon=True, name='bot-loop')
+        _bot_loop_thread.start()
+        _bot_app = None  # loop yangilandi — app ham qayta yaratilsin
+        logger.info("[Bot] background event loop (re)started")
     return _bot_loop
 
 
