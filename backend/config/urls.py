@@ -7,7 +7,19 @@ from apps.bot.views import telegram_webhook, set_webhook, webhook_info
 
 
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+    """
+    Ping endpoint — UptimeRobot yoki boshqa monitoring xizmati tomonidan
+    har 5 daqiqada chaqiriladi. Bot app ni ham ishga tushiradi (warm-up).
+    """
+    bot_status = 'ok'
+    try:
+        from apps.bot.views import _ensure_app, _bot_app
+        if _bot_app is None:
+            _ensure_app()
+            bot_status = 'warmed_up'
+    except Exception as e:
+        bot_status = f'warn:{str(e)[:60]}'
+    return JsonResponse({'status': 'ok', 'bot': bot_status})
 
 
 urlpatterns = [
