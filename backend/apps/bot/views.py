@@ -114,6 +114,7 @@ def _register_handlers(app):
         reminders_filter_callback, reminders_person_callback,
     )
 
+    # /start — oddiy CommandHandler (ConversationHandler emas)
     app.add_handler(get_start_conversation())
     app.add_handler(get_add_person_conversation())
     app.add_handler(CallbackQueryHandler(approve_callback,       pattern=r'^approve_\d+$'))
@@ -158,6 +159,20 @@ async def _dispatch_text(update, context):
         edit_field_text_handler, user_send_msg_text_handler,
     )
     text = update.message.text.strip() if update.message else ''
+
+    # ── Invite orqali ism kutilayotgan foydalanuvchi (DB holati) ──
+    tg_id = update.effective_user.id if update.effective_user else None
+    if tg_id:
+        from apps.bot.models import TelegramUser
+        from apps.bot.handlers.start import receive_name_db
+        try:
+            _tgu = await TelegramUser.objects.aget(telegram_id=tg_id)
+            if _tgu.awaiting_invite_token:
+                await receive_name_db(update, context)
+                return
+        except TelegramUser.DoesNotExist:
+            pass
+
     if context.user_data.get('send_msg_to'):
         await user_send_msg_text_handler(update, context); return
     if context.user_data.get('awaiting_edit_text'):

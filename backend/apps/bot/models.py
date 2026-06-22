@@ -23,6 +23,7 @@ class TelegramUser(models.Model):
         related_name='telegram_profile', verbose_name='Django foydalanuvchi'
     )
     status        = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    awaiting_invite_token = models.CharField(max_length=64, blank=True, default='')
     invited_by    = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='invited_users', verbose_name='Kim taklif qildi'

@@ -1,8 +1,6 @@
 """
-/start handler:
-  - Yangi foydalanuvchi → ism so'raydi → adminga xabar
-  - Allaqachon tasdiqlangan → asosiy menyu
-  - Rad etilgan → xabar
+/start handler — ConversationHandler ISHLATILMAYDI.
+Holat DB da saqlanadi: TelegramUser.awaiting_invite_token
 """
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -16,11 +14,10 @@ from apps.bot.keyboards import main_menu_keyboard, admin_menu_keyboard
 
 logger = logging.getLogger(__name__)
 
-WAITING_NAME = 1
+WAITING_NAME = 1  # saqlanadi — add_person uchun kerak bo'lishi mumkin
 
 
 async def _get_tg_user(telegram_id: int):
-    """TelegramUser ni user bilan birga yuklash (async)."""
     try:
         return await TelegramUser.objects.select_related('user').aget(
             telegram_id=telegram_id
@@ -30,19 +27,12 @@ async def _get_tg_user(telegram_id: int):
 
 
 def _is_admin(tg_user: TelegramUser) -> bool:
-    """user allaqachon select_related bilan yuklangan bo'lishi shart."""
     if not tg_user.user:
         return False
     return tg_user.user.is_superuser or tg_user.user.role == 'admin'
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    /start [token] — kirish nuqtasi.
-    Admin → darhol menyu.
-    Tasdiqlangan user → darhol menyu.
-    Yangi → invite tekshirib ism so'raydi.
-    """
     tg_id   = update.effective_user.id
     tg_name = update.effective_user.full_name or update.effective_user.username or ''
 
@@ -71,17 +61,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
 
-    # ── Kutilmoqda ───────────────────────────────────────────────
-    if tg_user and tg_user.status == TelegramUser.STATUS_PENDING:
+    # ── Kutilmoqda — faqat holat eslatmasi ──────────────────────
+    if tg_user and tg_user.status == TelegramUser.STATUS_PENDING and not tg_user.awaiting_invite_token:
         await update.message.reply_text(
             "Sizning so'rovingiz admin tomonidan ko'rib chiqilmoqda.\n"
             "Tasdiqlangach xabar keladi."
         )
         return ConversationHandler.END
 
-    # ── Yangi foydalanuvchi — invite tekshirish ──────────────────
-    args        = context.args
-    invite_obj  = None
+    # ── Invite tekshirish ────────────────────────────────────────
+    args       = context.args or []
+    invite_obj = None
 
     if args:
         token = args[0]
@@ -110,8 +100,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
 
-    context.user_data['invite_token'] = invite_obj.token
-    context.user_data['tg_name']      = tg_name
+    # ── Holatni DB ga yozish ─────────────────────────────────────
+    if tg_user is None:
+        tg_user = await TelegramUser.objects.acreate(
+            telegram_id=tg_id,
+            telegram_name=tg_name,
+            full_name='',
+            status=TelegramUser.STATUS_PENDING,
+            awaiting_invite_token=invite_obj.token,
+        )
+    else:
+        tg_user.telegram_name        = tg_name
+        tg_user.awaiting_invite_token = invite_obj.token
+        await tg_user.asave(update_fields=['telegram_name', 'awaiting_invite_token'])
 
     first_name = update.effective_user.first_name or tg_name or "Mehmon"
 
@@ -132,53 +133,53 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "     _admin tekshiradi_"
     )
     await update.message.reply_text(welcome, parse_mode='MarkdownV2')
-    return WAITING_NAME
+    return ConversationHandler.END
 
 
-async def receive_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Foydalanuvchi ismini qabul qilib adminga xabar yuboradi."""
+async def receive_name_db(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    DB dagi awaiting_invite_token bo'lgan foydalanuvchi ismini qabul qiladi.
+    ConversationHandler ISHLATILMAYDI — oddiy MessageHandler.
+    """
+    tg_id = update.effective_user.id
+    tg_user = await _get_tg_user(tg_id)
+
+    if not tg_user or not tg_user.awaiting_invite_token:
+        return  # bu handler uchun emas
+
     full_name = update.message.text.strip()
 
     if len(full_name) < 3:
         await update.message.reply_text(
             "Ism kamida 3 ta harfdan iborat bo'lishi kerak. Qaytadan kiriting:"
         )
-        return WAITING_NAME
+        return
 
     if len(full_name) > 100:
         await update.message.reply_text("Ism juda uzun. Qaytadan kiriting:")
-        return WAITING_NAME
+        return
 
-    tg_id        = update.effective_user.id
-    tg_name      = context.user_data.get('tg_name', '')
-    invite_token = context.user_data.get('invite_token')
-
+    # Invite tokenni yuklash
+    invite_token = tg_user.awaiting_invite_token
     try:
         invite_obj = await BotInvite.objects.select_related('created_by').aget(
             token=invite_token
         )
     except BotInvite.DoesNotExist:
         await update.message.reply_text("Xatolik yuz berdi. /start dan boshlang.")
-        return ConversationHandler.END
+        tg_user.awaiting_invite_token = ''
+        await tg_user.asave(update_fields=['awaiting_invite_token'])
+        return
 
-    # TelegramUser yaratish yoki yangilash (pending holat)
-    tg_user, created = await TelegramUser.objects.aget_or_create(
-        telegram_id=tg_id,
-        defaults={
-            'telegram_name': tg_name,
-            'full_name':     full_name,
-            'invited_by':    invite_obj.created_by,
-            'status':        TelegramUser.STATUS_PENDING,
-        }
-    )
-    if not created:
-        tg_user.full_name     = full_name
-        tg_user.telegram_name = tg_name
-        tg_user.invited_by    = invite_obj.created_by
-        tg_user.status        = TelegramUser.STATUS_PENDING
-        await tg_user.asave()
+    # TelegramUser yangilash
+    tg_user.full_name            = full_name
+    tg_user.status               = TelegramUser.STATUS_PENDING
+    tg_user.awaiting_invite_token = ''
+    if invite_obj.created_by:
+        tg_user.invited_by = invite_obj.created_by
+    await tg_user.asave(update_fields=['full_name', 'status', 'awaiting_invite_token', 'invited_by'])
 
-    # Invite tokenni ishlatilgan deb belgilash
+    # Invite ishlatilgan deb belgilash
     invite_obj.is_used = True
     invite_obj.used_by = tg_user
     await invite_obj.asave()
@@ -195,11 +196,8 @@ async def receive_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Barcha adminlarga xabar yuborish
     await _notify_admins(context, tg_user)
 
-    return ConversationHandler.END
-
 
 async def _notify_admins(context: ContextTypes.DEFAULT_TYPE, tg_user: TelegramUser):
-    """Barcha tasdiqlangan admin TelegramUserlarga so'rov xabarini yuboradi."""
     text = (
         f"🔔 *Yangi A'zolik So'rovi*\n"
         f"━━━━━━━━━━━━━━━\n\n"
@@ -213,7 +211,6 @@ async def _notify_admins(context: ContextTypes.DEFAULT_TYPE, tg_user: TelegramUs
         InlineKeyboardButton("Rad etish",  callback_data=f"reject_{tg_user.telegram_id}"),
     ]])
 
-    # Faqat approved + admin/superuser TelegramUserlar
     async for admin in TelegramUser.objects.select_related('user').filter(
         status=TelegramUser.STATUS_APPROVED
     ):
@@ -226,12 +223,12 @@ async def _notify_admins(context: ContextTypes.DEFAULT_TYPE, tg_user: TelegramUs
                 parse_mode='Markdown',
                 reply_markup=kb,
             )
+            logger.info(f"[Bot] Admin {admin.telegram_id} ga so'rov xabari yuborildi")
         except Exception as e:
             logger.warning(f"Admin {admin.telegram_id} ga xabar yuborib bo'lmadi: {e}")
 
 
 async def approve_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Admin Tasdiqlash bosdi."""
     query        = update.callback_query
     await query.answer()
     admin_tg_id  = query.from_user.id
@@ -278,7 +275,6 @@ async def approve_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reject_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Admin Rad etish bosdi."""
     query        = update.callback_query
     await query.answer()
     admin_tg_id  = query.from_user.id
@@ -316,15 +312,8 @@ async def reject_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def get_start_conversation():
-    return ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            WAITING_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_name)
-            ],
-        },
-        fallbacks=[CommandHandler('start', start)],
-        per_chat=True,
-        persistent=True,
-        name='start_conv',
-    )
+    """
+    ConversationHandler emas — faqat /start CommandHandler qaytaradi.
+    Ism qabul qilish receive_name_db orqali (oddiy MessageHandler, DB holati).
+    """
+    return CommandHandler('start', start)

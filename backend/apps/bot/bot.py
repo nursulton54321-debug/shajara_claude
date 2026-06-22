@@ -12,7 +12,7 @@ from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from django.conf import settings
 
-from apps.bot.handlers.start import get_start_conversation, approve_callback, reject_callback
+from apps.bot.handlers.start import get_start_conversation, approve_callback, reject_callback, receive_name_db
 from apps.bot.handlers.add_person import (
     get_add_person_conversation,
     addp_approve_callback,
@@ -110,6 +110,18 @@ async def _dispatch_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def _dispatch_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Matn xabarlarni to'g'ri handlerga yo'naltiradi."""
     text = update.message.text.strip() if update.message.text else ''
+
+    # ── Invite orqali ism kutilayotgan foydalanuvchi (DB holati) ──
+    tg_id = update.effective_user.id if update.effective_user else None
+    if tg_id:
+        from apps.bot.models import TelegramUser
+        try:
+            _tgu = await TelegramUser.objects.aget(telegram_id=tg_id)
+            if _tgu.awaiting_invite_token:
+                await receive_name_db(update, context)
+                return
+        except TelegramUser.DoesNotExist:
+            pass
 
     # Admin xabar yuborish kutilmoqda
     if context.user_data.get('send_msg_to'):
