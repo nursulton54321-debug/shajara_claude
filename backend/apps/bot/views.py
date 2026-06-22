@@ -1,11 +1,9 @@
 """
 Telegram webhook view — polling o'rniga webhook rejimi.
-Render.com free tier uchun: alohida process shart emas.
 """
 import json
 import logging
 import asyncio
-import threading
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,25 +13,43 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 _app = None
-_app_lock = threading.Lock()
 
 
 def _get_app():
     global _app
     if _app is not None:
         return _app
-    with _app_lock:
-        if _app is not None:
-            return _app
-        try:
-            from apps.bot.bot import build_app
-            _app = build_app()
-            asyncio.run(_app.initialize())
-            logger.info("[Bot] Application initialized (webhook mode)")
-        except Exception as e:
-            logger.error(f"[Bot] init xato: {e}")
-            _app = None
+    try:
+        from telegram.ext import Application
+        from apps.bot.bot import build_app
+
+        # updater=None — faqat webhook uchun, Updater (polling) o'chiriladi
+        token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+        _app = build_app()
+
+        async def _init():
+            await _app.initialize()
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(_init())
+        loop.close()
+        logger.info("[Bot] initialized (webhook mode)")
+    except Exception as e:
+        logger.error(f"[Bot] init xato: {e}")
+        _app = None
     return _app
+
+
+def _build_webhook_app():
+    """Updater o'chirilgan holda Application yaratish (webhook uchun)."""
+    from telegram.ext import Application
+    token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+    return (
+        Application.builder()
+        .token(token)
+        .updater(None)   # ← polling Updater shart emas
+        .build()
+    )
 
 
 @csrf_exempt
@@ -48,34 +64,127 @@ def telegram_webhook(request):
     except Exception:
         return JsonResponse({'error': 'JSON xato'}, status=400)
 
-    app = _get_app()
-    if app is None:
-        return JsonResponse({'error': 'bot init xato'}, status=500)
-
     try:
         from telegram import Update
+        from apps.bot.bot import build_app
 
         async def process():
+            # Har safar yangi app — oddiy va ishonchli
+            app = _build_webhook_app()
+            # Handlerlarni qo'shish
+            _register_handlers(app)
+            await app.initialize()
             update = Update.de_json(data, app.bot)
             await app.process_update(update)
+            await app.shutdown()
 
         asyncio.run(process())
     except Exception as e:
-        logger.error(f"[Bot] update xato: {e}")
+        logger.error(f"[Bot] update xato: {e}", exc_info=True)
+        return JsonResponse({'error': str(e)[:200]}, status=500)
 
     return JsonResponse({'ok': True})
 
 
+def _register_handlers(app):
+    """Barcha handlerlarni ro'yxatdan o'tkazish."""
+    from telegram.ext import CallbackQueryHandler, MessageHandler, filters
+    from apps.bot.handlers.start import get_start_conversation, approve_callback, reject_callback
+    from apps.bot.handlers.add_person import (
+        get_add_person_conversation, addp_approve_callback, addp_reject_callback,
+    )
+    from apps.bot.handlers.menu import (
+        handle_stats, handle_dashboard, handle_persons, handle_my_profile,
+        handle_invite, handle_users, handle_web, handle_reminders, handle_tree,
+        persons_page_callback, person_detail_callback,
+        persons_filter_open_callback, persons_filter_callback, _persons_list_msg as persons_filter_list,
+        edit_select_callback, edit_field_callback, edit_field_text_handler, edit_cancel_callback,
+        delete_person_callback, confirm_delete_callback,
+        back_main_callback, back_persons_callback,
+        user_msg_callback, user_warn_callback, user_block_callback,
+        user_send_msg_text_handler,
+        edit_photo_handler, edit_photo_delete_callback,
+        reminders_filter_callback, reminders_person_callback,
+    )
+
+    app.add_handler(get_start_conversation())
+    app.add_handler(get_add_person_conversation())
+    app.add_handler(CallbackQueryHandler(approve_callback,       pattern=r'^approve_\d+$'))
+    app.add_handler(CallbackQueryHandler(reject_callback,        pattern=r'^reject_\d+$'))
+    app.add_handler(CallbackQueryHandler(addp_approve_callback,  pattern=r'^addp_approve_'))
+    app.add_handler(CallbackQueryHandler(addp_reject_callback,   pattern=r'^addp_reject_'))
+    app.add_handler(CallbackQueryHandler(persons_page_callback,        pattern=r'^persons_page_\d+$'))
+    app.add_handler(CallbackQueryHandler(person_detail_callback,       pattern=r'^person_\d+$'))
+    app.add_handler(CallbackQueryHandler(persons_filter_open_callback, pattern=r'^pf_open$'))
+    app.add_handler(CallbackQueryHandler(persons_filter_callback,      pattern=r'^pf_'))
+    app.add_handler(CallbackQueryHandler(edit_select_callback,   pattern=r'^edit_select_\d+$'))
+    app.add_handler(CallbackQueryHandler(edit_field_callback,    pattern=r'^edit_field_\d+_'))
+    app.add_handler(CallbackQueryHandler(edit_cancel_callback,   pattern=r'^edit_cancel_\d+$'))
+    app.add_handler(CallbackQueryHandler(delete_person_callback,  pattern=r'^delete_\d+$'))
+    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r'^confirm_delete_\d+$'))
+    app.add_handler(CallbackQueryHandler(back_main_callback,    pattern=r'^back_main$'))
+    app.add_handler(CallbackQueryHandler(back_persons_callback, pattern=r'^back_persons$'))
+    app.add_handler(CallbackQueryHandler(edit_photo_delete_callback, pattern=r'^edit_photo_del_\d+$'))
+    app.add_handler(CallbackQueryHandler(reminders_filter_callback, pattern=r'^remf_'))
+    app.add_handler(CallbackQueryHandler(reminders_person_callback, pattern=r'^remp_'))
+    app.add_handler(CallbackQueryHandler(user_msg_callback,   pattern=r'^umsg_\d+$'))
+    app.add_handler(CallbackQueryHandler(user_warn_callback,  pattern=r'^uwarn_\d+$'))
+    app.add_handler(CallbackQueryHandler(user_block_callback, pattern=r'^ublock_\d+$'))
+    app.add_handler(MessageHandler(filters.PHOTO, _dispatch_photo))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.Regex(r'^(?!.*➕ Shaxs)'),
+        _dispatch_text,
+    ))
+
+
+async def _dispatch_photo(update, context):
+    from apps.bot.handlers.menu import edit_photo_handler
+    if context.user_data.get('awaiting_photo'):
+        await edit_photo_handler(update, context)
+
+
+async def _dispatch_text(update, context):
+    from apps.bot.handlers.menu import (
+        handle_stats, handle_dashboard, handle_persons, handle_my_profile,
+        handle_invite, handle_users, handle_web, handle_reminders, handle_tree,
+        _persons_list_msg as persons_filter_list,
+        edit_field_text_handler, user_send_msg_text_handler,
+    )
+    text = update.message.text.strip() if update.message else ''
+    if context.user_data.get('send_msg_to'):
+        await user_send_msg_text_handler(update, context); return
+    if context.user_data.get('awaiting_edit_text'):
+        await edit_field_text_handler(update, context); return
+    if context.user_data.get('awaiting_filter_year'):
+        context.user_data.pop('awaiting_filter_year')
+        if text and text.isdigit() and 1800 <= int(text) <= 2100:
+            context.user_data.setdefault('persons_filter', {})['birth_year'] = text
+        await persons_filter_list(update, context); return
+    if context.user_data.get('awaiting_filter_search'):
+        context.user_data.pop('awaiting_filter_search')
+        if text:
+            context.user_data.setdefault('persons_filter', {})['search'] = text
+        await persons_filter_list(update, context); return
+    handlers = {
+        '👥 Shaxslar': handle_persons, '📈 Statistika': handle_stats,
+        '📊 Dashboard': handle_dashboard, '👤 Foydalanuvchilar': handle_users,
+        '🔔 Eslatmalar': handle_reminders, '🌳 Shajara daraxti': handle_tree,
+        '🔗 Invite link': handle_invite, "🌐 Veb saytga o'tish": handle_web,
+        '👤 Mening profilim': handle_my_profile,
+    }
+    fn = handlers.get(text)
+    if fn:
+        await fn(update, context)
+
+
 def set_webhook(request):
     """GET /api/bot/set-webhook/ — webhookni Telegram ga ro'yxatdan o'tkazish."""
+    import urllib.request
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     backend_url = getattr(settings, 'WEB_BASE_URL', '').rstrip('/')
     if not token or not backend_url:
         return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yoki WEB_BASE_URL yo\'q'}, status=400)
-
     webhook_url = f"{backend_url}/api/bot/webhook/"
-
-    import urllib.request
     url = f"https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}&allowed_updates=%5B%22message%22%2C%22callback_query%22%5D"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
