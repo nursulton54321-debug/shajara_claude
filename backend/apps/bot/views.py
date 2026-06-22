@@ -199,9 +199,12 @@ def set_webhook(request):
     """GET /api/bot/set-webhook/ — webhookni Telegram ga ro'yxatdan o'tkazish."""
     import urllib.request
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
-    backend_url = getattr(settings, 'WEB_BASE_URL', '').rstrip('/')
-    if not token or not backend_url:
-        return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yoki WEB_BASE_URL yo\'q'}, status=400)
+    if not token:
+        return JsonResponse({'error': 'TELEGRAM_BOT_TOKEN yo\'q'}, status=400)
+    # Backend URL ni requestdan aniqlaymiz — WEB_BASE_URL ga bog'liq emas
+    backend_url = getattr(settings, 'BACKEND_URL', '').rstrip('/')
+    if not backend_url:
+        backend_url = request.build_absolute_uri('/').rstrip('/')
     webhook_url = f"{backend_url}/api/bot/webhook/"
     url = f"https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}&allowed_updates=%5B%22message%22%2C%22callback_query%22%5D"
     try:
