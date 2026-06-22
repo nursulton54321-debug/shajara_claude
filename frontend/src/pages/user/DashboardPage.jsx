@@ -136,9 +136,7 @@ function StatCards({ stats }) {
   ]
 
   return (
-    <div style={{
-      display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12,
-    }}>
+    <div className="dash-stat-grid">
       {cards.map((c, ci) => <StatCard key={c.label} {...c} idx={ci} navigate={navigate} />)}
     </div>
   )
@@ -148,47 +146,36 @@ function StatCard({ label, value, icon, sub, grad, glow, to, anim, idx, navigate
   const [hov, setHov] = useState(false)
   return (
     <div
+      className="dash-stat-card"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       onClick={() => to && navigate(to)}
       style={{
         background: grad,
-        borderRadius: 20,
-        padding: '18px 18px 16px',
+        borderRadius: 16,
+        padding: '14px 12px',
         cursor: to ? 'pointer' : 'default',
         position: 'relative', overflow: 'hidden',
-        display: 'flex', alignItems: 'center', gap: 14,
+        display: 'flex', alignItems: 'center', gap: 10,
         transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s',
-        transform: hov ? 'translateY(-6px) scale(1.03)' : 'translateY(0) scale(1)',
-        boxShadow: hov ? `0 20px 40px ${glow}` : `0 6px 20px ${glow}`,
+        transform: hov ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+        boxShadow: hov ? `0 16px 32px ${glow}` : `0 4px 16px ${glow}`,
         animation: `slideUp 0.5s ease ${idx * 80}ms both`,
       }}
     >
-      {/* Dek circles */}
       <div style={{
-        position:'absolute', top:-28, right:-20, width:90, height:90, borderRadius:'50%',
+        position:'absolute', top:-20, right:-14, width:70, height:70, borderRadius:'50%',
         background:'rgba(255,255,255,0.1)', pointerEvents:'none',
         transition:'transform 0.35s', transform: hov ? 'scale(1.5)' : 'scale(1)',
       }}/>
-      <div style={{ position:'absolute', bottom:-20, left:-12, width:65, height:65, borderRadius:'50%',
-        background:'rgba(255,255,255,0.07)', pointerEvents:'none' }}/>
-
-      {/* Shimmer on hover */}
-      {hov && (
-        <div style={{
-          position:'absolute', inset:0, borderRadius:20, pointerEvents:'none',
-          background:'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.15) 50%,transparent 70%)',
-          backgroundSize:'200% 100%', animation:'shimmer 0.65s ease forwards',
-        }}/>
-      )}
 
       {/* Icon */}
-      <div style={{
-        width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+      <div className="dash-stat-icon" style={{
+        width: 44, height: 44, borderRadius: 13, flexShrink: 0,
         background: 'rgba(255,255,255,0.22)',
         border: '1.5px solid rgba(255,255,255,0.3)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 26,
+        fontSize: 22,
         animation: hov ? anim : 'none',
       }}>
         {icon}
@@ -196,17 +183,17 @@ function StatCard({ label, value, icon, sub, grad, glow, to, anim, idx, navigate
 
       {/* Text */}
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{
-          fontSize: 34, fontWeight: 900, color: 'white', lineHeight: 1,
-          letterSpacing: '-1px', animation: 'countUp 0.5s ease both',
+        <div className="dash-stat-num" style={{
+          fontSize: 28, fontWeight: 900, color: 'white', lineHeight: 1,
+          letterSpacing: '-0.5px', animation: 'countUp 0.5s ease both',
         }}>
           <AnimCount target={value || 0} />
         </div>
         <div style={{
-          fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.92)',
-          marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.92)',
+          marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{label}</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginTop: 1 }}>
           {sub}
         </div>
       </div>
@@ -257,7 +244,7 @@ function ChartsRow({ stats }) {
   const [hovCard, setHovCard] = useState(null)
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+    <div className="dash-charts-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
 
       {/* Jins bo'yicha */}
       <div
@@ -911,17 +898,17 @@ function QuickLinks({ navigate }) {
   const links = allLinks.filter(l => !l.admin || isAdmin())
   const [hov, setHov] = useState(null)
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+    <div className="dash-quicklinks-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
       {links.map(({ l, to, g, anim }) => (
         <button key={to}
           onMouseEnter={() => setHov(to)}
           onMouseLeave={() => setHov(null)}
           onClick={() => navigate(to)}
           style={{
-            background: g, borderRadius:16, padding:'15px 12px',
+            background: g, borderRadius:14, padding:'12px 10px',
             border:'none', cursor:'pointer', color:'white',
-            fontSize:13, fontWeight:800,
-            display:'flex', alignItems:'center', gap:10,
+            fontSize:12, fontWeight:800,
+            display:'flex', alignItems:'center', gap:7,
             boxShadow: hov===to ? '0 12px 30px rgba(0,0,0,0.22)' : '0 4px 14px rgba(0,0,0,0.14)',
             transition:'transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s',
             transform: hov===to ? 'translateY(-5px) scale(1.03)' : 'none',
@@ -1042,12 +1029,12 @@ export default function DashboardPage() {
         {onboarding && <OnboardingWizard onComplete={() => setOnb(false)}/>}
 
         {/* ── Top bar ── */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
-          <h1 style={{ fontSize:22, fontWeight:900, margin:0, color:'var(--text-primary)', display:'flex', alignItems:'center', gap:8 }}>
+        <div className="dash-topbar">
+          <h1 className="dash-title" style={{ fontSize:20, fontWeight:900, margin:0, color:'var(--text-primary)', display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ animation:'floatY 2.5s ease infinite', display:'inline-block' }}>🏠</span>
             Bosh sahifa
           </h1>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          <div className="dash-top-btns">
             {topBtns.map(({ l,fn,g,d }) => (
               <TopBtn key={l} label={l} onClick={fn} grad={g} disabled={d} />
             ))}

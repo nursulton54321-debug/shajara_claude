@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -7,7 +7,7 @@
 .leaflet-pane { z-index: 400; }
 .leaflet-top, .leaflet-bottom { z-index: 1000; }
 
-/* ── CSS Variables (Light / Dark) ───────────────────── */
+/* â”€â”€ CSS Variables (Light / Dark) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   --bg-app:        #f1f5f9;
   --bg-surface:    #ffffff;
@@ -58,7 +58,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Dark/light mode smooth transition ─────────────────────── */
+/* â”€â”€ Dark/light mode smooth transition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body, main, aside, header, nav, section, article,
 div, span, p, h1, h2, h3, h4, h5, h6,
 input, select, textarea, button, label, a {
@@ -224,7 +224,7 @@ body {
   to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
-/* ── Tree node entrance ─────────────────────────────────── */
+/* â”€â”€ Tree node entrance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes nodeEnter {
   from { opacity: 0; transform: scale(0.78) translateY(10px) }
   to   { opacity: 1; transform: scale(1)    translateY(0) }
@@ -242,7 +242,7 @@ body {
   animation: nodeEnterFast 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
 
-/* ── ReactFlow Controls ─────────────────────────────────── */
+/* â”€â”€ ReactFlow Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .react-flow__controls {
   display: flex;
   flex-direction: column;
@@ -293,7 +293,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   border-color: #6366f1 !important;
 }
 
-/* ── Modal animations (global) ─────────────────────────── */
+/* â”€â”€ Modal animations (global) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes confirmFadeIn {
   from { opacity: 0 }
   to   { opacity: 1 }
@@ -303,7 +303,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   to   { opacity: 1; transform: scale(1) translateY(0) }
 }
 
-/* ── Skeleton shimmer ───────────────────────────────────── */
+/* â”€â”€ Skeleton shimmer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes skeletonShimmer {
   0%   { background-position: -200% center }
   100% { background-position:  200% center }
@@ -324,13 +324,13 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .dark ::-webkit-scrollbar-thumb { background: #475569; }
 
-/* ── Recharts global fixes ───────────────────────────── */
-/* Legend text — light mode */
+/* â”€â”€ Recharts global fixes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Legend text â€” light mode */
 .recharts-legend-item-text {
   color: #1e293b !important;
   fill: #1e293b !important;
 }
-/* Legend text — dark mode */
+/* Legend text â€” dark mode */
 .dark .recharts-legend-item-text {
   color: #e2e8f0 !important;
   fill: #e2e8f0 !important;
@@ -352,7 +352,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   fill: #94a3b8 !important;
 }
 
-/* ── Dark mode overrides ─────────────────────────────── */
+/* â”€â”€ Dark mode overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dark body { background: var(--bg-app); color: var(--text-primary); }
 
 /* Tailwind bg/text overrides for dark mode */
@@ -395,7 +395,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 .dark .rounded-xl,
 .dark .rounded-2xl,
 .dark .rounded-lg {
-  /* don't override bg here — only text */
+  /* don't override bg here â€” only text */
 }
 
 /* Shadow cards that use bg-white */
@@ -509,7 +509,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 .dark .font-semibold,
 .dark .font-bold         { color: inherit; }
 
-/* ── Inline style white bg override ─────────────────────
+/* â”€â”€ Inline style white bg override â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Sahifalarda background:'white' ishlatilgan komponentlar
    uchun CSS filter o'rniga universal dark override       */
 .dark [style*="background: white"],
@@ -522,7 +522,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   color: #f1f5f9 !important;
 }
 
-/* f8fafc (subtle white) → dark subtle */
+/* f8fafc (subtle white) â†’ dark subtle */
 .dark [style*="background: #f8fafc"],
 .dark [style*="background:#f8fafc"] {
   background: #0f172a !important;
@@ -559,7 +559,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   border-color: #334155 !important;
 }
 
-/* ── Timeline & Profile special elements ─────────────── */
+/* â”€â”€ Timeline & Profile special elements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dark [style*="background: #f0f4ff"],
 .dark [style*="background: #fdf4ff"],
 .dark [style*="background: #eef2ff"],
@@ -627,7 +627,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 .dark .badge-alive  { background: #14532d !important; color: #86efac !important; }
 .dark .badge-dead   { background: #450a0a !important; color: #fca5a5 !important; }
 
-/* ── Mobile improvements ─────────────────────────────── */
+/* â”€â”€ Mobile improvements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 768px) {
   .hide-mobile { display: none !important; }
   aside.w-56 { width: 52px !important; min-width: 52px !important; }
@@ -650,25 +650,25 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   aside { display: none !important; }
   .mobile-main-pad { padding-bottom: 60px !important; }
 
-  /* PNG export tugmasi — mobilda yashirin */
+  /* PNG export tugmasi â€” mobilda yashirin */
   .png-export-btn { display: none !important; }
 
-  /* TreePage toolbar qidirish — mobilda kenglik moslashuvchan */
+  /* TreePage toolbar qidirish â€” mobilda kenglik moslashuvchan */
   .tree-toolbar-search { width: 120px !important; flex-shrink: 1 !important; }
 
-  /* TreePage zoom tugmalari — mobilda kichikroq */
+  /* TreePage zoom tugmalari â€” mobilda kichikroq */
   .tree-zoom-btn { width: 26px !important; height: 26px !important; font-size: 14px !important; border-radius: 8px !important; }
 
-  /* MiniMap — mobilda yashirin (CSS backup) */
+  /* MiniMap â€” mobilda yashirin (CSS backup) */
   .react-flow__minimap { display: none !important; }
 
-  /* TreePage toolbar — gorizontal scroll, bitta qator */
+  /* TreePage toolbar â€” gorizontal scroll, bitta qator */
   .tree-toolbar-row { flex-wrap: nowrap !important; overflow-x: auto !important; gap: 5px !important; padding: 5px 8px !important; }
   .tree-toolbar-row::-webkit-scrollbar { display: none; }
   .tree-toolbar-right { margin-left: auto !important; flex-wrap: nowrap !important; gap: 4px !important; }
 }
 
-/* Mobile bottom nav — hammasi ko'rinsin, space-around */
+/* Mobile bottom nav â€” hammasi ko'rinsin, space-around */
 @media (max-width: 640px) {
   .mobile-bottom-nav {
     justify-content: space-around !important;
@@ -679,7 +679,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   .mobile-main-pad { padding-bottom: 56px !important; }
 }
 
-/* Stats ribbon — mobilda kichik va ixcham */
+/* Stats ribbon â€” mobilda kichik va ixcham */
 @media (max-width: 640px) {
   .stats-ribbon {
     min-height: 0 !important;
@@ -709,7 +709,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   .stats-ribbon .rb-stat > div:last-child > div:last-child { font-size: 7.5px !important; margin-top: 1px !important; }
 }
 
-/* ── Person profile responsive grid ── */
+/* â”€â”€ Person profile responsive grid â”€â”€ */
 .profile-grid {
   display: grid;
   grid-template-columns: 280px 1fr 300px;
@@ -757,35 +757,35 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 }
 .theme-toggle.dark-on .theme-toggle-thumb { transform: translateX(20px); }
 
-/* ═══════════════════════════════════════════════════════════════
-   COMPREHENSIVE DARK MODE FIX — barcha admin va user sahifalari
-   ═══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   COMPREHENSIVE DARK MODE FIX â€” barcha admin va user sahifalari
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── 1. Asosiy sahifa fonlari ── */
+/* â”€â”€ 1. Asosiy sahifa fonlari â”€â”€ */
 .dark .p-6,
 .dark .p-5,
 .dark .p-4 {
   color: var(--text-primary);
 }
 
-/* ── 2. Headings ── */
+/* â”€â”€ 2. Headings â”€â”€ */
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
   color: var(--text-primary) !important;
 }
 
-/* ── 3. Umumiy matn ── */
+/* â”€â”€ 3. Umumiy matn â”€â”€ */
 .dark p, .dark span, .dark label, .dark td, .dark li {
   color: inherit;
 }
 
-/* ── 4. bg-white barcha variantlar ── */
+/* â”€â”€ 4. bg-white barcha variantlar â”€â”€ */
 .dark .bg-white,
 .dark .bg-white\/25,
 .dark [class*="bg-white"] {
   background-color: var(--bg-surface) !important;
 }
 
-/* ── 5. Modal va dialog oynalar ── */
+/* â”€â”€ 5. Modal va dialog oynalar â”€â”€ */
 .dark .bg-white.rounded-2xl,
 .dark .bg-white.rounded-xl,
 .dark .bg-white.rounded-lg {
@@ -793,7 +793,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   color: var(--text-primary) !important;
 }
 
-/* ── 6. Qo'shimcha hardcoded ranglar (inline style) ── */
+/* â”€â”€ 6. Qo'shimcha hardcoded ranglar (inline style) â”€â”€ */
 .dark [style*="color: #475569"] { color: #94a3b8 !important; }
 .dark [style*="color: #6b7280"] { color: #9ca3af !important; }
 .dark [style*="color: #4b5563"] { color: #9ca3af !important; }
@@ -802,7 +802,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 .dark [style*="color: #1f2937"] { color: #f1f5f9 !important; }
 .dark [style*="color: #030712"] { color: #f9fafb !important; }
 
-/* ── 7. Qo'shimcha bg'lar ── */
+/* â”€â”€ 7. Qo'shimcha bg'lar â”€â”€ */
 .dark [style*="background: #f9fafb"],
 .dark [style*="background:#f9fafb"] {
   background: #1e293b !important;
@@ -819,7 +819,7 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   background: #475569 !important;
 }
 
-/* ── 8. Border overrides qo'shimcha ── */
+/* â”€â”€ 8. Border overrides qo'shimcha â”€â”€ */
 .dark [style*="border-bottom: 1px solid #f1f5f9"],
 .dark [style*="borderBottom: '1px solid #f1f5f9'"] {
   border-bottom-color: #334155 !important;
@@ -828,17 +828,17 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   border-top-color: #334155 !important;
 }
 
-/* ── 9. Admin sahifalar — Tailwind bg qo'shimcha ── */
+/* â”€â”€ 9. Admin sahifalar â€” Tailwind bg qo'shimcha â”€â”€ */
 .dark .bg-gray-50 { background-color: #1e293b !important; color: var(--text-primary) !important; }
 .dark .bg-gray-100 { background-color: #334155 !important; color: var(--text-primary) !important; }
 .dark .bg-gray-200 { background-color: #475569 !important; }
 
-/* ── 10. Tailwind text sizes qo'shimcha ── */
+/* â”€â”€ 10. Tailwind text sizes qo'shimcha â”€â”€ */
 .dark .text-sm   { color: inherit; }
 .dark .text-xs   { color: inherit; }
 .dark .text-base { color: inherit; }
 
-/* ── 11. font-medium/bold inside admin cards ── */
+/* â”€â”€ 11. font-medium/bold inside admin cards â”€â”€ */
 .dark .admin-card .font-medium,
 .dark .admin-card .font-semibold,
 .dark .admin-card .font-bold {
@@ -847,36 +847,36 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 .dark .admin-card .text-gray-400 { color: #64748b !important; }
 .dark .admin-card .text-gray-500 { color: #6b7280 !important; }
 
-/* ── 12. Input ichidagi label ranglari ── */
+/* â”€â”€ 12. Input ichidagi label ranglari â”€â”€ */
 .dark label { color: var(--text-secondary) !important; }
 .dark .block.text-sm { color: var(--text-secondary) !important; }
 
-/* ── 13. Divider / border-b ── */
+/* â”€â”€ 13. Divider / border-b â”€â”€ */
 .dark .border-b,
 .dark .border-t,
 .dark [class*="border-gray"] {
   border-color: #334155 !important;
 }
 
-/* ── 14. Hover bg override qo'shimcha ── */
+/* â”€â”€ 14. Hover bg override qo'shimcha â”€â”€ */
 .dark tr:hover,
 .dark li:hover {
   background-color: #334155 !important;
 }
 
-/* ── 15. Admin page containers ── */
+/* â”€â”€ 15. Admin page containers â”€â”€ */
 .dark .space-y-5,
 .dark .space-y-6 {
   color: var(--text-primary);
 }
 
-/* ── 16. Tag/badge bg-gray-100 text-gray-600 combo ── */
+/* â”€â”€ 16. Tag/badge bg-gray-100 text-gray-600 combo â”€â”€ */
 .dark .bg-gray-100.text-gray-600 {
   background: #334155 !important;
   color: #94a3b8 !important;
 }
 
-/* ── 17. Rounded white panels (AdminUsers, AdminSettings) ── */
+/* â”€â”€ 17. Rounded white panels (AdminUsers, AdminSettings) â”€â”€ */
 .dark .rounded-xl.bg-white,
 .dark .rounded-xl.shadow-sm,
 .dark .rounded-2xl.shadow-2xl {
@@ -885,34 +885,34 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
 }
 .dark .rounded-xl.shadow-sm { border: 1px solid var(--border) !important; }
 
-/* ── 18. Table inside white panels ── */
+/* â”€â”€ 18. Table inside white panels â”€â”€ */
 .dark .w-full.text-sm { color: var(--text-primary) !important; }
 .dark thead { background-color: var(--bg-subtle) !important; }
 .dark thead th { color: var(--text-secondary) !important; }
 .dark tbody tr:hover { background-color: var(--bg-hover) !important; }
 
-/* ── 19. Checkbox & radio ── */
+/* â”€â”€ 19. Checkbox & radio â”€â”€ */
 .dark input[type="checkbox"],
 .dark input[type="radio"] {
   background: #334155 !important;
   border-color: #475569 !important;
 }
 
-/* ── 20. Inline border-white (avatar borders over gradients — keep white) ── */
-/* .dark .border-white — intentionally NOT overridden (avatar borders ok) */
+/* â”€â”€ 20. Inline border-white (avatar borders over gradients â€” keep white) â”€â”€ */
+/* .dark .border-white â€” intentionally NOT overridden (avatar borders ok) */
 
-/* ── 21. Tabs / pill buttons ── */
+/* â”€â”€ 21. Tabs / pill buttons â”€â”€ */
 .dark .rounded-full.bg-gray-100 {
   background: #334155 !important;
   color: var(--text-primary) !important;
 }
 
-/* ── 22. Overflow-hidden white containers ── */
+/* â”€â”€ 22. Overflow-hidden white containers â”€â”€ */
 .dark .overflow-hidden.bg-white {
   background: var(--bg-surface) !important;
 }
 
-/* ── 23. AdminReminders modal ── */
+/* â”€â”€ 23. AdminReminders modal â”€â”€ */
 .dark .bg-white.rounded-2xl.shadow-2xl {
   background: var(--bg-surface) !important;
   color: var(--text-primary) !important;
@@ -921,3 +921,86 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   color: inherit !important;
 }
 
+
+/* ── Dashboard responsive ─────────────────────────────────── */
+.dash-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dash-top-btns {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+.dash-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.dash-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dash-quicklinks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  /* Top bar */
+  .dash-topbar { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .dash-title  { font-size: 17px !important; }
+  .dash-top-btns {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    width: 100%;
+  }
+  .dash-top-btns button {
+    padding: 5px 4px !important;
+    font-size: 10px !important;
+    border-radius: 9px !important;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Stat cards — 2x2 compact */
+  .dash-stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .dash-stat-card {
+    padding: 10px 9px !important;
+    border-radius: 13px !important;
+    gap: 8px !important;
+  }
+  .dash-stat-icon {
+    width: 34px !important; height: 34px !important;
+    border-radius: 10px !important; font-size: 16px !important;
+  }
+  .dash-stat-num { font-size: 22px !important; }
+
+  /* Charts — vertical stack */
+  .dash-charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* QuickLinks — 2x2 */
+  .dash-quicklinks-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .dash-quicklinks-grid button {
+    padding: 11px 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+  }
+  .dash-quicklinks-grid button span:first-child { font-size: 18px !important; }
+}
