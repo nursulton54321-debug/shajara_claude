@@ -226,3 +226,18 @@ def set_webhook(request):
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def webhook_info(request):
+    """GET /api/bot/webhook-info/ — Telegram dan webhook holati va oxirgi xatoni ko'rish."""
+    import urllib.request
+    token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+    if not token:
+        return JsonResponse({'error': 'token yo\'q'}, status=400)
+    try:
+        url = f"https://api.telegram.org/bot{token}/getWebhookInfo"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            result = json.loads(r.read())
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
