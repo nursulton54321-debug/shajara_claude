@@ -5,6 +5,10 @@ import { Toaster } from 'react-hot-toast'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
+import useDesignStore from './store/designStore'
+
+// Dizayn sozlamalarini ilova ochilishida qo'llash
+useDesignStore.getState().init()
 
 // ── 6.3 PWA: Service Worker ro'yxatga olish ──────────────────
 if ('serviceWorker' in navigator) {
