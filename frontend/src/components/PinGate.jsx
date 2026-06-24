@@ -208,6 +208,29 @@ export default function PinGate({ children }) {
     const onRelock = resetToLocked
     function onAuthExpired() {
       import('../store/authStore').then(m => m.default.getState().logout())
+      import('react-hot-toast').then(({ default: toast }) => {
+        toast.error(
+          '🔐 Sessiya tugadi. Qayta login qilishingiz kerak.',
+          { duration: 4000 }
+        )
+        setTimeout(() => {
+          toast(
+            (t) => (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <span style={{ fontWeight:700, fontSize:13 }}>Login sahifasiga o'tish</span>
+                <button
+                  onClick={() => { toast.dismiss(t.id); window.location.href = '/login' }}
+                  style={{ background:'#4f46e5', color:'white', border:'none',
+                    padding:'8px 14px', borderRadius:8, fontWeight:700,
+                    cursor:'pointer', fontSize:13 }}>
+                  🔑 Login
+                </button>
+              </div>
+            ),
+            { duration: 10000, icon: null }
+          )
+        }, 500)
+      })
     }
     window.addEventListener('pin-relock', onRelock)
     window.addEventListener('auth-expired', onAuthExpired)
