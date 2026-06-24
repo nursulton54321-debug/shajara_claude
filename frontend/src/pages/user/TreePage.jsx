@@ -2379,26 +2379,43 @@ function TreeFlow({ rawPersons, stats }) {
     : 1
   const activeFilters = (filterAlive ? 1 : 0) + (filterGender !== 'all' ? 1 : 0) + (filterGen > 0 ? 1 : 0)
 
-  // Hover-highlight: hoveredId bo'lganda unga bog'liq shaxslar IDlari
+  // Hover-highlight: hoveredId bo'lganda barcha ajdodlar, avlodlar va juftlar
   const hoveredConnectedIds = useMemo(() => {
     if (!hoveredId) return null
     const pid = parseInt(hoveredId.replace('p-', ''), 10)
     const pm2 = {}
     rawPersons.forEach(p => { pm2[p.id] = p })
-    const person = pm2[pid]
-    if (!person) return null
-    const ids = new Set([String(pid)])
-    // Ota-ona
-    if (person.father_id) ids.add(String(person.father_id))
-    if (person.mother_id) ids.add(String(person.mother_id))
-    // Bolalar
-    rawPersons.forEach(p => {
-      if (p.father_id === pid || p.mother_id === pid) ids.add(String(p.id))
-    })
-    // Turmush o'rtog'lari
-    ;(person.families || []).forEach(f => {
-      if (f.partner_id) ids.add(String(f.partner_id))
-    })
+    if (!pm2[pid]) return null
+
+    const ids = new Set()
+
+    // Barcha ajdodlarni rekursiv qo'shish (yuqoriga)
+    const addAncestors = (id) => {
+      if (ids.has(String(id))) return
+      ids.add(String(id))
+      const p = pm2[id]
+      if (!p) return
+      // Juftlarini ham qo'sh
+      ;(p.families || []).forEach(f => { if (f.partner_id) ids.add(String(f.partner_id)) })
+      if (p.father_id) addAncestors(p.father_id)
+      if (p.mother_id) addAncestors(p.mother_id)
+    }
+
+    // Barcha avlodlarni rekursiv qo'shish (pastga)
+    const addDescendants = (id) => {
+      if (ids.has(String(id))) return
+      ids.add(String(id))
+      const p = pm2[id]
+      if (!p) return
+      // Juftlarini ham qo'sh
+      ;(p.families || []).forEach(f => { if (f.partner_id) ids.add(String(f.partner_id)) })
+      rawPersons.forEach(child => {
+        if (child.father_id === id || child.mother_id === id) addDescendants(child.id)
+      })
+    }
+
+    addAncestors(pid)
+    addDescendants(pid)
     return ids
   }, [hoveredId, rawPersons])
 
