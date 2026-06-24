@@ -265,18 +265,30 @@ export default function AdminReminders() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const params = { sort }
-    if (filterType)  params.type  = filterType
-    if (filterMonth) params.month = filterMonth
-    if (filterYear)  params.year  = filterYear
-    const [rRes, sRes] = await Promise.all([getReminders(params), getReminderStats()])
-    setReminders(rRes.data)
-    setStats(sRes.data)
-    setLoading(false)
+    try {
+      const params = { sort }
+      if (filterType)  params.type  = filterType
+      if (filterMonth) params.month = filterMonth
+      if (filterYear)  params.year  = filterYear
+      const [rRes, sRes] = await Promise.all([getReminders(params), getReminderStats()])
+      setReminders(rRes.data?.results ?? rRes.data ?? [])
+      setStats(sRes.data ?? {})
+    } catch (e) {
+      console.error('Reminders load error:', e)
+      toast.error('Eslatmalarni yuklashda xato')
+      setReminders([])
+      setStats({})
+    } finally {
+      setLoading(false)
+    }
   }, [filterType, filterMonth, filterYear, sort])
 
   useEffect(() => { load() }, [load])
-  useEffect(() => { getPersons().then(r => setPersons(r.data)) }, [])
+  useEffect(() => {
+    getPersons({ page_size: 10000 })
+      .then(r => setPersons(Array.isArray(r.data) ? r.data : (r.data?.results ?? [])))
+      .catch(() => setPersons([]))
+  }, [])
 
   const handleSave = async (form) => {
     try {
