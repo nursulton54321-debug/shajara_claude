@@ -538,40 +538,70 @@ export default function RelationshipPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0f172a' : '#f8fafc' }}>
+      <style>{`
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @media (max-width: 640px) {
+          .rel-topbar { padding: 10px 12px !important; gap: 8px !important; }
+          .rel-topbar-title { font-size: 13px !important; }
+          .rel-topbar-sub { display: none !important; }
+          .rel-topbar-count { font-size: 10px !important; padding: 3px 8px !important; }
+          .rel-wrap { padding: 12px 10px 80px !important; }
+          .rel-selector { padding: 16px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
+          .rel-inputs-row { flex-direction: column !important; }
+          .rel-swap-btn { flex-direction: row !important; gap: 8px !important; padding-bottom: 0 !important; }
+          .rel-swap-inner { width: 38px !important; height: 38px !important; }
+          .rel-preview { padding: 12px 14px !important; margin-top: 14px !important; }
+          .rel-result-header { padding: 16px 16px 14px !important; }
+          .rel-result-hero { gap: 12px !important; }
+          .rel-result-icon { width: 52px !important; height: 52px !important; font-size: 26px !important; border-radius: 16px !important; }
+          .rel-result-title { font-size: 16px !important; }
+          .rel-lca-row { flex-direction: column !important; gap: 10px !important; padding: 14px 14px !important; }
+          .rel-lca-nums { flex-direction: row !important; gap: 16px !important; justify-content: center !important; }
+          .rel-empty-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .rel-path-section { padding: 14px 12px !important; }
+          .rel-ai-section { padding: 12px 14px !important; }
+          .rel-degree-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+      `}</style>
 
       {/* ── Top bar ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100,
+      <div className="rel-topbar" style={{ position: 'sticky', top: 0, zIndex: 100,
         background: isDark ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(12px)',
         borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 24px',
         boxShadow: '0 1px 12px rgba(0,0,0,0.06)' }}>
         <button onClick={() => navigate(-1)} style={{
-          padding: '6px 14px', borderRadius: 10, background: isDark ? '#1e293b' : '#f1f5f9',
-          border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b',
+          padding: '6px 12px', borderRadius: 10, background: isDark ? '#1e293b' : '#f1f5f9',
+          border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b',
+          whiteSpace: 'nowrap', flexShrink: 0,
         }}>← Orqaga</button>
 
-        <div style={{ width: 1, height: 20, background: isDark ? '#334155' : '#e2e8f0' }} />
-
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: isDark ? '#f1f5f9' : '#0f172a' }}>🔗 Munosabat hisoblagich</div>
-          <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>Ikki shaxs o'rtasidagi qarindoshlik munosabatini aniqlang</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="rel-topbar-title" style={{ fontSize: 14, fontWeight: 900, color: isDark ? '#f1f5f9' : '#0f172a',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            🔗 Munosabat hisoblagich
+          </div>
+          <div className="rel-topbar-sub" style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>
+            Ikki shaxs o'rtasidagi qarindoshlik munosabatini aniqlang
+          </div>
         </div>
 
-        <div style={{ fontSize: 12, color: isDark ? '#64748b' : '#94a3b8',
-          background: isDark ? '#1e293b' : '#f1f5f9', padding: '4px 12px', borderRadius: 20 }}>
-          {loading ? '⏳ Yuklanmoqda...' : `${persons.length} ta shaxs`}
+        <div className="rel-topbar-count" style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8',
+          background: isDark ? '#1e293b' : '#f1f5f9', padding: '4px 10px', borderRadius: 20,
+          whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {loading ? '⏳' : `${persons.length} ta`}
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px 60px' }}>
+      <div className="rel-wrap" style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px 80px' }}>
 
         {/* ── Selector panel ── */}
-        <div style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '24px',
+        <div className="rel-selector" style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '20px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 24 }}>
+          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 20 }}>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+          <div className="rel-inputs-row" style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
             <SearchInput
               label="👤 Birinchi shaxs (A)"
               persons={persons}
@@ -581,9 +611,9 @@ export default function RelationshipPage() {
             />
 
             {/* Swap button */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, paddingBottom: 4 }}>
-              <div style={{ fontSize: 10, color: '#94a3b8' }}>almashtir</div>
-              <button onClick={swap} style={{
+            <div className="rel-swap-btn" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, paddingBottom: 4, flexShrink: 0 }}>
+              <div style={{ fontSize: 9, color: '#94a3b8', whiteSpace: 'nowrap' }}>almashtir</div>
+              <button onClick={swap} className="rel-swap-inner" style={{
                 width: 44, height: 44, borderRadius: 14,
                 border: isDark ? '2px solid #334155' : '2px solid #e2e8f0',
                 background: isDark ? '#0f172a' : 'white', cursor: 'pointer', fontSize: 20,
@@ -642,13 +672,13 @@ export default function RelationshipPage() {
               border: `1px solid ${result.rel.color}30`,
             }}>
               {/* Header */}
-              <div style={{
-                padding: '28px 28px 20px',
+              <div className="rel-result-header" style={{
+                padding: '24px 24px 18px',
                 background: `linear-gradient(135deg, ${result.rel.color}15, ${result.rel.color}05)`,
                 borderBottom: `1px solid ${result.rel.color}20`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                  <div style={{
+                <div className="rel-result-hero" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div className="rel-result-icon" style={{
                     width: 72, height: 72, borderRadius: 20,
                     background: `linear-gradient(135deg,${result.rel.color},${result.rel.color}aa)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -656,12 +686,13 @@ export default function RelationshipPage() {
                   }}>
                     {result.rel.emoji}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: result.rel.color,
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: result.rel.color,
                       textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                       Munosabat natijasi
                     </div>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: isDark ? '#f1f5f9' : '#0f172a', lineHeight: 1.2, marginBottom: 4 }}>
+                    <div className="rel-result-title" style={{ fontSize: 20, fontWeight: 900, color: isDark ? '#f1f5f9' : '#0f172a', lineHeight: 1.2, marginBottom: 6,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {result.pA?.full_name?.split(' ')[0]} — {result.pB?.full_name?.split(' ')[0]}
                     </div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -700,33 +731,29 @@ export default function RelationshipPage() {
 
               {/* LCA info */}
               {result.lca && result.lca.depthA > 0 && result.lca.depthB > 0 && (
-                <div style={{ padding: '16px 28px', background: isDark ? '#1e293b' : 'white',
-                  borderBottom: isDark ? `1px solid #334155` : `1px solid #f1f5f9`, display: 'flex', gap: 20 }}>
-                  <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 12, background: isDark ? '#1e1b4b' : '#eef2ff' }}>
-                    <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, marginBottom: 2 }}>UMUMIY AJDOD</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: isDark ? '#a5b4fc' : '#1e1b4b' }}>
+                <div className="rel-lca-row" style={{ padding: '14px 20px', background: isDark ? '#1e293b' : 'white',
+                  borderBottom: isDark ? `1px solid #334155` : `1px solid #f1f5f9`, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 140, textAlign: 'center', padding: '10px', borderRadius: 12, background: isDark ? '#1e1b4b' : '#eef2ff' }}>
+                    <div style={{ fontSize: 10, color: '#6366f1', fontWeight: 700, marginBottom: 2 }}>UMUMIY AJDOD</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: isDark ? '#a5b4fc' : '#1e1b4b' }}>
                       {map[result.lca.id]?.full_name || `ID: ${result.lca.id}`}
                     </div>
-                    <div style={{ fontSize: 11, color: '#818cf8', marginTop: 2 }}>
-                      A dan {result.lca.depthA} pog'ona · B dan {result.lca.depthB} pog'ona
+                    <div style={{ fontSize: 10, color: '#818cf8', marginTop: 2 }}>
+                      A: {result.lca.depthA} pog'ona · B: {result.lca.depthB} pog'ona
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>A ajdodgacha</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#6366f1' }}>{result.lca.depthA}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>pog'ona</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>B ajdodgacha</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#ec4899' }}>{result.lca.depthB}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>pog'ona</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>Jami masofa</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: isDark ? '#f1f5f9' : '#0f172a' }}>
-                      {result.lca.depthA + result.lca.depthB}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>qadam</div>
+                  <div className="rel-lca-nums" style={{ display: 'flex', gap: 14 }}>
+                    {[
+                      { label: 'A → ajdod', val: result.lca.depthA, color: '#6366f1' },
+                      { label: 'B → ajdod', val: result.lca.depthB, color: '#ec4899' },
+                      { label: 'Jami', val: result.lca.depthA + result.lca.depthB, color: isDark ? '#f1f5f9' : '#0f172a' },
+                    ].map(({ label, val, color }) => (
+                      <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ fontSize: 10, color: '#94a3b8' }}>{label}</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color }}>{val}</div>
+                        <div style={{ fontSize: 10, color: '#94a3b8' }}>qadam</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1030,7 +1057,7 @@ export default function RelationshipPage() {
                 textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 📊 Qarindoshlik darajasi
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
+              <div className="rel-degree-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
                 {[
                   { key: 'Birinchi daraja', desc: 'Ota-ona, farzand', active: result.lca?.total === 1 || (result.lca?.depthA === 0 && result.lca?.depthB === 1) || (result.lca?.depthA === 1 && result.lca?.depthB === 0) },
                   { key: 'Ikkinchi daraja', desc: 'Aka-uka, opa-singil, bobo, buvi', active: result.lca?.total === 2 },
@@ -1070,7 +1097,7 @@ export default function RelationshipPage() {
 
         {/* Empty state */}
         {!idA && !idB && !result && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <div className="rel-empty-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
             {/* How it works */}
             <div style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 20, padding: '24px',
               boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: isDark ? '1px solid #334155' : '1px solid #f1f5f9' }}>
@@ -1158,9 +1185,6 @@ export default function RelationshipPage() {
         )}
       </div>
 
-      <style>{`
-        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-      `}</style>
     </div>
   )
 }
