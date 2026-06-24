@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 (
     S_LAST_NAME, S_FIRST_NAME, S_MIDDLE_NAME, S_GENDER,
-    S_BIRTH_DATE, S_DEATH_DATE, S_CHILD_NUMBER,
+    S_BIRTH_DATE, S_DECEASED, S_DEATH_DATE, S_CHILD_NUMBER,
     S_BIRTH_PLACE, S_PHONE, S_FATHER, S_MOTHER, S_SPOUSE,
     S_PHOTO, S_CONFIRM,
-) = range(14)
+) = range(15)
 
 CANCEL_TEXT = "❌ Bekor qilish"
 SKIP_TEXT   = "⏭️ O'tkazib yuborish"
-TOTAL       = 13
+TOTAL       = 14
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -47,6 +47,12 @@ def _kb_skip():
 def _kb_gender():
     return ReplyKeyboardMarkup(
         [[KeyboardButton("👨 Erkak"), KeyboardButton("👩 Ayol")],
+         [KeyboardButton(CANCEL_TEXT)]], resize_keyboard=True, one_time_keyboard=True
+    )
+
+def _kb_deceased():
+    return ReplyKeyboardMarkup(
+        [[KeyboardButton("🌿 Ha, vafot etgan"), KeyboardButton("🟢 Yo'q, tirik")],
          [KeyboardButton(CANCEL_TEXT)]], resize_keyboard=True, one_time_keyboard=True
     )
 
@@ -134,7 +140,7 @@ async def _spouse_kb(gender_filter: str):
 def _build_caption(d: dict) -> str:
     g_icon = "👨" if d.get('gender') == 'male' else "👩"
     gender = "Erkak" if d.get('gender') == 'male' else "Ayol"
-    status = "Vafot etgan 🌿" if d.get('death_date') else "Tirik 🟢"
+    status = "Vafot etgan 🌿" if (d.get('deceased') or d.get('death_date')) else "Tirik 🟢"
     full   = f"{d.get('last_name','')} {d.get('first_name','')} {d.get('middle_name','')}".strip()
 
     lines = [f"{g_icon} <b>{full}</b>", ""]
@@ -330,14 +336,52 @@ async def got_birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 5)
     await _send_step(
-        update.message.reply_text, context, 6, "🕯️", "Vafot etgan sana",
-        "Vafot etgan bo'lsa <b>sanasini</b> kiriting:\n<i>Format: KK.OO.YYYY</i>\n\n<i>(Tirik bo'lsa o'tkazib yuboring)</i>",
-        _kb_skip(),
+        update.message.reply_text, context, 6, "🌿", "Vafot etgan?",
+        "Shaxs <b>vafot etganmi?</b>\n\n"
+        "🌿 <b>Ha, vafot etgan</b> — sana ma'lum bo'lmasa ham\n"
+        "🟢 <b>Yo'q, tirik</b> — hozir hayot",
+        _kb_deceased(),
     )
-    return S_DEATH_DATE
+    return S_DECEASED
 
 
-# ── 6. Vafot etgan sana ─────────────────────────────────────────
+# ── 6. Vafot etganmi? ───────────────────────────────────────────
+async def got_deceased(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    if text == CANCEL_TEXT: return await _do_cancel(update, context)
+    chat_id = update.effective_chat.id
+
+    if "Ha" in text or "vafot" in text.lower():
+        _d(context)['deceased'] = True
+        await _delete_user_msg(update)
+        await _delete_step_msg(context, chat_id, 6)
+        await _send_step(
+            update.message.reply_text, context, 7, "🕯️", "Vafot etgan sana",
+            "Vafot etgan sanasini kiriting:\n<i>Format: KK.OO.YYYY  •  Masalan: 12.05.1985</i>\n\n"
+            "<i>Sana noma'lum bo'lsa — o'tkazib yuboring ⏭️</i>",
+            _kb_skip(),
+        )
+        return S_DEATH_DATE
+    elif "tirik" in text.lower() or "Yo'q" in text or "Yoq" in text:
+        _d(context)['deceased'] = False
+        await _delete_user_msg(update)
+        await _delete_step_msg(context, chat_id, 6)
+        await _send_step(
+            update.message.reply_text, context, 8, "🔢", "Farzand raqami",
+            "<b>Oilada nechanchi farzand</b> ekanligini kiriting:\n<i>Masalan: 3</i>\n\n"
+            "⚠️ <b>Majburiy maydon</b>",
+            _kb_cancel(),
+        )
+        return S_CHILD_NUMBER
+    else:
+        await update.message.reply_text(
+            "⚠️ Iltimos tugmalardan birini bosing:",
+            reply_markup=_kb_deceased(),
+        )
+        return S_DECEASED
+
+
+# ── 7. Vafot etgan sana ─────────────────────────────────────────
 async def got_death_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     if text == CANCEL_TEXT: return await _do_cancel(update, context)
@@ -354,9 +398,9 @@ async def got_death_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _d(context)['death_date_iso'] = d.isoformat()
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
-    await _delete_step_msg(context, chat_id, 6)
+    await _delete_step_msg(context, chat_id, 7)
     await _send_step(
-        update.message.reply_text, context, 7, "🔢", "Farzand raqami",
+        update.message.reply_text, context, 8, "🔢", "Farzand raqami",
         "<b>Oilada nechanchi farzand</b> ekanligini kiriting:\n<i>Masalan: 3</i>\n\n"
         "⚠️ <b>Majburiy maydon</b> — tug'ilgan sanasi noma'lum bo'lsa\n"
         "farzand raqamiga qarab tartiblanadi.",
@@ -378,9 +422,9 @@ async def got_child_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _d(context)['child_number'] = int(text)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
-    await _delete_step_msg(context, chat_id, 7)
+    await _delete_step_msg(context, chat_id, 8)
     await _send_step(
-        update.message.reply_text, context, 8, "📍", "Tug'ilgan joyi",
+        update.message.reply_text, context, 9, "📍", "Tug'ilgan joyi",
         "<b>Tug'ilgan joyini</b> kiriting:\n<i>Masalan: Samarqand viloyati, Urgut tumani</i>\n\n<i>(Ixtiyoriy)</i>",
         _kb_skip(),
     )
@@ -395,9 +439,9 @@ async def got_birth_place(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _d(context)['birth_place'] = text[:200]
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
-    await _delete_step_msg(context, chat_id, 8)
+    await _delete_step_msg(context, chat_id, 9)
     await _send_step(
-        update.message.reply_text, context, 9, "📞", "Telefon",
+        update.message.reply_text, context, 10, "📞", "Telefon",
         "<b>Telefon raqamini</b> kiriting:\n<i>Masalan: +998901234567</i>\n\n<i>(Ixtiyoriy)</i>",
         _kb_skip(),
     )
@@ -412,17 +456,17 @@ async def got_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _d(context)['phone'] = text[:20]
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
-    await _delete_step_msg(context, chat_id, 9)
+    await _delete_step_msg(context, chat_id, 10)
 
     kb  = await _parent_kb('male', "Otasi ma'lum emas")
     msg = await update.message.reply_text(
-        f"👨  <b>Otasi</b>   {'🟩'*10}{'⬜'*3} <b>10/{TOTAL}</b>\n"
+        f"👨  <b>Otasi</b>   {'🟩'*11}{'⬜'*3} <b>11/{TOTAL}</b>\n"
         "━━━━━━━━━━━━━━━\n\n"
         "Shaxsning <b>otasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>",
         parse_mode='HTML',
         reply_markup=ReplyKeyboardRemove(),
     )
-    context.user_data['qmsg_10'] = msg.message_id
+    context.user_data['qmsg_11'] = msg.message_id
     await update.message.reply_text("👨 Erkaklar ro'yxati 👇", reply_markup=kb)
     return S_FATHER
 
@@ -446,7 +490,7 @@ async def got_father(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Inline list xabarini o'chirish
     try: await query.message.delete()
     except Exception: pass
-    await _delete_step_msg(context, chat_id, 10)
+    await _delete_step_msg(context, chat_id, 11)
 
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _parent_kb(opp, "Onasi ma'lum emas")
@@ -455,13 +499,13 @@ async def got_father(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = await context.bot.send_message(
             chat_id=chat_id,
             text=(
-                f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   {'🟩'*11}{'⬜'*2} <b>11/{TOTAL}</b>\n"
+                f"{'👩' if opp=='female' else '👨'}  <b>Onasi</b>   {'🟩'*12}{'⬜'*2} <b>12/{TOTAL}</b>\n"
                 "━━━━━━━━━━━━━━━\n\n"
                 "Shaxsning <b>onasini</b> ro'yxatdan tanlang:\n<i>(Ma'lum bo'lmasa o'tkazib yuboring)</i>"
             ),
             parse_mode='HTML',
         )
-        context.user_data['qmsg_11'] = msg.message_id
+        context.user_data['qmsg_12'] = msg.message_id
         await context.bot.send_message(
             chat_id=chat_id,
             text=f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇",
@@ -472,7 +516,7 @@ async def got_father(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return S_MOTHER
 
 
-# ── 11. Onasi (inline) ──────────────────────────────────────────
+# ── 12. Onasi (inline) ──────────────────────────────────────────
 async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query   = update.callback_query
     await query.answer()
@@ -491,7 +535,7 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try: await query.message.delete()
     except Exception: pass
-    await _delete_step_msg(context, chat_id, 11)
+    await _delete_step_msg(context, chat_id, 12)
 
     opp = 'female' if _d(context).get('gender') == 'male' else 'male'
     kb  = await _spouse_kb(opp)
@@ -499,13 +543,13 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = await context.bot.send_message(
             chat_id=chat_id,
             text=(
-                f"💍  <b>Turmush o'rtog'i</b>   {'🟩'*12}{'⬜'*1} <b>12/{TOTAL}</b>\n"
+                f"💍  <b>Turmush o'rtog'i</b>   {'🟩'*13}{'⬜'*1} <b>13/{TOTAL}</b>\n"
                 "━━━━━━━━━━━━━━━\n\n"
                 "Turmush o'rtog'ini tanlang:\n<i>(Bo'lmasa o'tkazib yuboring)</i>"
             ),
             parse_mode='HTML',
         )
-        context.user_data['qmsg_12'] = msg.message_id
+        context.user_data['qmsg_13'] = msg.message_id
         await context.bot.send_message(
             chat_id=chat_id,
             text=f"{'👩' if opp=='female' else '👨'} Ro'yxat 👇",
@@ -516,7 +560,7 @@ async def got_mother(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return S_SPOUSE
 
 
-# ── 12. Turmush o'rtog'i (inline) ───────────────────────────────
+# ── 13. Turmush o'rtog'i (inline) ───────────────────────────────
 async def got_spouse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query   = update.callback_query
     await query.answer()
@@ -535,13 +579,13 @@ async def got_spouse(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try: await query.message.delete()
     except Exception: pass
-    await _delete_step_msg(context, chat_id, 12)
+    await _delete_step_msg(context, chat_id, 14)
 
     try:
         msg = await context.bot.send_message(
             chat_id=chat_id,
             text=(
-                f"📸  <b>Rasm</b>   {'🟩'*13} <b>13/{TOTAL}</b>\n"
+                f"📸  <b>Rasm</b>   {'🟩'*14} <b>14/{TOTAL}</b>\n"
                 "━━━━━━━━━━━━━━━\n\n"
                 "Shaxsning <b>rasmini</b> yuboring:\n\n"
                 "<i>(Ixtiyoriy — o'tkazib yuborish mumkin)</i>"
@@ -549,13 +593,13 @@ async def got_spouse(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML',
             reply_markup=_kb_skip(),
         )
-        context.user_data['qmsg_13'] = msg.message_id
+        context.user_data['qmsg_14'] = msg.message_id
     except Exception as e:
         logger.error(f"[add_person] got_spouse xabar yuborishda xato: {e}", exc_info=True)
     return S_PHOTO
 
 
-# ── 13. Rasm ────────────────────────────────────────────────────
+# ── 14. Rasm ────────────────────────────────────────────────────
 async def got_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.text and update.message.text.strip() == CANCEL_TEXT:
         return await _do_cancel(update, context)
@@ -567,7 +611,7 @@ async def got_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
-    await _delete_step_msg(context, chat_id, 13)
+    await _delete_step_msg(context, chat_id, 14)
 
     # Intro xabarini ham o'chirish
     intro_id = context.user_data.pop('intro_msg_id', None)
@@ -604,13 +648,13 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _d(context).pop('has_photo', None)
 
         msg = await query.message.reply_text(
-            f"📸  <b>Rasm</b>   <code>{'▓'*13} 13/{TOTAL}</code>\n"
+            f"📸  <b>Rasm</b>   <code>{'▓'*14} 14/{TOTAL}</code>\n"
             "━━━━━━━━━━━━━━━\n\n"
             "Rasmni qayta yuboring yoki o'tkazib yuboring:",
             parse_mode='HTML',
             reply_markup=_kb_skip(),
         )
-        context.user_data['qmsg_13'] = msg.message_id
+        context.user_data['qmsg_14'] = msg.message_id
         return S_PHOTO
 
     # ── Preview xabarini o'chirish ──────────────────────────────
@@ -707,6 +751,7 @@ async def addp_approve_callback(update: Update, context: ContextTypes.DEFAULT_TY
             'gender':      d.get('gender', 'male'),
             'birth_place': d.get('birth_place', ''),
             'phone':       d.get('phone', ''),
+            'deceased':    d.get('deceased', False),
             'created_by':  admin_tg.user,
         }
         if d.get('birth_date_iso'):  kwargs['birth_date']   = parse_date(d['birth_date_iso'])
@@ -836,6 +881,7 @@ def get_add_person_conversation():
             S_MIDDLE_NAME:  [MessageHandler(txt, got_middle_name)],
             S_GENDER:       [MessageHandler(txt, got_gender)],
             S_BIRTH_DATE:   [MessageHandler(txt, got_birth_date)],
+            S_DECEASED:     [MessageHandler(txt, got_deceased)],
             S_DEATH_DATE:   [MessageHandler(txt, got_death_date)],
             S_CHILD_NUMBER: [MessageHandler(txt, got_child_number)],
             S_BIRTH_PLACE:  [MessageHandler(txt, got_birth_place)],

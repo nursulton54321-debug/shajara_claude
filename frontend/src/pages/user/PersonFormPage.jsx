@@ -120,7 +120,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
   const [form, setForm] = useState({
     first_name: '', last_name: '', middle_name: '',
     gender: 'male', child_number: '',
-    birth_date: '', death_date: '',
+    birth_date: '', death_date: '', deceased: false,
     phone: '', birth_place: '', father: '', mother: '',
   })
   const [families, setFamilies]       = useState([])
@@ -194,7 +194,8 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           first_name: d.first_name||'', last_name: d.last_name||'',
           middle_name: d.middle_name||'', gender: d.gender||'male',
           child_number: d.child_number||'', birth_date: d.birth_date||'',
-          death_date: d.death_date||'', phone: d.phone||'',
+          death_date: d.death_date||'', deceased: d.deceased || !!d.death_date || false,
+          phone: d.phone||'',
           birth_place: d.birth_place||'',
           father: d.father != null ? String(d.father) : '',
           mother: d.mother != null ? String(d.mother) : '',
@@ -363,6 +364,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
         fd.append('gender',      form.gender)
         fd.append('phone',       form.phone || '')
         fd.append('birth_place', form.birth_place || '')
+        fd.append('deceased',    form.deceased ? 'true' : 'false')
         if (form.birth_date)    fd.append('birth_date',    form.birth_date)
         if (form.death_date)    fd.append('death_date',    form.death_date)
         if (form.child_number)  fd.append('child_number',  form.child_number)
@@ -384,8 +386,9 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           gender:       form.gender,
           phone:        form.phone || '',
           birth_place:  form.birth_place || '',
+          deceased:     form.deceased,
           birth_date:   form.birth_date  || null,
-          death_date:   form.death_date  || null,
+          death_date:   form.deceased ? (form.death_date || null) : null,
           child_number: form.child_number ? parseInt(form.child_number) : null,
           father:       form.father !== '' ? parseInt(form.father) : null,
           mother:       form.mother !== '' ? parseInt(form.mother) : null,
@@ -958,41 +961,82 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           </div>
 
           {/* Row 2: Dates + child number + phone */}
-          <div className="grid grid-cols-4 gap-3 pf-grid4">
-            <Field label="📅 Tug'ilgan sana" error={fieldErrors.birth_date}>
-              <input type="date" value={form.birth_date} onChange={e => setField('birth_date', e.target.value)}
-                className="form-input"
-                style={fieldErrors.birth_date ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
-            </Field>
-            <Field label="🌿 Vafot etgan sana" error={fieldErrors.death_date}>
-              <input type="date" value={form.death_date} onChange={e => setField('death_date', e.target.value)}
-                className="form-input"
-                style={fieldErrors.death_date ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
-            </Field>
-            <Field label="🔢 Nechanchi farzand" error={fieldErrors.child_number || (childNumWarning ? 'Bu raqamli farzand allaqachon kiritilgan!' : '')}>
-              <input type="number" min="1" max="99" value={form.child_number}
-                onChange={e => setField('child_number', e.target.value)}
-                className="form-input" placeholder="1"
-                style={(fieldErrors.child_number || childNumWarning) ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
-            </Field>
-            <Field label="📞 Telefon" error={fieldErrors.phone}>
-              <input type="tel" value={form.phone}
-                onChange={e => {
-                  const digits = e.target.value.replace(/\D/g, '')
-                  const n = digits.startsWith('998') ? digits : ('998' + digits).slice(0, 12)
-                  let r = '+998'
-                  if (n.length > 3)  r += ' ' + n.slice(3, 5)
-                  if (n.length > 5)  r += ' ' + n.slice(5, 8)
-                  if (n.length > 8)  r += '-' + n.slice(8, 10)
-                  if (n.length > 10) r += '-' + n.slice(10, 12)
-                  setField('phone', digits.length ? r : '')
+          <div>
+            {/* Vafot etgan toggle */}
+            <div style={{ marginBottom: 10 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !form.deceased
+                  set('deceased', next)
+                  if (!next) set('death_date', '')
                 }}
-                className="form-input" placeholder="+998 XX XXX-XX-XX"
-                style={fieldErrors.phone ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
-            </Field>
-            <Field label="📍 Tug'ilgan joy">
-              <BirthPlaceInput value={form.birth_place} onChange={v => set('birth_place', v)} />
-            </Field>
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '7px 14px', borderRadius: 20, cursor: 'pointer',
+                  border: `2px solid ${form.deceased ? '#6b7280' : (isDark ? '#334155' : '#e2e8f0')}`,
+                  background: form.deceased
+                    ? (isDark ? 'rgba(107,114,128,0.2)' : '#f3f4f6')
+                    : 'transparent',
+                  color: form.deceased ? (isDark ? '#d1d5db' : '#374151') : (isDark ? '#64748b' : '#94a3b8'),
+                  fontSize: 13, fontWeight: 700,
+                  transition: 'all 0.18s',
+                }}
+              >
+                <span style={{
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: form.deceased ? '#6b7280' : 'transparent',
+                  border: `2px solid ${form.deceased ? '#6b7280' : (isDark ? '#475569' : '#cbd5e1')}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.18s', flexShrink: 0,
+                }}>
+                  {form.deceased && <span style={{ color: 'white', fontSize: 10, fontWeight: 900 }}>✓</span>}
+                </span>
+                🌿 Vafot etgan
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-3 pf-grid4">
+              <Field label="📅 Tug'ilgan sana" error={fieldErrors.birth_date}>
+                <input type="date" value={form.birth_date} onChange={e => setField('birth_date', e.target.value)}
+                  className="form-input"
+                  style={fieldErrors.birth_date ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
+              </Field>
+
+              {/* Vafot etgan sana — faqat deceased=true bo'lsa */}
+              {form.deceased && (
+                <Field label="🌿 Vafot etgan sana (ixtiyoriy)" error={fieldErrors.death_date}>
+                  <input type="date" value={form.death_date} onChange={e => setField('death_date', e.target.value)}
+                    className="form-input"
+                    style={fieldErrors.death_date ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
+                </Field>
+              )}
+
+              <Field label="🔢 Nechanchi farzand" error={fieldErrors.child_number || (childNumWarning ? 'Bu raqamli farzand allaqachon kiritilgan!' : '')}>
+                <input type="number" min="1" max="99" value={form.child_number}
+                  onChange={e => setField('child_number', e.target.value)}
+                  className="form-input" placeholder="1"
+                  style={(fieldErrors.child_number || childNumWarning) ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
+              </Field>
+              <Field label="📞 Telefon" error={fieldErrors.phone}>
+                <input type="tel" value={form.phone}
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, '')
+                    const n = digits.startsWith('998') ? digits : ('998' + digits).slice(0, 12)
+                    let r = '+998'
+                    if (n.length > 3)  r += ' ' + n.slice(3, 5)
+                    if (n.length > 5)  r += ' ' + n.slice(5, 8)
+                    if (n.length > 8)  r += '-' + n.slice(8, 10)
+                    if (n.length > 10) r += '-' + n.slice(10, 12)
+                    setField('phone', digits.length ? r : '')
+                  }}
+                  className="form-input" placeholder="+998 XX XXX-XX-XX"
+                  style={fieldErrors.phone ? { borderColor: '#ef4444', background: isDark ? '#450a0a' : '#fef2f2' } : {}} />
+              </Field>
+              <Field label="📍 Tug'ilgan joy">
+                <BirthPlaceInput value={form.birth_place} onChange={v => set('birth_place', v)} />
+              </Field>
+            </div>
           </div>
 
           {/* Row 3: Ota-ona */}

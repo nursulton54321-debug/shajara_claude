@@ -18,6 +18,7 @@ class Person(models.Model):
 
     birth_date  = models.DateField(null=True, blank=True)
     death_date  = models.DateField(null=True, blank=True)
+    deceased    = models.BooleanField(default=False, help_text="Vafot etganmi (sana ma'lum bo'lmasa ham)")
     birth_place = models.CharField(max_length=200, blank=True, help_text="Tug'ilgan joy (viloyat, shahar)")
 
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
@@ -64,7 +65,7 @@ class Person(models.Model):
 
     @property
     def is_deceased(self):
-        return self.death_date is not None
+        return self.deceased or self.death_date is not None
 
     def _optimize_photo(self):
         """6.2 — Rasmni WebP formatiga o'tkazish va max 800×800 ga resize qilish."""
@@ -84,6 +85,9 @@ class Person(models.Model):
             pass  # Optimizatsiya muvaffaqiyatsiz bo'lsa — asl rasm qoladi
 
     def save(self, *args, **kwargs):
+        # death_date kiritilsa, deceased avtomatik True bo'ladi
+        if self.death_date:
+            self.deceased = True
         # Slug avtomatik generatsiya — bir marta
         if not self.slug:
             base = slugify(f"{self.last_name}-{self.first_name}", allow_unicode=False) or 'person'
