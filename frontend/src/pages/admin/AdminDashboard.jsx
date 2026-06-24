@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                     </div>
                   </td>
                   <td><span className={`badge ${p.gender==='male'?'badge-male':'badge-female'}`}>{p.gender==='male'?'👨 Erkak':'👩 Ayol'}</span></td>
-                  <td>{p.death_date?<span className="badge badge-dead">🌿 Vafot etgan</span>:<span className="badge badge-alive">💚 Tirik</span>}</td>
+                  <td>{(p.death_date||p.deceased||p.is_deceased)?<span className="badge badge-dead">🌿 Vafot etgan</span>:<span className="badge badge-alive">💚 Tirik</span>}</td>
                   <td>
                     <div style={{ display:'flex',gap:4 }}>
                       <button onClick={()=>navigate(`/admin/persons/${p.id}`)} style={{width:28,height:28,borderRadius:8,border:'none',background:'#eff6ff',color:'#2563eb',cursor:'pointer',fontSize:13}}>👁</button>
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                   <span className={`badge ${p.gender==='male'?'badge-male':'badge-female'}`} style={{fontSize:10}}>
                     {p.gender==='male'?'👨 Erkak':'👩 Ayol'}
                   </span>
-                  {p.death_date
+                  {(p.death_date||p.deceased||p.is_deceased)
                     ?<span className="badge badge-dead" style={{fontSize:10}}>🌿 Vafot</span>
                     :<span className="badge badge-alive" style={{fontSize:10}}>💚 Tirik</span>
                   }

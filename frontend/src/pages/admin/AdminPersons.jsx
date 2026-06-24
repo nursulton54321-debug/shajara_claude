@@ -276,7 +276,7 @@ export default function AdminPersons() {
                       <td style={{ fontSize:12,color:textSecondary }}>{p.birth_date?fmtDate(p.birth_date):'—'}</td>
                       <td style={{ fontSize:12,color:textSecondary }}>{p.death_date?fmtDate(p.death_date):'—'}</td>
                       <td style={{ fontSize:12,color:textSecondary,textAlign:'center' }}>{p.child_number?`${p.child_number}-farzand`:'—'}</td>
-                      <td>{p.death_date?<span className="badge badge-dead">🌿 Vafot etgan</span>:<span className="badge badge-alive">💚 Tirik</span>}</td>
+                      <td>{(p.death_date||p.deceased||p.is_deceased)?<span className="badge badge-dead">🌿 Vafot etgan</span>:<span className="badge badge-alive">💚 Tirik</span>}</td>
                       <td>
                         <div style={{ display:'flex',gap:4 }}>
                           <button onClick={()=>navigate(`/admin/persons/${p.id}`)} title="Ko'rish"
@@ -320,7 +320,7 @@ export default function AdminPersons() {
                       <span className={`badge ${p.gender==='male'?'badge-male':'badge-female'}`} style={{fontSize:10}}>
                         {p.gender==='male'?'👨 Erkak':'👩 Ayol'}
                       </span>
-                      {p.death_date
+                      {(p.death_date||p.deceased||p.is_deceased)
                         ?<span className="badge badge-dead" style={{fontSize:10}}>🌿 Vafot</span>
                         :<span className="badge badge-alive" style={{fontSize:10}}>💚 Tirik</span>
                       }
