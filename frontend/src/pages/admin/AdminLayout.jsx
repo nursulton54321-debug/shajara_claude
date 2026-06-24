@@ -36,11 +36,14 @@ const SIDEBAR_KEYFRAMES = `
 `
 
 const MOBILE_NAV_ITEMS = [
-  { to: '/',                  label: 'Daraxt',    icon: '🌳', end: true },
-  { to: '/admin',             label: 'Dashboard', icon: '📊', end: true },
-  { to: '/admin/persons',     label: 'Shaxslar',  icon: '👥' },
-  { to: '/admin/persons/add', label: "Qo'shish",  icon: '➕' },
-  { to: '/admin/stats',       label: 'Statistika',icon: '📈' },
+  { to: '/',                  label: 'Daraxt',     icon: '🌳', end: true },
+  { to: '/admin',             label: 'Dashboard',  icon: '📊', end: true },
+  { to: '/admin/persons',     label: 'Shaxslar',   icon: '👥' },
+  { to: '/admin/persons/add', label: "Qo'shish",   icon: '➕' },
+  { to: '/admin/link',        label: "Bog'lash",   icon: '🔗' },
+  { to: '/admin/stats',       label: 'Statistika', icon: '📈' },
+  { to: '/admin/reminders',   label: 'Eslatma',    icon: '🔔' },
+  { to: '/admin/invites',     label: 'Invitlar',   icon: '📨' },
 ]
 
 export default function AdminLayout() {
@@ -285,53 +288,105 @@ export default function AdminLayout() {
         </main>
       </div>
 
-      {/* ── Mobile bottom nav ── */}
+      {/* ── Mobile bottom nav — premium ── */}
       <nav className="admin-mobile-nav" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
-        background: isDark ? '#1e293b' : '#ffffff',
-        borderTop: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`,
-        padding: '8px 4px env(safe-area-inset-bottom)',
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
-        justifyContent: 'space-around',
+        background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.97)',
+        backdropFilter: 'blur(24px)',
+        borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+        boxShadow: isDark
+          ? '0 -8px 40px rgba(0,0,0,0.5)'
+          : '0 -8px 40px rgba(0,0,0,0.1)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        flexDirection: 'column',
       }}>
-        {MOBILE_NAV_ITEMS.map(({ to, label, icon, end }) => {
-          const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
-          return (
-            <NavLink key={to} to={to} end={end} style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                padding: '6px 10px', borderRadius: 12, minWidth: 52,
-                color: isActive ? '#6366f1' : isDark ? '#64748b' : '#94a3b8',
-                transition: 'all 0.15s',
-              }}>
-                <span style={{ fontSize: 20 }}>{icon}</span>
-                <span style={{ fontSize: 9, fontWeight: 700 }}>{label}</span>
-                {label === 'Eslatma' && birthdayCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: 4, width: 8, height: 8,
-                    borderRadius: '50%', background: '#ef4444',
-                  }} />
-                )}
-              </div>
-            </NavLink>
-          )
-        })}
-        <div onClick={() => { logout(); navigate('/') }} style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          padding: '6px 10px', borderRadius: 12, minWidth: 52, cursor: 'pointer',
-          color: '#94a3b8',
+        {/* Gradient accent line on top */}
+        <div style={{
+          height: 2,
+          background: 'linear-gradient(90deg,#6366f1,#3b82f6,#10b981,#f59e0b,#ec4899)',
+          opacity: 0.7,
+        }}/>
+
+        <div style={{
+          display: 'flex',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          padding: '6px 8px 4px',
+          gap: 2,
+          alignItems: 'center',
         }}>
-          <span style={{ fontSize: 20 }}>👤</span>
-          <span style={{ fontSize: 9, fontWeight: 700 }}>Akkount</span>
-        </div>
-        <div onClick={() => { logout(); clearPinSession() }} style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          padding: '6px 10px', borderRadius: 12, minWidth: 52, cursor: 'pointer',
-          color: '#ef4444',
-        }}>
-          <span style={{ fontSize: 20 }}>🔒</span>
-          <span style={{ fontSize: 9, fontWeight: 700 }}>Qulflash</span>
+          {/* Nav items */}
+          {MOBILE_NAV_ITEMS.map(({ to, label, icon, end }) => {
+            const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
+            const showBadge = label === 'Eslatma' && birthdayCount > 0
+            return (
+              <NavLink key={to} to={to} end={end}
+                style={{ textDecoration: 'none', flexShrink: 0 }}>
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+                  padding: '5px 10px', borderRadius: 12, minWidth: 50,
+                  background: isActive
+                    ? 'linear-gradient(135deg,#6366f1,#3b82f6)'
+                    : 'transparent',
+                  color: isActive ? 'white' : isDark ? '#64748b' : '#94a3b8',
+                  transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                  transform: isActive ? 'translateY(-2px)' : 'none',
+                  boxShadow: isActive ? '0 4px 14px rgba(99,102,241,0.4)' : 'none',
+                  position: 'relative',
+                }}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                  <span style={{ fontSize: 8, fontWeight: 800, whiteSpace: 'nowrap',
+                    marginTop: 2, letterSpacing: '0.01em' }}>{label}</span>
+                  {showBadge && (
+                    <span style={{
+                      position: 'absolute', top: 2, right: 6,
+                      width: 16, height: 16, borderRadius: '50%',
+                      background: '#ef4444', color: 'white',
+                      fontSize: 8, fontWeight: 900,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: `2px solid ${isDark ? '#0f172a' : 'white'}`,
+                    }}>{birthdayCount > 9 ? '9+' : birthdayCount}</span>
+                  )}
+                </div>
+              </NavLink>
+            )
+          })}
+
+          {/* Divider */}
+          <div style={{
+            width: 1, height: 32, flexShrink: 0,
+            background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+            margin: '0 4px',
+          }}/>
+
+          {/* Akkount */}
+          <div onClick={() => { logout(); navigate('/') }}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+              padding: '5px 10px', borderRadius: 12, minWidth: 50, cursor: 'pointer',
+              color: isDark ? '#94a3b8' : '#64748b', flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onTouchStart={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
+            onTouchEnd={e => e.currentTarget.style.background = 'transparent'}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>👤</span>
+            <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2 }}>Chiqish</span>
+          </div>
+
+          {/* Qulflash */}
+          <div onClick={() => { logout(); clearPinSession() }}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+              padding: '5px 10px', borderRadius: 12, minWidth: 50, cursor: 'pointer',
+              color: '#ef4444', flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onTouchStart={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+            onTouchEnd={e => e.currentTarget.style.background = 'transparent'}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>🔒</span>
+            <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2 }}>Qulflash</span>
+          </div>
         </div>
       </nav>
     </>

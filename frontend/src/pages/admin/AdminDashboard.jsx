@@ -98,7 +98,7 @@ export default function AdminDashboard() {
   const textSecondary = isDark ? '#94a3b8' : '#64748b'
 
   return (
-    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="ad-wrap" style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
       <style>{`
         @keyframes adSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
         @keyframes adPop { 0%{transform:scale(0.9);opacity:0} 70%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       `}</style>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'adSlideIn 0.4s ease both' }}>
+      <div className="ad-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'adSlideIn 0.4s ease both' }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
             Xush kelibsiz, Admin! 👋
@@ -135,6 +135,7 @@ export default function AdminDashboard() {
             )}
           </div>
           <button onClick={() => { logout(); navigate('/login') }}
+            className="ad-exit-btn"
             style={{ padding: '10px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', background: '#fef2f2', color: '#dc2626', fontSize: 13, fontWeight: 700 }}>
             🚪 Chiqish
           </button>
@@ -142,7 +143,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Yangi kreativ bo'limlar ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, animation: 'adSlideIn 0.45s 0.08s ease both' }}>
+      <div className="ad-top-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, animation: 'adSlideIn 0.45s 0.08s ease both' }}>
 
         {/* 1. Tezkor amallar */}
         <div style={{
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
               <div style={{ fontSize: 12, color: textMuted }}>Bir bosishda o'ting</div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="ad-qa-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
               { icon: '➕', label: "Yangi shaxs", sub: "qo'shish", grad: 'linear-gradient(135deg,#6366f1,#7c3aed)', path: '/admin/persons/add' },
               { icon: '🔗', label: "Ota-ona", sub: "bog'lash", grad: 'linear-gradient(135deg,#10b981,#059669)', path: '/admin/link' },
@@ -309,7 +310,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Jadval + Tug'ilgan kunlar ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+      <div className="ad-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
 
         {/* So'nggi qo'shilganlar */}
         <div style={{ background: card, borderRadius: 18, border: `1px solid ${border}`, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>

@@ -1059,3 +1059,34 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
     padding-bottom: 80px !important;
   }
 }
+
+/* ── Admin Dashboard — mobile responsive ───────────────────── */
+@media (max-width: 640px) {
+  /* Wrap padding */
+  .ad-wrap { padding: 14px 12px !important; gap: 14px !important; }
+
+  /* Header */
+  .ad-header h1 { font-size: 20px !important; }
+  .ad-header p  { font-size: 12px !important; }
+  .ad-exit-btn  { display: none !important; }
+
+  /* 3-column → 1-column */
+  .ad-top-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Quick actions — 1 column buttons */
+  .ad-qa-list { gap: 6px !important; }
+
+  /* Bottom grid — table + birthdays stacked */
+  .ad-bottom-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Admin mobile nav — hide scrollbar */
+  .admin-mobile-nav ::-webkit-scrollbar { display: none; }
+  .admin-mobile-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+  .admin-main { padding-bottom: 72px !important; }
+}
