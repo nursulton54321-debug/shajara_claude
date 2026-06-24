@@ -574,59 +574,109 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
 
       {/* Form body - no scroll */}
       <style>{`
-        /* Mobile save bar: hidden on desktop */
+        /* Mobile save bar: desktop da yashiriladi */
         .pf-mobile-savebar { display: none; }
+
         @media (max-width: 640px) {
+          /* ── Sticky save bar ── */
           .pf-mobile-savebar { display: flex !important; }
-          /* Outer / form scroll */
+
+          /* ── Outer scroll ── */
           .pf-outer  { height: auto !important; min-height: 100vh; overflow: visible !important; display: flex; flex-direction: column; }
           .pf-form   { overflow: visible !important; height: auto !important; flex: unset !important; }
-          .pf-layout { grid-template-columns: 1fr !important; grid-template-rows: auto auto !important; }
+          .pf-layout { grid-template-columns: 1fr !important; }
 
-          /* Left panel — compact horizontal strip */
+          /* ── Top bar: faqat sarlavha + Saqlash ── */
+          .pf-topbar         { padding: 7px 12px !important; gap: 6px !important; }
+          .pf-topbar h1      { font-size: 12px !important; }
+          .pf-topbar p       { display: none !important; }
+          .pf-topbar-divider { display: none !important; }
+          .pf-topbtns        { gap: 4px !important; }
+          .pf-topbtns button { padding: 5px 9px !important; font-size: 11px !important; border-radius: 8px !important; }
+          .pf-btn-clear      { display: none !important; }
+
+          /* ── Left panel: gorizontal, ixcham ── */
           .pf-left {
             border-right: none !important;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid rgba(148,163,184,0.2) !important;
             flex-direction: row !important;
-            align-items: flex-start !important;
-            padding: 10px 14px !important;
-            gap: 14px !important;
-            flex-wrap: wrap;
-            justify-content: flex-start;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            padding: 10px 12px !important;
+            gap: 12px !important;
+            flex-wrap: nowrap !important;
           }
-          /* Avatar smaller on mobile */
-          .pf-left .w-28 { width: 72px !important; height: 72px !important; }
-          /* Gender buttons — horizontal row */
-          .pf-left .space-y-2 { display: flex !important; flex-direction: row !important; gap: 8px !important; }
-          .pf-left .space-y-2 > * { flex: 1; }
-          /* OCR — mobilda yashiriladi */
+          /* Avatar: kichik */
+          .pf-left .w-28       { width: 60px !important; height: 60px !important; border-radius: 12px !important; }
+          .pf-left .text-4xl   { font-size: 22px !important; }
+          /* Rasm yuklash matni: ixcham */
+          .pf-left .text-center { text-align: left !important; }
+          .pf-left .text-center .text-xs.font-medium { font-size: 10px !important; }
+          .pf-left .text-center .text-xs.text-gray-400 { display: none !important; }
+          .pf-left .text-gray-300 { display: none !important; }
+          /* OCR: yashirish */
           .pf-left-ocr { display: none !important; }
-          /* Hide upload hint text */
-          .pf-left .text-xs.text-gray-300 { display: none !important; }
+          /* Jins label */
+          .pf-left .mt-2 { margin-top: 0 !important; flex: 1; }
+          .pf-left .mt-2 .text-xs { font-size: 10px !important; margin-bottom: 4px !important; }
+          /* Jins tugmalari: gorizontal */
+          .pf-left .space-y-2 {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 6px !important;
+          }
+          .pf-left .space-y-2 button {
+            flex: 1;
+            padding: 6px 4px !important;
+            font-size: 11px !important;
+          }
 
-          /* Top bar */
-          .pf-topbar { flex-wrap: wrap; gap: 6px !important; padding: 8px 12px !important; }
-          .pf-topbar h1 { font-size: 13px !important; }
-          .pf-topbar p  { display: none !important; }
-          .pf-topbar-divider { display: none !important; }
-          .pf-topbtns { flex-wrap: wrap; gap: 4px !important; }
-          .pf-topbtns button { padding: 6px 10px !important; font-size: 11px !important; border-radius: 8px !important; }
-          /* Hide "Tozalash" on mobile — save space */
-          .pf-btn-clear { display: none !important; }
+          /* ── Right panel ── */
+          .pf-right {
+            overflow: visible !important;
+            padding: 12px !important;
+            padding-bottom: 100px !important;
+            gap: 10px !important;
+          }
 
-          /* Field grids */
-          .pf-grid3 { grid-template-columns: 1fr !important; }
-          .pf-grid4 { grid-template-columns: 1fr 1fr !important; }
-          .pf-grid2 { grid-template-columns: 1fr !important; }
+          /* ── Form inputs kichikroq ── */
+          .pf-right .form-input,
+          .pf-right input,
+          .pf-right select {
+            padding: 7px 10px !important;
+            font-size: 12px !important;
+            border-radius: 8px !important;
+          }
 
-          /* Right panel */
-          .pf-right { overflow: visible !important; padding: 14px !important; padding-bottom: 96px !important; gap: 12px !important; }
+          /* ── Section labels ── */
+          .pf-section-label,
+          .pf-right .text-xs.font-bold {
+            font-size: 9px !important;
+            margin-bottom: 6px !important;
+          }
+          .pf-right .form-label,
+          .pf-right label.form-label {
+            font-size: 9px !important;
+            margin-bottom: 3px !important;
+          }
 
-          /* Hints section — 1 col */
-          .pf-hints { grid-template-columns: 1fr !important; }
+          /* ── Field grids ── */
+          .pf-grid3 { grid-template-columns: 1fr !important; gap: 8px !important; }
+          .pf-grid4 { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          .pf-grid2 { grid-template-columns: 1fr !important; gap: 8px !important; }
 
-          /* Family form sub-grid */
-          .pf-famgrid { grid-template-columns: 1fr !important; }
+          /* ── Ota-onasi, turmush ── */
+          .pf-grid2 .form-input { font-size: 11px !important; }
+
+          /* ── Hints: 1 ustun ── */
+          .pf-hints { grid-template-columns: 1fr !important; gap: 6px !important; padding: 10px !important; }
+          .pf-hints .text-xs { font-size: 10px !important; }
+
+          /* ── Oila formi ── */
+          .pf-famgrid { grid-template-columns: 1fr !important; gap: 6px !important; }
+
+          /* ── Duplicate warning ── */
+          .pf-right [style*="borderRadius: 12"] .text-xs { font-size: 10px !important; }
         }
       `}</style>
       {/* ── 16. OCR taklif modali ── */}

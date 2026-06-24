@@ -1113,3 +1113,20 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   /* 2-row nav: no overflowX */
   .admin-mobile-nav { overflow: visible; }
 }
+
+
+/* ── PersonFormPage — form-input kichik mobilda ─────────────── */
+@media (max-width: 640px) {
+  .pf-right .form-input,
+  .pf-right input.form-input,
+  .pf-right select.form-input {
+    padding: 7px 9px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    height: auto !important;
+  }
+  .pf-right .form-label {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+  }
+}
