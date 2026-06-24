@@ -12,19 +12,20 @@ const useAuthStore = create(persist(
       const res = await api.post('/auth/login/', { username, password })
       const { access, refresh, user } = res.data
       set({ user, token: access })
-      sessionStorage.setItem('refresh', refresh)
+      localStorage.setItem('refresh', refresh)
       api.defaults.headers.Authorization = `Bearer ${access}`
       return user
     },
 
     loginWithTokens: ({ access, refresh, user }) => {
       set({ user, token: access })
-      sessionStorage.setItem('refresh', refresh)
+      localStorage.setItem('refresh', refresh)
       api.defaults.headers.Authorization = `Bearer ${access}`
     },
 
     logout: () => {
       set({ user: null, token: null })
+      localStorage.removeItem('refresh')
       sessionStorage.removeItem('refresh')
       delete api.defaults.headers.Authorization
     },
@@ -38,7 +39,7 @@ const useAuthStore = create(persist(
 
     restoreToken: async () => {
       if (api.defaults.headers.Authorization) return
-      const refresh = sessionStorage.getItem('refresh')
+      const refresh = localStorage.getItem('refresh') || sessionStorage.getItem('refresh')
       if (!refresh || !get().user) return
       try {
         const res = await axios.post('/api/auth/refresh/', { refresh })
@@ -47,6 +48,7 @@ const useAuthStore = create(persist(
         api.defaults.headers.Authorization = `Bearer ${access}`
       } catch {
         set({ user: null, token: null })
+        localStorage.removeItem('refresh')
         sessionStorage.removeItem('refresh')
         delete api.defaults.headers.Authorization
       }
@@ -54,11 +56,9 @@ const useAuthStore = create(persist(
   }),
   {
     name: 'auth',
-    // token ham saqlanadi — sahifa yangilanishida auth header tiklanadi
     partialize: (s) => ({ user: s.user, token: s.token }),
     onRehydrateStorage: () => (state) => {
       if (state?.token) {
-        // Saqlangan token bilan auth headerni tikla (expired bo'lsa interceptor refresh qiladi)
         api.defaults.headers.Authorization = `Bearer ${state.token}`
       }
     },

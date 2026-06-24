@@ -2,13 +2,13 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: (import.meta.env.VITE_API_URL || '') + '/api' })
 
-// ── localStorage → sessionStorage migration (bir martalik) ────
+// ── sessionStorage → localStorage migration (bir martalik) ────
 ;(function migrateRefresh() {
-  const old = localStorage.getItem('refresh')
-  if (old && !sessionStorage.getItem('refresh')) {
-    sessionStorage.setItem('refresh', old)
+  const old = sessionStorage.getItem('refresh')
+  if (old && !localStorage.getItem('refresh')) {
+    localStorage.setItem('refresh', old)
   }
-  if (old) localStorage.removeItem('refresh')
+  if (old) sessionStorage.removeItem('refresh')
 })()
 
 // ── Auth token ─────────────────────────────────────────────────
@@ -77,6 +77,7 @@ api.interceptors.response.use(
         } catch (refreshError) {
           _processQueue(refreshError, null)
           _refreshing = false
+          localStorage.removeItem('refresh')
           sessionStorage.removeItem('refresh')
           localStorage.removeItem('auth')
           delete api.defaults.headers.Authorization
