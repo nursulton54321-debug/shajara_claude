@@ -238,10 +238,17 @@ async def edit_select_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if not tg_user or not tg_user.is_approved:
         return
 
+    from apps.persons.models import Person
+    try:
+        p = await Person.objects.aget(id=person_id)
+        name_line = f"👤 <b>{p.full_name}</b>\n\n"
+    except Person.DoesNotExist:
+        name_line = ""
+
     kb = _edit_field_kb(person_id)
     await _smart_edit(
         query,
-        f"✏️ <b>Tahrirlash</b>\n\nQaysi ma'lumotni o'zgartirmoqchisiz?",
+        f"✏️ <b>Tahrirlash</b>\n\n{name_line}Qaysi ma'lumotni o'zgartirmoqchisiz?",
         reply_markup=kb,
     )
 
@@ -278,11 +285,51 @@ async def edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         context.user_data['awaiting_photo'] = True
         return
 
+    # Jins — tugmalar bilan
+    if field == 'gender':
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("👨 Erkak", callback_data=f"edit_val_{person_id}_gender_male"),
+             InlineKeyboardButton("👩 Ayol",  callback_data=f"edit_val_{person_id}_gender_female")],
+            [InlineKeyboardButton("❌ Bekor", callback_data=f"edit_select_{person_id}")],
+        ])
+        await _smart_edit(query, "⚧ <b>Jins</b>\n\nTanlang:", reply_markup=kb)
+        return
+
+    # Vafot etgan holat — tugmalar bilan
+    if field == 'deceased':
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🟢 Tirik",        callback_data=f"edit_val_{person_id}_deceased_no"),
+             InlineKeyboardButton("🕯️ Vafot etgan", callback_data=f"edit_val_{person_id}_deceased_yes")],
+            [InlineKeyboardButton("❌ Bekor", callback_data=f"edit_select_{person_id}")],
+        ])
+        await _smart_edit(query, "🕯️ <b>Vafot etgan holat</b>\n\nTanlang:", reply_markup=kb)
+        return
+
+    # Ota/ona — shaxslar ro'yxatidan tanlash
+    if field in ('father', 'mother'):
+        gender_filter = 'male' if field == 'father' else 'female'
+        label_uz = "Otasi" if field == 'father' else "Onasi"
+        from apps.persons.models import Person as PersonModel
+        rows = []
+        async for pp in PersonModel.objects.filter(gender=gender_filter).order_by('last_name', 'first_name')[:40]:
+            icon = '👨' if gender_filter == 'male' else '👩'
+            rows.append([InlineKeyboardButton(
+                f"{icon} {pp.full_name}",
+                callback_data=f"edit_val_{person_id}_{field}_{pp.id}"
+            )])
+        rows.append([
+            InlineKeyboardButton("🚫 O'chirish", callback_data=f"edit_val_{person_id}_{field}_0"),
+            InlineKeyboardButton("❌ Bekor",     callback_data=f"edit_select_{person_id}"),
+        ])
+        await _smart_edit(query, f"👥 <b>{label_uz}</b>\n\nTanlang:", reply_markup=InlineKeyboardMarkup(rows))
+        return
+
     hints = {
         'birth_date':   'Format: KK.OO.YYYY  (Masalan: 15.03.1975)',
         'death_date':   'Format: KK.OO.YYYY  (Bo\'sh qoldirish uchun: -)',
         'child_number': 'Faqat raqam (Masalan: 3)',
         'phone':        'Masalan: +998901234567',
+        'note':         'Izoh, biografiya yoki qo\'shimcha ma\'lumot',
     }
     hint = hints.get(field, '')
 
@@ -298,6 +345,60 @@ async def edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     context.user_data['awaiting_edit_text'] = True
     return EDIT_FIELD
+
+
+async def edit_val_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """gender/deceased/father/mother uchun tugma tanlanishi."""
+    query = update.callback_query
+    await query.answer()
+    # format: edit_val_{person_id}_{field}_{value}
+    parts     = query.data.split('_', 4)  # ['edit','val',person_id,field,value]
+    person_id = int(parts[2])
+    field     = parts[3]
+    value     = parts[4]
+
+    from apps.persons.models import Person
+    try:
+        p = await Person.objects.aget(id=person_id)
+    except Person.DoesNotExist:
+        await query.answer("❌ Shaxs topilmadi.", show_alert=True)
+        return
+
+    if field == 'gender':
+        p.gender = value  # 'male' or 'female'
+        label = "Jins"
+    elif field == 'deceased':
+        p.deceased = (value == 'yes')
+        if value == 'no':
+            p.death_date = None
+        label = "Vafot etgan holat"
+    elif field in ('father', 'mother'):
+        label = "Otasi" if field == 'father' else "Onasi"
+        if value == '0':
+            setattr(p, field, None)
+        else:
+            try:
+                parent = await Person.objects.aget(id=int(value))
+                setattr(p, field, parent)
+            except Person.DoesNotExist:
+                await query.answer("❌ Shaxs topilmadi.", show_alert=True)
+                return
+    else:
+        await query.answer("❌ Noma'lum maydon.", show_alert=True)
+        return
+
+    await p.asave()
+    context.user_data.pop('persons_cache', None)
+    context.user_data.pop('editing', None)
+
+    await _smart_edit(
+        query,
+        f"✅ <b>{label}</b> muvaffaqiyatli yangilandi!",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("👤 Shaxsga qaytish", callback_data=f"person_{person_id}"),
+            InlineKeyboardButton("✏️ Yana tahrirlash", callback_data=f"edit_select_{person_id}"),
+        ]]),
+    )
 
 
 async def edit_field_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -349,6 +450,11 @@ async def edit_field_text_handler(update: Update, context: ContextTypes.DEFAULT_
             p.child_number = int(raw)
     elif field == 'phone':
         p.phone = raw[:20]
+    elif field == 'note':
+        if len(raw) > 2000:
+            error = "⚠️ Izoh 2000 ta belgidan oshmasin."
+        else:
+            p.note = raw if raw != '-' else ''
     else:
         if len(raw) < 2 or len(raw) > 100:
             error = "⚠️ 2–100 ta belgi bo'lishi kerak."

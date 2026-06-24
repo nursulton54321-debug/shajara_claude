@@ -24,6 +24,7 @@ from apps.bot.handlers.menu import (
     persons_page_callback, person_detail_callback,
     persons_filter_open_callback, persons_filter_callback, _persons_list_msg as persons_filter_list,
     edit_select_callback, edit_field_callback, edit_field_text_handler, edit_cancel_callback,
+    edit_val_callback,
     delete_person_callback, confirm_delete_callback,
     back_main_callback, back_persons_callback,
     user_msg_callback, user_warn_callback, user_block_callback,
@@ -68,6 +69,7 @@ def build_app():
     app.add_handler(CallbackQueryHandler(edit_select_callback,   pattern=r'^edit_select_\d+$'))
     app.add_handler(CallbackQueryHandler(edit_field_callback,    pattern=r'^edit_field_\d+_'))
     app.add_handler(CallbackQueryHandler(edit_cancel_callback,   pattern=r'^edit_cancel_\d+$'))
+    app.add_handler(CallbackQueryHandler(edit_val_callback,      pattern=r'^edit_val_'))
 
     # O'chirish
     app.add_handler(CallbackQueryHandler(delete_person_callback,  pattern=r'^delete_\d+$'))

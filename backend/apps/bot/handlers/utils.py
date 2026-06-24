@@ -20,11 +20,16 @@ EDIT_FIELDS = [
     ("last_name",    "Familiya",           "🏷️"),
     ("first_name",   "Ism",                "✨"),
     ("middle_name",  "Otasining ismi",     "👨"),
+    ("gender",       "Jins",               "⚧"),
     ("birth_date",   "Tug'ilgan sana",     "🎂"),
-    ("death_date",   "Vafot etgan sana",   "🕯️"),
+    ("deceased",     "Vafot etgan holat",  "🕯️"),
+    ("death_date",   "Vafot etgan sana",   "🌿"),
     ("child_number", "Farzand raqami",     "🔢"),
     ("birth_place",  "Tug'ilgan joyi",     "📍"),
     ("phone",        "Telefon",            "📞"),
+    ("father",       "Otasi",              "👨‍👦"),
+    ("mother",       "Onasi",              "👩‍👦"),
+    ("note",         "Izoh / Bio",         "📝"),
 ]
 
 
