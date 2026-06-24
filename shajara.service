@@ -7,6 +7,7 @@ User=ubuntu
 Group=www-data
 WorkingDirectory=/var/www/shajara/backend
 EnvironmentFile=/var/www/shajara/backend/.env
+ExecStartPre=/var/www/shajara/venv/bin/python manage.py migrate --no-input
 ExecStart=/var/www/shajara/venv/bin/gunicorn \
     config.wsgi:application \
     --bind 127.0.0.1:8000 \

@@ -15,3 +15,15 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 accesslog = "-"
 errorlog = "-"
 loglevel = "info"
+
+
+def on_starting(server):
+    """Har deploy/restart da migration avtomatik qo'llanadi."""
+    import subprocess, sys
+    result = subprocess.run(
+        [sys.executable, "manage.py", "migrate", "--no-input"],
+        capture_output=True, text=True
+    )
+    print("[gunicorn] migrate stdout:", result.stdout)
+    if result.returncode != 0:
+        print("[gunicorn] migrate stderr:", result.stderr)
