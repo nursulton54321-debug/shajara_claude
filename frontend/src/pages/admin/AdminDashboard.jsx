@@ -260,13 +260,14 @@ export default function AdminDashboard() {
               { icon: '🎂', label: 'Yaqin bayram', value: upcomingBirthdays.length, grad: 'linear-gradient(135deg,#f59e0b,#d97706)', glow: 'rgba(245,158,11,0.3)' },
             ].map(({ icon, label, value, grad, glow }) => (
               <div key={label} style={{
-                flex: 1, background: grad, borderRadius: 12,
-                padding: '12px 16px', color: 'white', boxShadow: `0 4px 14px ${glow}`,
-                display: 'flex', alignItems: 'center', gap: 10,
+                flex: 1, minWidth: 0, background: grad, borderRadius: 12,
+                padding: '12px 12px', color: 'white', boxShadow: `0 4px 14px ${glow}`,
+                display: 'flex', alignItems: 'center', gap: 8,
               }}>
-                <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
-                <span style={{ flex: 1, fontSize: 12, fontWeight: 700, opacity: 0.9, lineHeight: 1.3 }}>{label}</span>
-                <span style={{ fontSize: 28, fontWeight: 900, lineHeight: 1, flexShrink: 0 }}><AnimCount to={value || 0} /></span>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 11, fontWeight: 700, opacity: 0.9, lineHeight: 1.3,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                <span style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, flexShrink: 0 }}><AnimCount to={value || 0} /></span>
               </div>
             ))}
           </div>
@@ -292,17 +293,17 @@ export default function AdminDashboard() {
           <div>
             <div style={{ fontSize: 12, fontWeight: 800, color: textPrimary, marginBottom: 7 }}>💚 Tirik / 🕯️ Vafot etgan</div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: isDark ? '#0f172a' : '#f0fdf4', borderRadius: 11, padding: '10px 14px', border: '1px solid #bbf7d0' }}>
-                <span style={{ fontSize: 18, flexShrink: 0 }}>💚</span>
-                <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#10b981' }}>Tirik</span>
-                <span style={{ fontSize: 22, fontWeight: 900, color: '#10b981', flexShrink: 0 }}><AnimCount to={stats.alive || 0} /></span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#10b981', flexShrink: 0 }}>{stats.total ? Math.round((stats.alive/stats.total)*100) : 0}%</span>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: isDark ? '#0f172a' : '#f0fdf4', borderRadius: 11, padding: '10px 12px', border: '1px solid #bbf7d0' }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>💚</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 11, fontWeight: 700, color: '#10b981', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Tirik</span>
+                <span style={{ fontSize: 20, fontWeight: 900, color: '#10b981', flexShrink: 0 }}><AnimCount to={stats.alive || 0} /></span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#10b981', flexShrink: 0 }}>{stats.total ? Math.round((stats.alive/stats.total)*100) : 0}%</span>
               </div>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: isDark ? '#0f172a' : '#f9fafb', borderRadius: 11, padding: '10px 14px', border: `1px solid ${border}` }}>
-                <span style={{ fontSize: 18, flexShrink: 0 }}>🕯️</span>
-                <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: textMuted }}>Vafot etgan</span>
-                <span style={{ fontSize: 22, fontWeight: 900, color: textSecondary, flexShrink: 0 }}><AnimCount to={vafot} /></span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: textMuted, flexShrink: 0 }}>{stats.total ? Math.round((vafot/stats.total)*100) : 0}%</span>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: isDark ? '#0f172a' : '#f9fafb', borderRadius: 11, padding: '10px 12px', border: `1px solid ${border}` }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>🕯️</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 11, fontWeight: 700, color: textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Vafot etgan</span>
+                <span style={{ fontSize: 20, fontWeight: 900, color: textSecondary, flexShrink: 0 }}><AnimCount to={vafot} /></span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: textMuted, flexShrink: 0 }}>{stats.total ? Math.round((vafot/stats.total)*100) : 0}%</span>
               </div>
             </div>
           </div>
