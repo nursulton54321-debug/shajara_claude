@@ -76,7 +76,7 @@ class PersonShortSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Person
         fields = ['id', 'full_name', 'gender', 'birth_date', 'death_date',
-                  'age', 'age_would_be', 'photo', 'photo_url', 'child_number',
+                  'deceased', 'age', 'age_would_be', 'photo', 'photo_url', 'child_number',
                   'father_id', 'mother_id', 'birth_place', 'phone', 'families']
 
     def get_photo_url(self, obj):
@@ -251,7 +251,7 @@ class PersonTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Person
         fields = ['id', 'full_name', 'gender', 'birth_date', 'death_date',
-                  'is_deceased', 'photo_url', 'father_id', 'mother_id',
+                  'deceased', 'is_deceased', 'photo_url', 'father_id', 'mother_id',
                   'child_number', 'families']
 
     def get_photo_url(self, obj):

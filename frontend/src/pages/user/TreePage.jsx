@@ -42,7 +42,7 @@ const calcAge = (birth, death) => {
 // ── PersonNode ─────────────────────────────────────────────────
 function PersonNode({ data }) {
   const male      = data.gender === 'male'
-  const dead      = !!data.death_date || !!data.deceased   // deceased maydoni ham hisobga olinadi
+  const dead      = !!data.death_date || !!data.deceased || !!data.is_deceased   // barcha deceased belgilari
   const dimmed    = data.dimDeceased && dead
   const showGray  = dimmed   // faqat dimmed rejimda kulrang ko'rsatiladi
   const isFocused = data.isFocused
@@ -1084,7 +1084,7 @@ function PersonDetailModal({ personId, onClose, navigate, onFocus, isFocused }) 
   )
 
   const male   = detail?.gender === 'male'
-  const dead   = !!detail?.death_date || !!detail?.deceased
+  const dead   = !!detail?.death_date || !!detail?.deceased || !!detail?.is_deceased
   const accent = dead ? '#6b7280' : male ? '#6366f1' : '#ec4899'
   const accentLight = dead ? '#f3f4f6' : male ? '#eef2ff' : '#fff0f8'
   const heroGrad = dead
@@ -1859,7 +1859,7 @@ function MobileListView({ rawPersons, onPersonClick, toolbarSearch = '', user })
           <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
             {byGen[gen].sort((a,b) => (a.child_number||99)-(b.child_number||99)).map(p => {
               const male = p.gender === 'male'
-              const dead = !!p.death_date || !!p.deceased
+              const dead = !!p.death_date || !!p.deceased || !!p.is_deceased
               const accent = dead ? '#6b7280' : male ? '#6366f1' : '#ec4899'
               const age = p.birth_date
                 ? Math.floor((new Date() - new Date(p.birth_date + 'T00:00:00')) / (365.25*86400000))
