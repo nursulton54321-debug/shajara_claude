@@ -472,6 +472,14 @@ class TreeLayout:
                       if pid not in has_parent and pid not in self.spouse_only]
         self.roots.sort(key=lambda pid: self.persons[pid].child_number or 99)
 
+        # Alohida floating (izolyatsiya) — ota-ona yo'q va bolalari ham yo'q
+        # Ularni asosiy daraxtdan ajratib saqlaymiz
+        self.isolated = [pid for pid in self.roots
+                         if not self.children_map.get(pid)
+                         and pid not in self.spouse_map]
+        # Root lardan izolyatsiyalarni olib tashlaymiz
+        self.roots = [pid for pid in self.roots if pid not in self.isolated]
+
         # Generation assignment
         self.gen_map = {}
         visited = set()
@@ -560,6 +568,17 @@ class TreeLayout:
         for r in self.roots:
             place(r, cur_x)
             cur_x += self._subtree_w(r, memo) + H_GAP * 2
+
+        # Izolyatsiya bo'lgan (bog'lanmagan) kishilarni eng pastki qatordan keyin joylashtir
+        if self.isolated:
+            max_gen = max(self.gen_map.values()) if self.gen_map else 0
+            iso_y = PAD_Y + TITLE_H + (max_gen + 2) * (CARD_H + V_GAP)
+            iso_x = PAD_X
+            for pid in self.isolated:
+                p = self.persons[pid]
+                self.gen_map[pid] = max_gen + 2
+                positions[pid] = (iso_x, iso_y)
+                iso_x += CARD_W + H_GAP * 2
 
         return positions
 
@@ -680,9 +699,22 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
 
     pmap = {p.id: p for p in persons}
 
+    # ── Helper: juft kartaning vizual markazi ───────────────────────────────
+    def _couple_cx(pid, px_val):
+        """pid uchun vizual markaz: juft bo'lsa ikki karta o'rtasi, aks holda karta markazi."""
+        csp = layout.spouse_map.get(pid)
+        if csp and csp in layout.spouse_only and csp in sc_pos:
+            csp_x, _ = sc_pos[csp]
+            return int((px_val + sc_card_w + csp_x) // 2)
+        return int(px_val + sc_card_w // 2)
+
     # ── Draw connection lines ────────────────────────────────────────────────
-    lw = SCALE * 3   # chiziq qalinligi (oshirildi)
+    lw = SCALE * 3
     for pid, (px, py) in sc_pos.items():
+        # Spouse_only kartalarni o'tkazib yuboramiz — chiziqni ota chizadi
+        if pid in layout.spouse_only:
+            continue
+
         person = pmap.get(pid)
         if not person:
             continue
@@ -704,25 +736,22 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
             draw.text((mx - 6 * SCALE, ly - 5 * SCALE), '♥', font=fn_hrt,
                       fill=(220, 80, 120))
 
-        # Parent → children: juft bo'lsa o'rta nuqtadan, aks holda karta markazidan
+        # Parent → children: juft bo'lsa JUFT MARKAZI dan, aks holda karta markazidan
         children = [c for c in layout.children_map.get(pid, [])
                     if c not in layout.spouse_only]
         if not children:
             continue
 
-        if has_couple:
-            # Er-xotin juftining o'rta nuqtasidan chiziq boshlanadi
-            sp_x, _ = sc_pos[sp]
-            parent_cx = int((px + sc_card_w // 2 + sp_x + sc_card_w // 2) // 2)
-        else:
-            parent_cx = int(px + sc_card_w // 2)
+        # Ota chiziq boshlanish nuqtasi — juft bo'lsa ikki karta o'rtasidan
+        parent_cx = _couple_cx(pid, px)
         parent_cy = int(py + sc_card_h)
 
         child_tops = []
         for cid in children:
             if cid in sc_pos:
                 cx2, cy2 = sc_pos[cid]
-                child_cx = int(cx2 + sc_card_w // 2)
+                # Bola ham juft bo'lsa — uning juft markazi
+                child_cx = _couple_cx(cid, cx2)
                 child_tops.append((child_cx, int(cy2)))
 
         if not child_tops:
@@ -730,18 +759,20 @@ def _render_canvas(persons, layout, positions, canvas_w, canvas_h) -> bytes:
 
         stem_y = parent_cy + sc_v_gap // 2
 
-        # Vertical stem
+        # Vertical stem (otadan gorizontal chizig'gacha)
         draw.line([(parent_cx, parent_cy), (parent_cx, stem_y)],
                   fill=LINE_COL, width=lw)
 
-        # Horizontal bar
+        # Horizontal bar (barcha bolalar ustida)
         bar_xs = [ct[0] for ct in child_tops]
         bar_x1, bar_x2 = min(bar_xs), max(bar_xs)
+        bar_x1 = min(bar_x1, parent_cx)
+        bar_x2 = max(bar_x2, parent_cx)
         if bar_x1 != bar_x2:
             draw.line([(bar_x1, stem_y), (bar_x2, stem_y)],
                       fill=LINE_COL, width=lw)
 
-        # Drop lines + arrows
+        # Drop lines + arrows (gorizontaldan bolaga)
         aw = 7 * SCALE
         for child_cx, child_cy in child_tops:
             draw.line([(child_cx, stem_y), (child_cx, child_cy)],
