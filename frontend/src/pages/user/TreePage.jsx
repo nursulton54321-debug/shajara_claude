@@ -2495,6 +2495,11 @@ function TreeFlow({ rawPersons, stats }) {
             .rb-stat:hover { background:rgba(255,255,255,0.1) !important; border-radius:12px }
             .rb-stat:hover .rb-val { transform:scale(1.08) }
             .rb-val { transition: transform 0.18s }
+            @media (max-width: 768px) {
+              .rb-left { overflow-x: auto; scrollbar-width: none; }
+              .rb-left::-webkit-scrollbar { display: none; }
+              .rb-stat { padding: 0 12px !important; min-width: 72px; }
+            }
           `}</style>
 
           {/* Bg glows */}
@@ -2506,10 +2511,11 @@ function TreeFlow({ rawPersons, stats }) {
           {/* ── LEFT: 4 stat ── */}
           <div className="rb-left" style={{ display:'flex', alignItems:'stretch' }}>
             {[
-              { icon:'👥', label:"Jami a'zolar", value:stats.total,         suffix:'',      glow:'rgba(255,255,255,0.18)' },
-              { icon:'💚', label:'Tiriklar',      value:stats.alive,         suffix:'',      glow:'rgba(16,185,129,0.3)'  },
-              { icon:'🌿', label:'Avlodlar',      value:extraStats?.genCount ?? '—', suffix:' ta', glow:'rgba(34,197,94,0.3)'   },
-              { icon:'📊', label:"O'rtacha yosh", value:extraStats?.avgAge ?? '—',  suffix:' yosh', glow:'rgba(251,191,36,0.3)'  },
+              { icon:'👥', label:"Jami a'zolar", value:stats.total,                         suffix:'',      glow:'rgba(255,255,255,0.18)' },
+              { icon:'💚', label:'Tiriklar',      value:stats.alive,                         suffix:'',      glow:'rgba(16,185,129,0.3)'  },
+              { icon:'🕯️', label:'Vafot etgan',   value:stats.deceased ?? (stats.total - (stats.alive||0)), suffix:'', glow:'rgba(148,163,184,0.3)' },
+              { icon:'🌿', label:'Avlodlar',      value:extraStats?.genCount ?? '—',         suffix:' ta',   glow:'rgba(34,197,94,0.3)'   },
+              { icon:'📊', label:"O'rtacha yosh", value:extraStats?.avgAge ?? '—',           suffix:' yosh', glow:'rgba(251,191,36,0.3)'  },
             ].map(({ icon, label, value, suffix, glow }, i) => (
               <div key={label} className="rb-stat" style={{
                 display:'flex', alignItems:'center', gap:9,
