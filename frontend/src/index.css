@@ -1130,3 +1130,9 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
     margin-bottom: 2px !important;
   }
 }
+
+/* ── Mobile theme toggle (floating) ──────────────────────────── */
+.mobile-theme-fab { display: none !important; }
+@media (max-width: 640px) {
+  .mobile-theme-fab { display: flex !important; }
+}

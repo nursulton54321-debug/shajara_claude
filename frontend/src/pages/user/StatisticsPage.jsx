@@ -511,24 +511,38 @@ export default function StatisticsPage() {
     <div style={{ minHeight: '100%', background: isDark ? '#0f172a' : '#f1f5f9', paddingBottom: 80 }}>
       <style>{`
         @media (max-width: 640px) {
-          .stat-hero { padding: 16px 14px 14px !important; }
-          .stat-hero-sub { font-size: 10px !important; }
-          .stat-hero-title { font-size: 20px !important; }
+          /* Hero section */
+          .stat-hero { padding: 14px 12px 12px !important; }
+          .stat-hero-sub { font-size: 9px !important; }
+          .stat-hero-title { font-size: 18px !important; }
           .stat-hero-meta { font-size: 10px !important; }
-          .stat-hero-chips { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
-          .stat-hero-chip { padding: 8px 4px !important; border-radius: 12px !important; }
-          .stat-hero-chip-num { font-size: 18px !important; }
-          .stat-hero-chip-lbl { font-size: 8px !important; }
-          .stat-hero-chip-icon { font-size: 14px !important; }
-          .stat-export-row { gap: 6px !important; }
-          .stat-export-row button { font-size: 11px !important; padding: 7px 8px !important; }
-          .stat-tabs-wrap { padding: 10px 10px 0 !important; }
-          .stat-tabs-inner { gap: 6px !important; }
-          .stat-tab { flex: 1 !important; padding: 10px 6px !important; flex-direction: column !important; gap: 3px !important; }
+
+          /* Chips — 4 col, kichik */
+          .stat-hero-chips { grid-template-columns: repeat(4, 1fr) !important; gap: 5px !important; margin-bottom: 8px !important; }
+          .stat-hero-chip { padding: 7px 3px !important; border-radius: 10px !important; }
+          .stat-hero-chip-num { font-size: 16px !important; }
+          .stat-hero-chip-lbl { font-size: 7px !important; }
+          .stat-hero-chip-icon { font-size: 13px !important; }
+
+          /* Export buttons */
+          .stat-export-row { gap: 5px !important; }
+          .stat-export-row button { font-size: 10px !important; padding: 7px 6px !important; border-radius: 10px !important; }
+
+          /* Tabs */
+          .stat-tabs-wrap { padding: 8px 8px 0 !important; }
+          .stat-tabs-inner { gap: 4px !important; padding: 4px !important; border-radius: 12px !important; }
+          .stat-tab { flex: 1 !important; padding: 8px 4px !important; flex-direction: column !important; gap: 2px !important; border-radius: 8px !important; }
           .stat-tab-lbl { font-size: 8px !important; }
-          .stat-tab-ico { font-size: 20px !important; }
-          .stat-body { padding: 12px 10px !important; gap: 12px !important; }
-          .stat-pie-grid { grid-template-columns: 1fr !important; }
+          .stat-tab-ico { font-size: 18px !important; }
+
+          /* Body */
+          .stat-body { padding: 10px 8px !important; gap: 10px !important; padding-bottom: 96px !important; }
+
+          /* Pie charts — 1 col */
+          .stat-pie-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+
+          /* Generation cards — 2 col on mobile */
+          .stat-gen-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
         }
       `}</style>
 
@@ -789,7 +803,7 @@ export default function StatisticsPage() {
             </Card>
 
             {/* Generation detail cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+            <div className="stat-gen-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
               {genStats.map(g => {
                 const maleRatio = g.total ? Math.round((g.male / g.total) * 100) : 0
                 return (

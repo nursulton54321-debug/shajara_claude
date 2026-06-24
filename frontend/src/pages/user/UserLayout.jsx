@@ -641,15 +641,25 @@ export default function UserLayout() {
               </NavLink>
             )
           })}
-          <div onClick={toggle} style={{
-            display:'flex', flexDirection:'column', alignItems:'center', gap:1,
-            padding:'4px 8px', borderRadius:10, cursor:'pointer', flexShrink:0,
-            color:'var(--text-muted)',
-          }}>
-            <span style={{ fontSize:18, lineHeight:1 }}>{isDark ? '☀️' : '🌙'}</span>
-            <span style={{ fontSize:8, fontWeight:700 }}>Rejim</span>
-          </div>
         </nav>
+
+        {/* Mobile theme toggle — top-right floating, icon only */}
+        <button
+          onClick={toggle}
+          className="mobile-theme-fab"
+          style={{
+            position:'fixed', top:10, right:10, zIndex:1100,
+            width:36, height:36, borderRadius:'50%', border:'none', cursor:'pointer',
+            background: isDark ? 'rgba(30,41,59,0.92)' : 'rgba(255,255,255,0.92)',
+            backdropFilter:'blur(10px)',
+            boxShadow: isDark
+              ? '0 2px 14px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.25)'
+              : '0 2px 14px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)',
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
+            transition:'all 0.2s',
+          }}>
+          {isDark ? '☀️' : '🌙'}
+        </button>
       </div>
     </>
   )
