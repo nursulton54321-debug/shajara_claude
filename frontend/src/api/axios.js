@@ -15,13 +15,28 @@ const api = axios.create({ baseURL: (import.meta.env.VITE_API_URL || '') + '/api
 // api.defaults.headers.Authorization login paytida o'rnatiladi (authStore).
 // Token faqat in-memory — localStorage da saqlanmaydi.
 api.interceptors.request.use((config) => {
-  // Authorization allaqachon o'rnatilgan bo'lsa — hech narsa qilma
   if (config.headers.Authorization || api.defaults.headers.Authorization) return config
   return config
 })
 
-// ── 401 → token refresh ───────────────────────────────────────
+// ── 401 → token refresh (queue pattern) ──────────────────────
+// Bir vaqtda bir nechta so'rov 401 olganda, barchasi navbatga qo'shiladi
+// va refresh muvaffaqiyatli bo'lgandan keyin hammasi qayta yuboriladi.
 let _refreshing = false
+let _failedQueue = []
+
+function _processQueue(error, token = null) {
+  _failedQueue.forEach(({ resolve, reject, config }) => {
+    if (error) {
+      reject(error)
+    } else {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
+      resolve(api(config))
+    }
+  })
+  _failedQueue = []
+}
 
 api.interceptors.response.use(
   (r) => r,
@@ -29,7 +44,14 @@ api.interceptors.response.use(
     const status = error.response?.status
     const isRefreshEndpoint = error.config?.url?.includes('/auth/refresh/')
 
-    if (status === 401 && !isRefreshEndpoint && !_refreshing) {
+    if (status === 401 && !isRefreshEndpoint) {
+      if (_refreshing) {
+        // Refresh davom etmoqda — navbatga qo'shamiz
+        return new Promise((resolve, reject) => {
+          _failedQueue.push({ resolve, reject, config: error.config })
+        })
+      }
+
       const refresh = sessionStorage.getItem('refresh')
       if (refresh) {
         _refreshing = true
@@ -44,21 +66,26 @@ api.interceptors.response.use(
             localStorage.setItem('auth', JSON.stringify(stored))
           }
           api.defaults.headers.Authorization = `Bearer ${newToken}`
-          error.config.headers.Authorization = `Bearer ${newToken}`
+
+          // Navbatdagi barcha so'rovlarni qayta yubor
+          _processQueue(null, newToken)
           _refreshing = false
+
+          error.config.headers = error.config.headers || {}
+          error.config.headers.Authorization = `Bearer ${newToken}`
           return api(error.config)
-        } catch {
-          // Refresh muvaffaqiyatsiz — auth tozalash, PIN gate ko'rsatish
+        } catch (refreshError) {
+          _processQueue(refreshError, null)
           _refreshing = false
           sessionStorage.removeItem('refresh')
           localStorage.removeItem('auth')
           delete api.defaults.headers.Authorization
-          // PinGate va boshqa komponentlar uchun event
           window.dispatchEvent(new Event('auth-expired'))
         }
       }
     }
-    // 5xx server xatolari uchun global toast (4xx — komponentlar o'zi ko'rsatadi)
+
+    // 5xx server xatolari uchun global toast
     const status2 = error.response?.status
     if (status2 >= 500) {
       import('react-hot-toast').then(({ default: toast }) => {
@@ -71,8 +98,6 @@ api.interceptors.response.use(
 )
 
 // ── In-flight GET deduplication ───────────────────────────────
-// Bir sahifada bir xil endpoint bir vaqtda 2-3 marta chaqirilsa,
-// faqat 1 ta request yuboriladi. Response kelgandan keyin kesh tozalanadi.
 const _inFlight = new Map()
 
 const _rawGet = api.get.bind(api)
