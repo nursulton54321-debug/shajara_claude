@@ -311,7 +311,7 @@ async def edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         label_uz = "Otasi" if field == 'father' else "Onasi"
         from apps.persons.models import Person as PersonModel
         rows = []
-        async for pp in PersonModel.objects.filter(gender=gender_filter).order_by('last_name', 'first_name')[:40]:
+        async for pp in PersonModel.objects.filter(gender=gender_filter).exclude(id=person_id).order_by('last_name', 'first_name')[:40]:
             icon = '👨' if gender_filter == 'male' else '👩'
             rows.append([InlineKeyboardButton(
                 f"{icon} {pp.full_name}",
@@ -322,6 +322,44 @@ async def edit_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
             InlineKeyboardButton("❌ Bekor",     callback_data=f"edit_select_{person_id}"),
         ])
         await _smart_edit(query, f"👥 <b>{label_uz}</b>\n\nTanlang:", reply_markup=InlineKeyboardMarkup(rows))
+        return
+
+    # Turmush o'rtog'i — Family modeli orqali bog'lash
+    if field == 'spouse':
+        from apps.persons.models import Person as PersonModel
+        from apps.persons.models import Family
+        # Joriy turmush o'rtog'ini topamiz
+        cur_p = await PersonModel.objects.aget(id=person_id)
+        cur_spouse = None
+        if cur_p.gender == 'male':
+            fam = await Family.objects.filter(husband_id=person_id).afirst()
+            if fam:
+                cur_spouse = await PersonModel.objects.aget(id=fam.wife_id)
+        else:
+            fam = await Family.objects.filter(wife_id=person_id).afirst()
+            if fam:
+                cur_spouse = await PersonModel.objects.aget(id=fam.husband_id)
+
+        # Qarama-qarshi jinsdagi shaxslar ro'yxati
+        opp_gender = 'female' if cur_p.gender == 'male' else 'male'
+        opp_icon   = '👩' if opp_gender == 'female' else '👨'
+        rows = []
+        async for pp in PersonModel.objects.filter(gender=opp_gender).exclude(id=person_id).order_by('last_name', 'first_name')[:40]:
+            mark = ' ✅' if (cur_spouse and cur_spouse.id == pp.id) else ''
+            rows.append([InlineKeyboardButton(
+                f"{opp_icon} {pp.full_name}{mark}",
+                callback_data=f"edit_val_{person_id}_spouse_{pp.id}"
+            )])
+        cur_txt = f"\n\n💍 Hozirgi: <b>{cur_spouse.full_name}</b>" if cur_spouse else ""
+        rows.append([
+            InlineKeyboardButton("🚫 O'chirish", callback_data=f"edit_val_{person_id}_spouse_0"),
+            InlineKeyboardButton("❌ Bekor",     callback_data=f"edit_select_{person_id}"),
+        ])
+        await _smart_edit(
+            query,
+            f"💍 <b>Turmush o'rtog'i</b>{cur_txt}\n\nTanlang:",
+            reply_markup=InlineKeyboardMarkup(rows)
+        )
         return
 
     hints = {
@@ -383,6 +421,43 @@ async def edit_val_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Person.DoesNotExist:
                 await query.answer("❌ Shaxs topilmadi.", show_alert=True)
                 return
+    elif field == 'spouse':
+        label = "Turmush o'rtog'i"
+        from apps.persons.models import Family
+        # Avvalgi nikohni o'chiramiz
+        if p.gender == 'male':
+            await Family.objects.filter(husband_id=person_id).adelete()
+        else:
+            await Family.objects.filter(wife_id=person_id).adelete()
+
+        sp_name = "o'chirildi"
+        if value != '0':
+            try:
+                sp = await Person.objects.aget(id=int(value))
+            except Person.DoesNotExist:
+                await query.answer("❌ Shaxs topilmadi.", show_alert=True)
+                return
+            # Family yaratamiz: erkak husband, ayol wife
+            if p.gender == 'male':
+                husband, wife = p, sp
+            else:
+                husband, wife = sp, p
+            await Family.objects.acreate(
+                husband=husband, wife=wife, is_active=True,
+            )
+            sp_name = sp.full_name
+        # Person modelini saqlash shart emas — Family alohida
+        context.user_data.pop('persons_cache', None)
+        context.user_data.pop('editing', None)
+        await _smart_edit(
+            query,
+            f"✅ <b>Turmush o'rtog'i</b> yangilandi!\n💍 {sp_name}",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("👤 Shaxsga qaytish", callback_data=f"person_{person_id}"),
+                InlineKeyboardButton("✏️ Yana tahrirlash", callback_data=f"edit_select_{person_id}"),
+            ]]),
+        )
+        return
     else:
         await query.answer("❌ Noma'lum maydon.", show_alert=True)
         return

@@ -29,7 +29,7 @@ EDIT_FIELDS = [
     ("phone",        "Telefon",            "📞"),
     ("father",       "Otasi",              "👨‍👦"),
     ("mother",       "Onasi",              "👩‍👦"),
-    ("note",         "Izoh / Bio",         "📝"),
+    ("spouse",       "Turmush o'rtog'i",   "💍"),
 ]
 
 
