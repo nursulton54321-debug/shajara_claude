@@ -42,15 +42,18 @@ const calcAge = (birth, death) => {
 // ── PersonNode ─────────────────────────────────────────────────
 function PersonNode({ data }) {
   const male      = data.gender === 'male'
-  const dead      = !!data.death_date
+  const dead      = !!data.death_date || !!data.deceased   // deceased maydoni ham hisobga olinadi
   const dimmed    = data.dimDeceased && dead
+  const showGray  = dimmed   // faqat dimmed rejimda kulrang ko'rsatiladi
   const isFocused = data.isFocused
   const { isDark } = useThemeStore()
   const [hoverPos, setHoverPos] = useState(null)
 
-  const accent  = dead ? '#94a3b8' : male ? '#818cf8' : '#f472b6'
-  const accent2 = dead ? '#64748b' : male ? '#6366f1' : '#ec4899'
-  const gFrom   = dead
+  // Odatda barcha kartalar bir xil ko'rinadi (jins bo'yicha rang)
+  // Faqat "Vafot etgan" rejimida vafot etganlar kulrang bo'ladi
+  const accent  = showGray ? '#94a3b8' : male ? '#818cf8' : '#f472b6'
+  const accent2 = showGray ? '#64748b' : male ? '#6366f1' : '#ec4899'
+  const gFrom   = showGray
     ? (isDark ? '#1e293b' : '#f8fafc')
     : male
       ? (isDark ? '#1e1b4b' : '#eef2ff')
@@ -94,7 +97,7 @@ function PersonNode({ data }) {
           {/* Header strip */}
           <div style={{
             height: 4,
-            background: dead
+            background: showGray
               ? 'linear-gradient(90deg,#64748b,#94a3b8)'
               : `linear-gradient(90deg,${accent2},${accent})`,
           }} />
@@ -161,12 +164,14 @@ function PersonNode({ data }) {
                   </div>
                 </div>
               )}
-              {dead && data.death_date && (
+              {dead && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 13, width: 18, textAlign: 'center', flexShrink: 0 }}>🌿</span>
                   <div>
-                    <div style={{ fontSize: 9.5, color: isDark ? '#475569' : '#94a3b8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Vafot sanasi</div>
-                    <div style={{ fontSize: 11.5, color: isDark ? '#cbd5e1' : '#334155', fontWeight: 600 }}>{fmtDate(data.death_date)}</div>
+                    <div style={{ fontSize: 9.5, color: isDark ? '#475569' : '#94a3b8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Vafot etgan</div>
+                    <div style={{ fontSize: 11.5, color: isDark ? '#cbd5e1' : '#334155', fontWeight: 600 }}>
+                      {data.death_date ? fmtDate(data.death_date) : 'Sana noma\'lum'}
+                    </div>
                   </div>
                 </div>
               )}
@@ -260,26 +265,26 @@ function PersonNode({ data }) {
         borderRadius: 14,
         border: isFocused
           ? `2.5px solid #f59e0b`
-          : `1.5px solid ${dead ? (isDark ? '#334155' : '#e2e8f0') : accent + '60'}`,
+          : `1.5px solid ${showGray ? (isDark ? '#334155' : '#e2e8f0') : accent + '60'}`,
         boxShadow: isFocused
           ? `0 0 0 4px rgba(245,158,11,0.3), 0 6px 24px rgba(245,158,11,0.4)`
-          : dead
+          : showGray
             ? `0 2px 8px rgba(0,0,0,0.08)`
             : `0 4px 20px ${accent}28, inset 0 1px 0 rgba(255,255,255,0.12)`,
-        opacity: dimmed ? 0.35 : 1,
-        filter: dimmed ? 'grayscale(50%)' : 'none',
+        opacity: dimmed ? 0.3 : 1,
+        filter: dimmed ? 'grayscale(80%) brightness(0.7)' : 'none',
         position: 'relative', overflow: 'hidden',
         transition: 'opacity 0.3s, filter 0.3s, transform 0.18s, box-shadow 0.18s',
       }}
         onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)'
-          e.currentTarget.style.boxShadow = dead
+          e.currentTarget.style.boxShadow = showGray
             ? '0 8px 24px rgba(0,0,0,0.14)'
             : `0 10px 32px ${accent}45, inset 0 1px 0 rgba(255,255,255,0.15)`
         }}
         onMouseLeave={e => {
           e.currentTarget.style.transform = ''
-          e.currentTarget.style.boxShadow = dead
+          e.currentTarget.style.boxShadow = showGray
             ? '0 2px 8px rgba(0,0,0,0.08)'
             : `0 4px 20px ${accent}28, inset 0 1px 0 rgba(255,255,255,0.12)`
         }}
@@ -287,14 +292,14 @@ function PersonNode({ data }) {
         {/* left accent stripe */}
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-          background: dead
+          background: showGray
             ? (isDark ? '#475569' : '#cbd5e1')
             : `linear-gradient(180deg,${accent},${accent2})`,
           borderRadius: '14px 0 0 14px',
         }} />
 
         {/* subtle glow orb */}
-        {!dead && (
+        {!showGray && (
           <div style={{
             position: 'absolute', top: -18, left: -8, width: 70, height: 70,
             borderRadius: '50%', pointerEvents: 'none',
@@ -306,13 +311,13 @@ function PersonNode({ data }) {
         <div style={{ paddingLeft: 12, paddingRight: 10, flexShrink: 0, position: 'relative', zIndex: 1 }}>
           <div style={{
             width: PHOTO, height: PHOTO, borderRadius: 12, overflow: 'hidden',
-            border: `2px solid ${dead ? (isDark ? '#475569' : '#cbd5e1') : accent}`,
-            background: dead
+            border: `2px solid ${showGray ? (isDark ? '#475569' : '#cbd5e1') : accent}`,
+            background: showGray
               ? (isDark ? '#1e293b' : '#f1f5f9')
               : `linear-gradient(135deg,${accent}22,${gFrom})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 20, flexShrink: 0,
-            boxShadow: dead ? 'none' : `0 0 0 3px ${accent}22`,
+            boxShadow: showGray ? 'none' : `0 0 0 3px ${accent}22`,
           }}>
             {data.photo_url
               ? <img src={data.photo_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
@@ -334,7 +339,7 @@ function PersonNode({ data }) {
           {/* Last name */}
           <div style={{
             fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-            color: dead ? (isDark ? '#64748b' : '#94a3b8') : accent2,
+            color: showGray ? (isDark ? '#64748b' : '#94a3b8') : accent2,
             lineHeight: 1, marginBottom: 2,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{lastName}</div>
@@ -353,7 +358,7 @@ function PersonNode({ data }) {
               fontSize: 10, color: isDark ? '#64748b' : '#94a3b8', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 3,
             }}>
-              {ageAtDeath != null ? `${ageAtDeath} yil yashadi` : ''}
+              {ageAtDeath != null ? `${ageAtDeath} yil yashadi` : '🌿 Vafot etgan'}
             </div>
           ) : (
             ageNow != null && (
@@ -1079,7 +1084,7 @@ function PersonDetailModal({ personId, onClose, navigate, onFocus, isFocused }) 
   )
 
   const male   = detail?.gender === 'male'
-  const dead   = !!detail?.death_date
+  const dead   = !!detail?.death_date || !!detail?.deceased
   const accent = dead ? '#6b7280' : male ? '#6366f1' : '#ec4899'
   const accentLight = dead ? '#f3f4f6' : male ? '#eef2ff' : '#fff0f8'
   const heroGrad = dead
@@ -1854,7 +1859,7 @@ function MobileListView({ rawPersons, onPersonClick, toolbarSearch = '', user })
           <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
             {byGen[gen].sort((a,b) => (a.child_number||99)-(b.child_number||99)).map(p => {
               const male = p.gender === 'male'
-              const dead = !!p.death_date
+              const dead = !!p.death_date || !!p.deceased
               const accent = dead ? '#6b7280' : male ? '#6366f1' : '#ec4899'
               const age = p.birth_date
                 ? Math.floor((new Date() - new Date(p.birth_date + 'T00:00:00')) / (365.25*86400000))
@@ -2697,7 +2702,7 @@ function TreeFlow({ rawPersons, stats }) {
               background: dimDeceased ? '#1e293b' : '#f8fafc',
               color: dimDeceased ? 'white' : '#64748b',
               borderColor: dimDeceased ? '#1e293b' : '#e2e8f0', transition:'all 0.2s' }}>
-            🌿 <span className="hide-mobile">{dimDeceased ? 'Asl holat' : 'Xiralatish'}</span>
+            🌿 <span className="hide-mobile">{dimDeceased ? 'Asl holat' : 'Vafot etgan'}</span>
           </button>
 
           {/* 12. Share button */}
