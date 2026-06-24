@@ -294,7 +294,7 @@ function SearchInput({ label, value, onChange, persons, selectedId, onSelect, ac
   const selected = persons.find(p => p.id === selectedId)
 
   return (
-    <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+    <div className="rel-search-wrap" style={{ position: 'relative', flex: 1, minWidth: 200 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase',
         letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
 
@@ -547,9 +547,10 @@ export default function RelationshipPage() {
           .rel-topbar-count { font-size: 10px !important; padding: 3px 8px !important; }
           .rel-wrap { padding: 12px 10px 80px !important; }
           .rel-selector { padding: 16px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
-          .rel-inputs-row { flex-direction: column !important; }
-          .rel-swap-btn { flex-direction: row !important; gap: 8px !important; padding-bottom: 0 !important; }
+          .rel-inputs-row { flex-direction: column !important; align-items: stretch !important; }
+          .rel-swap-btn { flex-direction: row !important; gap: 8px !important; padding-bottom: 0 !important; align-self: center !important; }
           .rel-swap-inner { width: 38px !important; height: 38px !important; }
+          .rel-search-wrap { min-width: unset !important; width: 100% !important; }
           .rel-preview { padding: 12px 14px !important; margin-top: 14px !important; }
           .rel-result-header { padding: 16px 16px 14px !important; }
           .rel-result-hero { gap: 12px !important; }
@@ -599,7 +600,11 @@ export default function RelationshipPage() {
         {/* ── Selector panel ── */}
         <div className="rel-selector" style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '20px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 20 }}>
+          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 20,
+          overflow: 'hidden', position: 'relative' }}>
+          {/* Decorative gradient strip */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+            background: 'linear-gradient(90deg,#6366f1,#ec4899)', borderRadius: '24px 24px 0 0' }} />
 
           <div className="rel-inputs-row" style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
             <SearchInput
