@@ -504,112 +504,107 @@ export default function UserLayout() {
             }}/>
           )}
 
-          {/* Action panel */}
+          {/* Action panel — chapdan chiqadi */}
           {fabOpen && (
             <div style={{
-              position:'fixed', bottom:74, right:14, zIndex:200,
+              position:'fixed', bottom:130, left:14, zIndex:200,
               display:'flex', flexDirection:'column', gap:10,
               animation:'fabPanelIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both',
             }}>
               {/* Login / Ro'yxat — faqat guest uchun */}
               {!user && (
-                <div style={{ display:'flex', alignItems:'center', gap:10, justifyContent:'flex-end' }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:'white',
-                    background:'rgba(0,0,0,0.55)', padding:'4px 10px', borderRadius:20,
-                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
-                    Kirish / Ro'yxat
-                  </span>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <button onClick={() => { setFabOpen(false); setShowAuthModal(true) }} style={{
                     width:46, height:46, borderRadius:'50%', border:'none', cursor:'pointer',
                     background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    boxShadow:'0 6px 20px rgba(99,102,241,0.55)', fontSize:20,
-                    flexShrink:0,
+                    boxShadow:'0 6px 20px rgba(99,102,241,0.55)', fontSize:20, flexShrink:0,
                   }}>🔑</button>
+                  <span style={{ fontSize:12, fontWeight:700, color:'white',
+                    background:'rgba(0,0,0,0.6)', padding:'5px 11px', borderRadius:20,
+                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
+                    Kirish / Ro'yxat
+                  </span>
                 </div>
               )}
 
               {/* Admin panel — login bo'lganda */}
               {user && (
-                <div style={{ display:'flex', alignItems:'center', gap:10, justifyContent:'flex-end' }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:'white',
-                    background:'rgba(0,0,0,0.55)', padding:'4px 10px', borderRadius:20,
-                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
-                    {isAdmin() ? 'Admin panel' : 'Mening panelim'}
-                  </span>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <button onClick={() => { setFabOpen(false); navigate('/admin') }} style={{
                     width:46, height:46, borderRadius:'50%', border:'none', cursor:'pointer',
                     background:'linear-gradient(135deg,#4f46e5,#7c3aed)',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    boxShadow:'0 6px 20px rgba(79,70,229,0.55)', fontSize:20,
-                    flexShrink:0,
+                    boxShadow:'0 6px 20px rgba(79,70,229,0.55)', fontSize:20, flexShrink:0,
                   }}>⚙️</button>
+                  <span style={{ fontSize:12, fontWeight:700, color:'white',
+                    background:'rgba(0,0,0,0.6)', padding:'5px 11px', borderRadius:20,
+                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
+                    {isAdmin() ? 'Admin panel' : 'Mening panelim'}
+                  </span>
                 </div>
               )}
 
               {/* Telegram bot */}
-              <div style={{ display:'flex', alignItems:'center', gap:10, justifyContent:'flex-end' }}>
-                <span style={{ fontSize:11, fontWeight:700, color:'white',
-                  background:'rgba(0,0,0,0.55)', padding:'4px 10px', borderRadius:20,
-                  backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
-                  Telegram bot
-                </span>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <a href="https://t.me/mening_shajarambot" target="_blank" rel="noreferrer"
                   onClick={() => setFabOpen(false)}
                   style={{
                     width:46, height:46, borderRadius:'50%', border:'none', cursor:'pointer',
                     background:'linear-gradient(135deg,#229ED9,#0ea5e9)',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    boxShadow:'0 6px 20px rgba(34,158,217,0.55)', textDecoration:'none',
-                    flexShrink:0,
+                    boxShadow:'0 6px 20px rgba(34,158,217,0.55)', textDecoration:'none', flexShrink:0,
                   }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.658-.64.136-.954l11.566-4.458c.537-.194 1.006.131.972.957z"/>
                   </svg>
                 </a>
+                <span style={{ fontSize:12, fontWeight:700, color:'white',
+                  background:'rgba(0,0,0,0.6)', padding:'5px 11px', borderRadius:20,
+                  backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
+                  Telegram bot
+                </span>
               </div>
 
               {/* Akkauntdan chiqish — login bo'lganda */}
               {user && (
-                <div style={{ display:'flex', alignItems:'center', gap:10, justifyContent:'flex-end' }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:'white',
-                    background:'rgba(0,0,0,0.55)', padding:'4px 10px', borderRadius:20,
-                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
-                    Akkauntdan chiqish
-                  </span>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <button onClick={() => { setFabOpen(false); logout(); navigate('/') }} style={{
                     width:46, height:46, borderRadius:'50%', border:'none', cursor:'pointer',
                     background:'linear-gradient(135deg,#64748b,#475569)',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    boxShadow:'0 6px 20px rgba(100,116,139,0.5)', fontSize:20,
-                    flexShrink:0,
+                    boxShadow:'0 6px 20px rgba(100,116,139,0.5)', fontSize:20, flexShrink:0,
                   }}>👤</button>
+                  <span style={{ fontSize:12, fontWeight:700, color:'white',
+                    background:'rgba(0,0,0,0.6)', padding:'5px 11px', borderRadius:20,
+                    backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
+                    Akkauntdan chiqish
+                  </span>
                 </div>
               )}
 
               {/* Qulflash */}
-              <div style={{ display:'flex', alignItems:'center', gap:10, justifyContent:'flex-end' }}>
-                <span style={{ fontSize:11, fontWeight:700, color:'white',
-                  background:'rgba(0,0,0,0.55)', padding:'4px 10px', borderRadius:20,
-                  backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
-                  Saytni qulflash
-                </span>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <button onClick={() => { setFabOpen(false); if (user) logout(); clearPinSession() }} style={{
                   width:46, height:46, borderRadius:'50%', border:'none', cursor:'pointer',
                   background:'linear-gradient(135deg,#ef4444,#dc2626)',
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 6px 20px rgba(239,68,68,0.5)', fontSize:20,
-                  flexShrink:0,
+                  boxShadow:'0 6px 20px rgba(239,68,68,0.5)', fontSize:20, flexShrink:0,
                 }}>🔒</button>
+                <span style={{ fontSize:12, fontWeight:700, color:'white',
+                  background:'rgba(0,0,0,0.6)', padding:'5px 11px', borderRadius:20,
+                  backdropFilter:'blur(4px)', whiteSpace:'nowrap' }}>
+                  Saytni qulflash
+                </span>
               </div>
             </div>
           )}
 
-          {/* FAB toggle button */}
+          {/* FAB toggle button — chapda */}
           <button
             onClick={() => setFabOpen(v => !v)}
             style={{
-              position:'fixed', bottom:74, right:14, zIndex:201,
+              position:'fixed', bottom:74, left:14, zIndex:201,
               width:48, height:48, borderRadius:'50%', border:'none', cursor:'pointer',
               background: fabOpen
                 ? 'linear-gradient(135deg,#ef4444,#dc2626)'
