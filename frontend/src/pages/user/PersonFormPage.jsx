@@ -544,7 +544,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
             className="btn btn-ghost text-sm px-3 py-1.5 rounded-lg">
             ← Orqaga
           </button>
-          <div className="w-px h-5 bg-gray-200" />
+          <div className="w-px h-5 bg-gray-200 pf-topbar-divider" />
           <div>
             <h1 className="text-base font-bold text-gray-800">
               {isEdit ? '✏️ Shaxsni tahrirlash' : '➕ Yangi shaxs qo\'shish'}
@@ -559,7 +559,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
             </button>
           )}
           <button type="button" onClick={() => { setForm({ first_name:'',last_name:'',middle_name:'',gender:'male',child_number:'',birth_date:'',death_date:'',phone:'',birth_place:'',father:'',mother:'' }); setPhotoPreview(null); setPhoto(null); setNewSpouse({ partner:'', wedding_date:'' }) }}
-            className="btn btn-ghost text-sm">
+            className="btn btn-ghost text-sm pf-btn-clear">
             🔄 Tozalash
           </button>
           <button
@@ -574,20 +574,59 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
 
       {/* Form body - no scroll */}
       <style>{`
+        /* Mobile save bar: hidden on desktop */
+        .pf-mobile-savebar { display: none; }
         @media (max-width: 640px) {
-          .pf-outer    { height: auto !important; min-height: 100vh; overflow: visible !important; display: flex; flex-direction: column; }
-          .pf-form     { overflow: visible !important; height: auto !important; flex: unset !important; }
-          .pf-right    { overflow: visible !important; }
-          .pf-layout   { grid-template-columns: 1fr !important; grid-template-rows: auto auto !important; }
-          .pf-left     { border-right: none !important; border-bottom: 1px solid #f1f5f9; flex-direction: row !important; align-items: center !important; padding: 10px 14px !important; gap: 14px !important; }
-          .pf-topbar   { flex-wrap: wrap; gap: 6px !important; padding: 8px 12px !important; }
+          .pf-mobile-savebar { display: flex !important; }
+          /* Outer / form scroll */
+          .pf-outer  { height: auto !important; min-height: 100vh; overflow: visible !important; display: flex; flex-direction: column; }
+          .pf-form   { overflow: visible !important; height: auto !important; flex: unset !important; }
+          .pf-layout { grid-template-columns: 1fr !important; grid-template-rows: auto auto !important; }
+
+          /* Left panel — compact horizontal strip */
+          .pf-left {
+            border-right: none !important;
+            border-bottom: 1px solid #e2e8f0;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            padding: 10px 14px !important;
+            gap: 14px !important;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+          }
+          /* Avatar smaller on mobile */
+          .pf-left .w-28 { width: 72px !important; height: 72px !important; }
+          /* Gender buttons — horizontal row */
+          .pf-left .space-y-2 { display: flex !important; flex-direction: row !important; gap: 8px !important; }
+          .pf-left .space-y-2 > * { flex: 1; }
+          /* OCR label compact */
+          .pf-left-ocr { margin-top: 0 !important; }
+          /* Hide upload hint text */
+          .pf-left .text-xs.text-gray-300 { display: none !important; }
+
+          /* Top bar */
+          .pf-topbar { flex-wrap: wrap; gap: 6px !important; padding: 8px 12px !important; }
           .pf-topbar h1 { font-size: 13px !important; }
-          .pf-topbar p  { display: none; }
-          .pf-topbtns  { flex-wrap: wrap; gap: 4px !important; }
-          .pf-topbtns button { padding: 5px 8px !important; font-size: 11px !important; }
-          .pf-grid3    { grid-template-columns: 1fr 1fr !important; }
-          .pf-grid4    { grid-template-columns: 1fr 1fr !important; }
-          .pf-right    { padding: 14px !important; padding-bottom: 80px !important; }
+          .pf-topbar p  { display: none !important; }
+          .pf-topbar-divider { display: none !important; }
+          .pf-topbtns { flex-wrap: wrap; gap: 4px !important; }
+          .pf-topbtns button { padding: 6px 10px !important; font-size: 11px !important; border-radius: 8px !important; }
+          /* Hide "Tozalash" on mobile — save space */
+          .pf-btn-clear { display: none !important; }
+
+          /* Field grids */
+          .pf-grid3 { grid-template-columns: 1fr !important; }
+          .pf-grid4 { grid-template-columns: 1fr 1fr !important; }
+          .pf-grid2 { grid-template-columns: 1fr !important; }
+
+          /* Right panel */
+          .pf-right { overflow: visible !important; padding: 14px !important; padding-bottom: 96px !important; gap: 12px !important; }
+
+          /* Hints section — 1 col */
+          .pf-hints { grid-template-columns: 1fr !important; }
+
+          /* Family form sub-grid */
+          .pf-famgrid { grid-template-columns: 1fr !important; }
         }
       `}</style>
       {/* ── 16. OCR taklif modali ── */}
@@ -815,7 +854,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
         </div>
 
         {/* RIGHT: Fields */}
-        <div className="overflow-hidden p-5 grid pf-right" style={{ gridTemplateRows: 'auto auto auto auto auto', gap: '14px', alignContent: 'start' }}>
+        <div className="p-5 grid pf-right" style={{ gridTemplateRows: 'auto auto auto auto auto', gap: '14px', alignContent: 'start' }}>
 
           {/* Row 1: Name fields */}
           <div>
@@ -909,7 +948,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           {/* Row 3: Ota-ona */}
           <div>
             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">👨‍👩‍👦 Ota-onasi</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pf-grid2">
               {[
                 ['father', '👨 Otasi', 'male'],
                 ['mother', '👩 Onasi', 'female'],
@@ -934,7 +973,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           {!isEdit && (
             <div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">💍 Turmush o'rtog'i</div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 pf-grid2">
                 <Field label="💍 Turmush o'rtog'i (ixtiyoriy)">
                   <select value={newSpouse.partner}
                     onChange={e => setNewSpouse(s => ({ ...s, partner: e.target.value }))}
@@ -974,7 +1013,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
                   background: isDark ? 'rgba(5,46,22,0.5)' : '#f0fdf4',
                   border: `1px solid ${isDark ? '#166534' : '#bbf7d0'}`,
                 }}>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="grid grid-cols-2 gap-2 mb-2 pf-famgrid">
                     <Field label="💍 Turmush o'rtog'i *">
                       <select value={famForm.partner} onChange={e => setFamForm(f => ({...f, partner: e.target.value}))} className="form-input">
                         <option value="">— Tanlang —</option>
@@ -1072,7 +1111,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           )}
 
           {/* Hints */}
-          <div className="grid grid-cols-2 gap-3 p-3 rounded-xl" style={{
+          <div className="grid grid-cols-2 gap-3 p-3 rounded-xl pf-hints" style={{
             background: isDark ? 'rgba(5,46,22,0.5)' : '#f0fdf4',
             border: `1px solid ${isDark ? '#166534' : '#bbf7d0'}`,
           }}>
@@ -1085,6 +1124,47 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           </div>
         </div>
       </form>
+    </div>
+
+    {/* Mobile sticky save bar */}
+    <div className="pf-mobile-savebar" style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
+      padding: '10px 14px 14px',
+      background: isDark
+        ? 'rgba(15,23,42,0.95)'
+        : 'rgba(255,255,255,0.95)',
+      backdropFilter: 'blur(12px)',
+      borderTop: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+      display: 'flex', gap: 8,
+    }}>
+      <button type="button" onClick={() => navigate(backPath)}
+        style={{
+          padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          background: 'transparent', fontSize: 13, fontWeight: 700,
+          color: isDark ? '#94a3b8' : '#64748b', cursor: 'pointer', flexShrink: 0,
+        }}>
+        ← Orqaga
+      </button>
+      {isEdit && (
+        <button type="button" onClick={handleDelete}
+          style={{
+            padding: '10px 12px', borderRadius: 10, border: 'none',
+            background: isDark ? 'rgba(127,29,29,0.4)' : '#fee2e2',
+            color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+          }}>
+          🗑️
+        </button>
+      )}
+      <button type="button" onClick={handleSubmit} disabled={loading}
+        style={{
+          flex: 1, padding: '11px', borderRadius: 10, border: 'none',
+          background: loading ? '#a5b4fc' : 'linear-gradient(135deg,#4f46e5,#7c3aed)',
+          color: 'white', fontSize: 14, fontWeight: 800,
+          cursor: loading ? 'default' : 'pointer',
+          boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+        }}>
+        {loading ? '⏳ Saqlanmoqda...' : '💾 Saqlash'}
+      </button>
     </div>
     </>
   )
