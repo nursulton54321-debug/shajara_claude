@@ -65,6 +65,22 @@ def _upload_to_imagekit(instance):
         logging.getLogger(__name__).warning(f"[ImageKit] xato: {e}")
 
 
+def _sync_person_reminders(person, user):
+    """Shaxsning tug'ilgan kuni va vafot sanasi bo'yicha eslatma yaratadi/yangilaydi."""
+    if person.birth_date:
+        Reminder.objects.get_or_create(
+            person=person, type='birthday',
+            defaults={'date': person.birth_date, 'note': f"{person.full_name}ning tug'ilgan kuni", 'is_active': True, 'created_by': user}
+        )
+        Reminder.objects.filter(person=person, type='birthday').update(date=person.birth_date)
+    if person.death_date:
+        Reminder.objects.get_or_create(
+            person=person, type='death',
+            defaults={'date': person.death_date, 'note': f"{person.full_name} vafot etgan sana", 'is_active': True, 'created_by': user}
+        )
+        Reminder.objects.filter(person=person, type='death').update(date=person.death_date)
+
+
 class PersonListCreateView(generics.ListCreateAPIView):
     serializer_class = PersonShortSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -78,6 +94,7 @@ class PersonListCreateView(generics.ListCreateAPIView):
         instance = serializer.save(created_by=self.request.user)
         _upload_to_imagekit(instance)
         log_action(self.request, 'create', instance)
+        _sync_person_reminders(instance, self.request.user)
 
     def get_queryset(self):
         qs = Person.objects.all()
@@ -114,6 +131,7 @@ class PersonDetailView(generics.RetrieveUpdateDestroyAPIView):
         changes = _diff(old, new)
         if changes:
             log_action(self.request, 'update', instance, changes=changes)
+        _sync_person_reminders(instance, self.request.user)
 
     def perform_destroy(self, instance):
         log_action(self.request, 'delete', instance,
@@ -229,7 +247,13 @@ class ReminderStatsView(APIView):
     def get(self, request):
         today = timezone.now().date()
         qs = Reminder.objects.filter(is_active=True)
-        in_30 = sum(1 for r in qs if r.days_until <= 30)
+        in_30 = 0
+        for r in qs:
+            try:
+                if r.days_until <= 30:
+                    in_30 += 1
+            except Exception:
+                pass
         this_month = qs.filter(date__month=today.month).count()
         return Response({
             'total': Reminder.objects.count(),

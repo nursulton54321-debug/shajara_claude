@@ -239,7 +239,7 @@ export default function AdminPersons() {
         ) : (
           <>
             {/* ── Desktop: jadval ── */}
-            <div className="adp-table-wrap" style={{ overflowX:'auto' }}>
+            <div className="adp-table-wrap" style={{ overflowX:'auto', overflowY:'auto', maxHeight:'calc(100vh - 260px)' }}>
               <table className="data-table">
                 <thead>
                   <tr>
