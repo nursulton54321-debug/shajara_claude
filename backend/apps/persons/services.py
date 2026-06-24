@@ -39,13 +39,14 @@ def get_statistics(today=None):
     Bot va veb bir xil hisoblaydi.
     """
     from .models import Person
+    from django.db.models import Q
     today = today or timezone.now().date()
     qs = Person.objects.all()
     total    = qs.count()
     male     = qs.filter(gender='male').count()
     female   = qs.filter(gender='female').count()
-    deceased = qs.filter(death_date__isnull=False).count()
-    alive    = qs.filter(death_date__isnull=True).count()
+    deceased = qs.filter(Q(death_date__isnull=False) | Q(deceased=True)).count()
+    alive    = qs.filter(death_date__isnull=True, deceased=False).count()
     return {
         'total':    total,
         'male':     male,

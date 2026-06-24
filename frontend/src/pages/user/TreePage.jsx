@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo, createContext, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createShareLink, getShareLinks, deleteShareLink } from '../../api/persons'
 import {
@@ -39,6 +39,9 @@ const calcAge = (birth, death) => {
   return Math.floor((e - new Date(birth + 'T00:00:00')) / (365.25 * 86400000))
 }
 
+// ── Hover context — ReactFlow node memo'ni chetlab o'tish ──────
+const HoverCtx = createContext({ hoveredId: null, connectedIds: null })
+
 // ── PersonNode ─────────────────────────────────────────────────
 function PersonNode({ data }) {
   const male      = data.gender === 'male'
@@ -46,8 +49,9 @@ function PersonNode({ data }) {
   const dimmed    = data.dimDeceased && dead
   const showGray  = dimmed   // faqat dimmed rejimda kulrang ko'rsatiladi
   const isFocused = data.isFocused
-  // Hover-highlight: agar boshqa kard hover bo'lsa va bu kard bog'liq bo'lmasa — xiralash
-  const dimByHover = !!(data.hoveredId && data.hoveredId !== String(data.id) && !data.connectedIds?.has(String(data.id)))
+  // Hover-highlight: Context orqali o'qiladi (ReactFlow node memo'ni chetlab o'tadi)
+  const { hoveredId, connectedIds } = useContext(HoverCtx)
+  const dimByHover = !!(hoveredId && !connectedIds?.has(String(data.id)))
   const { isDark } = useThemeStore()
   const [hoverPos, setHoverPos] = useState(null)
 
@@ -2140,7 +2144,7 @@ function TreeFlow({ rawPersons, stats }) {
     const genMap    = computeGenerations(rawPersons)
     const genVals   = Object.values(genMap)
     const genCount  = genVals.length ? Math.max(...genVals) + 1 : 1
-    const alive     = rawPersons.filter(p => !p.death_date)
+    const alive     = rawPersons.filter(p => !p.death_date && !p.deceased && !p.is_deceased)
     const ages      = alive.map(p => calcAge(p.birth_date, null)).filter(a => a != null && a >= 0)
     const avgAge    = ages.length ? Math.round(ages.reduce((s, a) => s + a, 0) / ages.length) : null
     const males     = rawPersons.filter(p => p.gender === 'male').length
@@ -2422,10 +2426,7 @@ function TreeFlow({ rawPersons, stats }) {
     })
   }, [hoveredId, hoveredConnectedIds, edges])
 
-  const visibleNodes = baseNodes.map(n => {
-    if (n.type !== 'personNode') return n
-    return { ...n, data: { ...n.data, hoveredId: hoveredId || null, connectedIds: hoveredConnectedIds } }
-  })
+  const visibleNodes = baseNodes
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', background:'linear-gradient(135deg,#eef2ff,#fdf4ff)' }}>
@@ -2979,6 +2980,7 @@ function TreeFlow({ rawPersons, stats }) {
       )}
 
       {/* Canvas — har doim DOM da, lekin list rejimida joy egallamas */}
+      <HoverCtx.Provider value={{ hoveredId, connectedIds: hoveredConnectedIds }}>
       <div
         style={{
           flex: viewMode === 'tree' ? 1 : 0,
@@ -3142,6 +3144,7 @@ function TreeFlow({ rawPersons, stats }) {
           <TreeEmptyState navigate={navigate} isDark={isDark} />
         )}
       </div>
+      </HoverCtx.Provider>
     </div>
   )
 }
