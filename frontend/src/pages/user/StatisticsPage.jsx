@@ -54,23 +54,37 @@ const calcAge = (birth, death) => {
   return Math.floor((e - new Date(birth + 'T00:00:00')) / (365.25 * 86400000))
 }
 
-// O'zbek viloyatlari koordinatalari — kalit so'zlar va sinonimlar bilan
+// O'zbek viloyatlari + tumanlar koordinatalari
 const PLACE_COORDS = [
-  { keys: ['toshkent shahr', 'toshkent sh'],  coords: [41.2995, 69.2401], label: 'Toshkent shahri' },
-  { keys: ['toshkent viloyat', 'toshkent v'], coords: [41.1123, 69.8597], label: 'Toshkent viloyati' },
+  { keys: ['toshkent shahr', 'toshkent sh', 'chilonzor', 'yakkasaroy', 'shayxontohur', 'yunusobod', 'mirobod', 'mirzo ulug', 'olmaz', 'bektemir', 'uchtepa', 'sergeli'],
+    coords: [41.2995, 69.2401], label: 'Toshkent shahri' },
+  { keys: ['toshkent viloyat', 'toshkent v', 'chirchiq', 'angren', 'olmaliq', 'nurafshon', 'bo\'stonliq', 'bostanliq', 'ohangaron', 'yangiyo\'l', 'yangiyo`l'],
+    coords: [41.1123, 69.8597], label: 'Toshkent viloyati' },
   { keys: ['toshkent'],                        coords: [41.2995, 69.2401], label: 'Toshkent' },
-  { keys: ['andijon'],                         coords: [40.7821, 72.3442], label: 'Andijon' },
-  { keys: ["farg'ona", 'fargona', 'fergana'],  coords: [40.3864, 71.7864], label: "Farg'ona" },
-  { keys: ['namangan'],                        coords: [41.0011, 71.6726], label: 'Namangan' },
-  { keys: ['samarqand'],                       coords: [39.6542, 66.9597], label: 'Samarqand' },
-  { keys: ['buxoro', 'bukhara'],               coords: [39.7747, 64.4286], label: 'Buxoro' },
-  { keys: ['qashqadaryo', 'kashkadarya'],      coords: [38.8610, 65.7880], label: 'Qashqadaryo' },
-  { keys: ['surxondaryo', 'surkhandarya'],     coords: [37.9400, 67.5680], label: 'Surxondaryo' },
-  { keys: ['navoiy', 'navoi'],                 coords: [40.0841, 65.3792], label: 'Navoiy' },
-  { keys: ['xorazm', 'khorezm'],               coords: [41.5522, 60.6247], label: 'Xorazm' },
-  { keys: ["qoraqalpog'iston", 'karakalpak', 'nukus'], coords: [43.7304, 59.6166], label: "Qoraqalpog'iston" },
-  { keys: ['jizzax'],                          coords: [40.1158, 67.8422], label: 'Jizzax' },
-  { keys: ['sirdaryo', 'syrdarya'],            coords: [40.8484, 68.6614], label: 'Sirdaryo' },
+  { keys: ['andijon', 'asaka', 'xo\'jaobod', 'xojaobod', 'marhamat', 'ulug\'nor', 'jalaquduq', 'shahrixon', 'bo\'z', 'izboskan', 'buloqboshi', 'qo\'rg\'ontepa'],
+    coords: [40.7821, 72.3442], label: 'Andijon' },
+  { keys: ["farg'ona", 'fargona', 'fergana', 'marg\'ilon', 'margilon', 'qo\'qon', 'quva', 'rishton', 'bag\'dod', 'dang\'ara', 'yozyovon', 'oltiariq', 'furqat'],
+    coords: [40.3864, 71.7864], label: "Farg'ona" },
+  { keys: ['namangan', 'chust', 'pop', 'uychi', 'kosonsoy', 'to\'raqo\'rg\'on', 'norin', 'mingbuloq', 'yangiqo\'rg\'on', 'ulug\'nor'],
+    coords: [41.0011, 71.6726], label: 'Namangan' },
+  { keys: ['samarqand', 'urgut', 'kattaqo\'rg\'on', 'bulung\'ur', 'paxtachi', 'jomboy', 'narpay', 'ishtixon', 'pastdarg\'om', 'oqdaryo', 'toyloq', 'nurobod'],
+    coords: [39.6542, 66.9597], label: 'Samarqand' },
+  { keys: ['buxoro', 'bukhara', 'g\'ijduvon', 'kogon', 'qorovulbozor', 'romitan', 'shofirkon', 'vobkent', 'jondor', 'olot', 'peshku'],
+    coords: [39.7747, 64.4286], label: 'Buxoro' },
+  { keys: ['qashqadaryo', 'kashkadarya', 'qarshi', 'shahrisabz', 'kitob', 'g\'uzor', 'koson', 'muborak', 'kamashi', 'chiroqchi', 'yakkabog\'', 'dehqonobod'],
+    coords: [38.8610, 65.7880], label: 'Qashqadaryo' },
+  { keys: ['surxondaryo', 'surkhandarya', 'termiz', 'denov', 'sho\'rchi', 'uzun', 'sherobod', 'jarqo\'rg\'on', 'qumqo\'rg\'on', 'baysun', 'boysun'],
+    coords: [37.9400, 67.5680], label: 'Surxondaryo' },
+  { keys: ['navoiy', 'navoi', 'zarafshon', 'uchquduq', 'karmana', 'konimex', 'nurota', 'tomdi', 'xatirchi'],
+    coords: [40.0841, 65.3792], label: 'Navoiy' },
+  { keys: ['xorazm', 'khorezm', 'urganch', 'urgench', 'xiva', 'khiva', 'tuproqqal\'a', 'gurlan', 'bog\'ot', 'shovot', 'yangibozor', 'qo\'shko\'pir'],
+    coords: [41.5522, 60.6247], label: 'Xorazm' },
+  { keys: ["qoraqalpog'iston", 'karakalpak', 'nukus', 'qo\'ng\'irot', 'moynoq', 'xo\'jayli', 'to\'rtko\'l', 'beruniy', 'qanlikol'],
+    coords: [43.7304, 59.6166], label: "Qoraqalpog'iston" },
+  { keys: ['jizzax', 'do\'stlik', 'dustlik', 'g\'allaorol', 'zomin', 'paxtakor', 'arnasoy', 'forish', 'sharof rashidov', 'yangiobod'],
+    coords: [40.1158, 67.8422], label: 'Jizzax' },
+  { keys: ['sirdaryo', 'syrdarya', 'guliston', 'yangiyer', 'shirin', 'xovos', 'boyovut', 'sardoba', 'mirzaobod', 'oqoltin'],
+    coords: [40.8484, 68.6614], label: 'Sirdaryo' },
 ]
 
 function getCoords(place) {
@@ -494,75 +508,108 @@ export default function StatisticsPage() {
   )
 
   return (
-    <div style={{ minHeight: '100%', background: isDark ? '#0f172a' : '#f8fafc', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100%', background: isDark ? '#0f172a' : '#f8fafc', paddingBottom: 80 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .stat-header { padding: 14px 14px 12px !important; }
+          .stat-header-title { font-size: 17px !important; }
+          .stat-header-sub { display: none !important; }
+          .stat-header-row { flex-direction: column !important; gap: 10px !important; }
+          .stat-chips { display: grid !important; grid-template-columns: 1fr 1fr 1fr 1fr !important; gap: 5px !important; }
+          .stat-chip { padding: 4px 6px !important; font-size: 10px !important; border-radius: 10px !important; flex-direction: column !important; gap: 1px !important; }
+          .stat-chip-val { font-size: 15px !important; font-weight: 900 !important; }
+          .stat-chip-lbl { font-size: 8px !important; opacity: 0.8 !important; }
+          .stat-export-btns { display: flex !important; gap: 6px !important; width: 100% !important; }
+          .stat-export-btns button { flex: 1 !important; padding: 6px 8px !important; font-size: 11px !important; }
+          .stat-tabs-row { padding: 10px 10px 0 !important; gap: 4px !important; }
+          .stat-tab-btn { padding: 7px 10px !important; font-size: 11px !important; }
+          .stat-tab-label { display: none !important; }
+          .stat-tab-icon { font-size: 18px !important; }
+          .stat-content { padding: 12px 10px !important; gap: 14px !important; }
+          .stat-pie-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* ── Header ── */}
-      <div style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
+      <div className="stat-header" style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
         padding: '28px 28px 20px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%',
           background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div className="stat-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          {/* Title row */}
           <div style={{ color: 'white' }}>
-            <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 2 }}>Tahlil va vizualizatsiya</div>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>📊 Statistika</div>
-            <div style={{ fontSize: 12, opacity: 0.75, marginTop: 3 }}>
-              Jami {persons.length} ta shaxs · {genStats.length} ta avlod
+            <div className="stat-header-sub" style={{ fontSize: 11, opacity: 0.65, marginBottom: 2 }}>Tahlil va vizualizatsiya</div>
+            <div className="stat-header-title" style={{ fontSize: 22, fontWeight: 900 }}>📊 Statistika</div>
+            <div className="stat-header-sub" style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
+              {persons.length} ta shaxs · {genStats.length} ta avlod
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Mini stat chips */}
-            {[
-              { label: 'Erkaklar',    value: persons.filter(p=>p.gender==='male').length,   color: '#818cf8' },
-              { label: 'Ayollar',     value: persons.filter(p=>p.gender==='female').length,  color: '#f9a8d4' },
-              { label: 'Tirik',       value: persons.filter(p=>!p.death_date).length,        color: '#6ee7b7' },
-              { label: 'Vafot etgan', value: persons.filter(p=>p.death_date).length,         color: '#d1d5db' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                background: 'rgba(255,255,255,0.15)', color, backdropFilter: 'blur(4px)',
-                border: '1px solid rgba(255,255,255,0.2)' }}>
-                {value} {label}
-              </div>
-            ))}
-            {/* Eksport tugmalari */}
-            <button onClick={handleExportPDF} disabled={pdfLoading}
-              style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
-                backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
-                opacity: pdfLoading ? 0.6 : 1 }}>
-              {pdfLoading ? '⏳' : '📄'} PDF
-            </button>
-            <button onClick={handleExportBackup} disabled={zipLoading}
-              style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
-                backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
-                opacity: zipLoading ? 0.6 : 1 }}>
-              {zipLoading ? '⏳' : '📦'} Backup
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 380 }}>
+            {/* Mini stat chips — 4 ta grid */}
+            <div className="stat-chips" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Erkaklar', value: persons.filter(p=>p.gender==='male').length,  color: '#818cf8', icon: '👨' },
+                { label: 'Ayollar',  value: persons.filter(p=>p.gender==='female').length, color: '#f9a8d4', icon: '👩' },
+                { label: 'Tirik',    value: persons.filter(p=>!p.death_date).length,       color: '#6ee7b7', icon: '💚' },
+                { label: 'Vafot',    value: persons.filter(p=>p.death_date).length,        color: '#d1d5db', icon: '🕯️' },
+              ].map(({ label, value, color, icon }) => (
+                <div key={label} className="stat-chip" style={{
+                  padding: '6px 12px', borderRadius: 16, fontWeight: 700,
+                  background: 'rgba(255,255,255,0.14)', color, backdropFilter: 'blur(4px)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  display: 'flex', alignItems: 'center', gap: 5, flex: '1 0 auto',
+                }}>
+                  <span style={{ fontSize: 14 }}>{icon}</span>
+                  <span className="stat-chip-val" style={{ fontSize: 14, fontWeight: 900 }}>{value}</span>
+                  <span className="stat-chip-lbl" style={{ fontSize: 10 }}>{label}</span>
+                </div>
+              ))}
+            </div>
+            {/* Export buttons */}
+            <div className="stat-export-btns" style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleExportPDF} disabled={pdfLoading}
+                style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
+                  backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
+                  opacity: pdfLoading ? 0.6 : 1 }}>
+                {pdfLoading ? '⏳' : '📄'} PDF
+              </button>
+              <button onClick={handleExportBackup} disabled={zipLoading}
+                style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
+                  backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
+                  opacity: zipLoading ? 0.6 : 1 }}>
+                {zipLoading ? '⏳' : '📦'} Backup
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display: 'flex', gap: 4, padding: '16px 28px 0', overflowX: 'auto' }}>
+      <div className="stat-tabs-row" style={{ display: 'flex', gap: 4, padding: '16px 28px 0', overflowX: 'auto' }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className="stat-tab-btn"
             style={{
               padding: '9px 18px', borderRadius: 12, fontSize: 12, fontWeight: 700,
               border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-              transition: 'all 0.15s',
+              transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
               background: activeTab === t.id
                 ? 'linear-gradient(135deg,#4f46e5,#7c3aed)'
                 : (isDark ? '#1e293b' : '#f1f5f9'),
               color: activeTab === t.id ? 'white' : textSecondary,
               boxShadow: activeTab === t.id ? '0 4px 12px rgba(79,70,229,0.35)' : 'none',
+              flex: '1 0 auto',
             }}>
-            {t.icon} {t.label}
+            <span className="stat-tab-icon">{t.icon}</span>
+            <span className="stat-tab-label">{t.label}</span>
           </button>
         ))}
       </div>
 
-      <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="stat-content" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* ═══════════════════ 2.1 AVLODLAR STATISTIKASI ═══════════════════ */}
         {activeTab === 'generations' && (
@@ -618,7 +665,7 @@ export default function StatisticsPage() {
             </Card>
 
             {/* ── Jins nisbati + Hayot holati (yonma-yon) ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="stat-pie-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Jins nisbati */}
               <Card title="Jins nisbati" icon="👫" accent="#3b82f6">
                 <div style={{ fontSize: 11, color: textSecondary, marginBottom: 8 }}>
