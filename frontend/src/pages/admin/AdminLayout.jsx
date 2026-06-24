@@ -288,104 +288,87 @@ export default function AdminLayout() {
         </main>
       </div>
 
-      {/* ── Mobile bottom nav — premium ── */}
+      {/* ── Mobile bottom nav — 2-row premium ── */}
       <nav className="admin-mobile-nav" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
         background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.97)',
         backdropFilter: 'blur(24px)',
         borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
-        boxShadow: isDark
-          ? '0 -8px 40px rgba(0,0,0,0.5)'
-          : '0 -8px 40px rgba(0,0,0,0.1)',
+        boxShadow: isDark ? '0 -8px 40px rgba(0,0,0,0.5)' : '0 -8px 40px rgba(0,0,0,0.1)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         flexDirection: 'column',
       }}>
-        {/* Gradient accent line on top */}
-        <div style={{
-          height: 2,
-          background: 'linear-gradient(90deg,#6366f1,#3b82f6,#10b981,#f59e0b,#ec4899)',
-          opacity: 0.7,
-        }}/>
+        {/* Gradient accent line */}
+        <div style={{ height: 2, background: 'linear-gradient(90deg,#6366f1,#3b82f6,#10b981,#f59e0b,#ec4899)', opacity: 0.8 }}/>
 
-        <div style={{
-          display: 'flex',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          padding: '6px 8px 4px',
-          gap: 2,
-          alignItems: 'center',
-        }}>
-          {/* Nav items */}
-          {MOBILE_NAV_ITEMS.map(({ to, label, icon, end }) => {
+        {/* ── Row 1: asosiy navigatsiya ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', padding: '5px 4px 2px' }}>
+          {MOBILE_NAV_ITEMS.slice(0,5).map(({ to, label, icon, end }) => {
             const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
             const showBadge = label === 'Eslatma' && birthdayCount > 0
             return (
-              <NavLink key={to} to={to} end={end}
-                style={{ textDecoration: 'none', flexShrink: 0 }}>
+              <NavLink key={to} to={to} end={end} style={{ textDecoration:'none' }}>
                 <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                  padding: '5px 10px', borderRadius: 12, minWidth: 50,
-                  background: isActive
-                    ? 'linear-gradient(135deg,#6366f1,#3b82f6)'
-                    : 'transparent',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+                  padding:'5px 2px', borderRadius:10, position:'relative',
+                  background: isActive ? 'linear-gradient(135deg,#6366f1,#3b82f6)' : 'transparent',
                   color: isActive ? 'white' : isDark ? '#64748b' : '#94a3b8',
-                  transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                  transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
                   transform: isActive ? 'translateY(-2px)' : 'none',
-                  boxShadow: isActive ? '0 4px 14px rgba(99,102,241,0.4)' : 'none',
-                  position: 'relative',
+                  boxShadow: isActive ? '0 4px 12px rgba(99,102,241,0.4)' : 'none',
+                  margin:'0 2px',
                 }}>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
-                  <span style={{ fontSize: 8, fontWeight: 800, whiteSpace: 'nowrap',
-                    marginTop: 2, letterSpacing: '0.01em' }}>{label}</span>
-                  {showBadge && (
-                    <span style={{
-                      position: 'absolute', top: 2, right: 6,
-                      width: 16, height: 16, borderRadius: '50%',
-                      background: '#ef4444', color: 'white',
-                      fontSize: 8, fontWeight: 900,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: `2px solid ${isDark ? '#0f172a' : 'white'}`,
-                    }}>{birthdayCount > 9 ? '9+' : birthdayCount}</span>
-                  )}
+                  <span style={{ fontSize:17, lineHeight:1 }}>{icon}</span>
+                  <span style={{ fontSize:7.5, fontWeight:800, whiteSpace:'nowrap', marginTop:1 }}>{label}</span>
+                  {showBadge && <span style={{ position:'absolute', top:1, right:4, width:14, height:14, borderRadius:'50%', background:'#ef4444', color:'white', fontSize:7, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${isDark?'#0f172a':'white'}` }}>{birthdayCount > 9?'9+':birthdayCount}</span>}
+                </div>
+              </NavLink>
+            )
+          })}
+        </div>
+
+        {/* ── Row 2: qolgan nav + amallar ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', padding: '2px 4px 5px' }}>
+          {MOBILE_NAV_ITEMS.slice(5).map(({ to, label, icon, end }) => {
+            const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
+            const showBadge = label === 'Eslatma' && birthdayCount > 0
+            return (
+              <NavLink key={to} to={to} end={end} style={{ textDecoration:'none' }}>
+                <div style={{
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+                  padding:'5px 2px', borderRadius:10, position:'relative',
+                  background: isActive ? 'linear-gradient(135deg,#6366f1,#3b82f6)' : 'transparent',
+                  color: isActive ? 'white' : isDark ? '#64748b' : '#94a3b8',
+                  transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                  transform: isActive ? 'translateY(-2px)' : 'none',
+                  boxShadow: isActive ? '0 4px 12px rgba(99,102,241,0.4)' : 'none',
+                  margin:'0 2px',
+                }}>
+                  <span style={{ fontSize:17, lineHeight:1 }}>{icon}</span>
+                  <span style={{ fontSize:7.5, fontWeight:800, whiteSpace:'nowrap', marginTop:1 }}>{label}</span>
+                  {showBadge && <span style={{ position:'absolute', top:1, right:4, width:14, height:14, borderRadius:'50%', background:'#ef4444', color:'white', fontSize:7, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${isDark?'#0f172a':'white'}` }}>{birthdayCount > 9?'9+':birthdayCount}</span>}
                 </div>
               </NavLink>
             )
           })}
 
-          {/* Divider */}
-          <div style={{
-            width: 1, height: 32, flexShrink: 0,
-            background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-            margin: '0 4px',
-          }}/>
-
-          {/* Akkount */}
+          {/* Chiqish */}
           <div onClick={() => { logout(); navigate('/') }}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-              padding: '5px 10px', borderRadius: 12, minWidth: 50, cursor: 'pointer',
-              color: isDark ? '#94a3b8' : '#64748b', flexShrink: 0,
-              transition: 'background 0.15s',
-            }}
-            onTouchStart={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
-            onTouchEnd={e => e.currentTarget.style.background = 'transparent'}>
-            <span style={{ fontSize: 18, lineHeight: 1 }}>👤</span>
-            <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2 }}>Chiqish</span>
+            style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+              padding:'5px 2px', borderRadius:10, cursor:'pointer', margin:'0 2px',
+              color: isDark?'#94a3b8':'#64748b' }}>
+            <span style={{ fontSize:17, lineHeight:1 }}>👤</span>
+            <span style={{ fontSize:7.5, fontWeight:800, marginTop:1 }}>Chiqish</span>
           </div>
 
           {/* Qulflash */}
           <div onClick={() => { logout(); clearPinSession() }}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-              padding: '5px 10px', borderRadius: 12, minWidth: 50, cursor: 'pointer',
-              color: '#ef4444', flexShrink: 0,
-              transition: 'background 0.15s',
-            }}
-            onTouchStart={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
-            onTouchEnd={e => e.currentTarget.style.background = 'transparent'}>
-            <span style={{ fontSize: 18, lineHeight: 1 }}>🔒</span>
-            <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2 }}>Qulflash</span>
+            style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+              padding:'5px 2px', borderRadius:10, cursor:'pointer', margin:'0 2px',
+              color:'#ef4444' }}>
+            <span style={{ fontSize:17, lineHeight:1 }}>🔒</span>
+            <span style={{ fontSize:7.5, fontWeight:800, marginTop:1 }}>Qulflash</span>
           </div>
         </div>
       </nav>

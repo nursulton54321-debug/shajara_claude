@@ -1090,3 +1090,26 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   .admin-mobile-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
   .admin-main { padding-bottom: 72px !important; }
 }
+
+/* ── Admin Dashboard recent + bday mobile ───────────────────── */
+/* Desktop: jadval ko'rsatiladi, card list yashiriladi */
+.ad-card-list { display: none; }
+.ad-table-wrap { display: block; }
+
+/* Birthday grid default 2 col */
+.ad-bday-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+@media (max-width: 640px) {
+  /* Jadval yashiriladi, card list ko'rsatiladi */
+  .ad-table-wrap { display: none !important; }
+  .ad-card-list  { display: block !important; }
+
+  /* Birthday 2-col → 1-col */
+  .ad-bday-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+
+  /* Admin mobile nav height */
+  .admin-main { padding-bottom: 96px !important; }
+
+  /* 2-row nav: no overflowX */
+  .admin-mobile-nav { overflow: visible; }
+}

@@ -309,129 +309,153 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── Jadval + Tug'ilgan kunlar ── */}
-      <div className="ad-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
-
-        {/* So'nggi qo'shilganlar */}
-        <div style={{ background: card, borderRadius: 18, border: `1px solid ${border}`, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🕐</span>
-              <span style={{ fontWeight: 900, color: textPrimary, fontSize: 16 }}>So'nggi qo'shilganlar</span>
-            </div>
-            <button onClick={() => navigate('/admin/persons')}
-              style={{ fontSize: 12, color: '#6366f1', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
-              Barchasini ko'rish →
-            </button>
+      {/* ── So'nggi qo'shilganlar (full width) ── */}
+      <div style={{ background: card, borderRadius: 18, border: `1px solid ${border}`, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🕐</span>
+            <span style={{ fontWeight: 900, color: textPrimary, fontSize: 15 }}>So'nggi qo'shilganlar</span>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>№</th><th>Shaxs</th><th>Jins</th><th>Holati</th><th>Amallar</th>
+          <button onClick={() => navigate('/admin/persons')}
+            style={{ fontSize: 12, color: '#6366f1', fontWeight: 700, background: isDark?'#1e1b4b':'#eef2ff', border: 'none', cursor: 'pointer', padding: '4px 10px', borderRadius: 8 }}>
+            Barchasi →
+          </button>
+        </div>
+        {/* Desktop jadval */}
+        <div className="ad-table-wrap" style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr><th>№</th><th>Shaxs</th><th>Jins</th><th>Holati</th><th>Amallar</th></tr>
+            </thead>
+            <tbody>
+              {recent.map((p, i) => (
+                <tr key={p.id}>
+                  <td><span style={{ width:24,height:24,borderRadius:'50%',background:isDark?'#334155':'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:textSecondary }}>{i+1}</span></td>
+                  <td>
+                    <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+                      <div style={{ width:34,height:34,borderRadius:10,overflow:'hidden',flexShrink:0,background:p.gender==='male'?'#3b82f6':'#ec4899',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:14 }}>
+                        {(p.photo_url||p.photo)?<img src={p.photo_url||p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>:(p.gender==='male'?'👨':'👩')}
+                      </div>
+                      <span style={{ fontSize:14,fontWeight:700,color:textPrimary }}>{p.full_name}</span>
+                    </div>
+                  </td>
+                  <td><span className={`badge ${p.gender==='male'?'badge-male':'badge-female'}`}>{p.gender==='male'?'👨 Erkak':'👩 Ayol'}</span></td>
+                  <td>{p.death_date?<span className="badge badge-dead">🌿 Vafot etgan</span>:<span className="badge badge-alive">💚 Tirik</span>}</td>
+                  <td>
+                    <div style={{ display:'flex',gap:4 }}>
+                      <button onClick={()=>navigate(`/admin/persons/${p.id}`)} style={{width:28,height:28,borderRadius:8,border:'none',background:'#eff6ff',color:'#2563eb',cursor:'pointer',fontSize:13}}>👁</button>
+                      <button onClick={()=>navigate(`/admin/persons/${p.id}/edit`)} style={{width:28,height:28,borderRadius:8,border:'none',background:'#fffbeb',color:'#d97706',cursor:'pointer',fontSize:13}}>✏️</button>
+                      <button onClick={()=>handleDelete(p.id,p.full_name)} style={{width:28,height:28,borderRadius:8,border:'none',background:'#fef2f2',color:'#dc2626',cursor:'pointer',fontSize:13}}>🗑️</button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {recent.map((p, i) => (
-                  <tr key={p.id}>
-                    <td><span style={{ width: 24, height: 24, borderRadius: '50%', background: isDark ? '#334155' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: textSecondary }}>{i+1}</span></td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: p.gender === 'male' ? '#3b82f6' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14 }}>
-                          {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (p.gender === 'male' ? '👨' : '👩')}
-                        </div>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: textPrimary }}>{p.full_name}</span>
-                      </div>
-                    </td>
-                    <td><span className={`badge ${p.gender === 'male' ? 'badge-male' : 'badge-female'}`}>{p.gender === 'male' ? '👨 Erkak' : '👩 Ayol'}</span></td>
-                    <td>{p.death_date ? <span className="badge badge-dead">🌿 Vafot etgan</span> : <span className="badge badge-alive">💚 Tirik</span>}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => navigate(`/admin/persons/${p.id}`)} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#eff6ff', color: '#2563eb', cursor: 'pointer', fontSize: 13 }}>👁</button>
-                        <button onClick={() => navigate(`/admin/persons/${p.id}/edit`)} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#fffbeb', color: '#d97706', cursor: 'pointer', fontSize: 13 }}>✏️</button>
-                        <button onClick={() => handleDelete(p.id, p.full_name)} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 13 }}>🗑️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Mobile card list */}
+        <div className="ad-card-list">
+          {recent.map((p, i) => (
+            <div key={p.id} style={{
+              display:'flex', alignItems:'center', gap:10,
+              padding:'10px 14px', borderBottom:`1px solid ${border}`,
+            }}>
+              <span style={{ fontSize:11,fontWeight:700,color:textMuted,width:18,flexShrink:0 }}>{i+1}</span>
+              <div style={{ width:38,height:38,borderRadius:11,overflow:'hidden',flexShrink:0,
+                background:p.gender==='male'?'#3b82f6':'#ec4899',
+                display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:16 }}>
+                {(p.photo_url||p.photo)?<img src={p.photo_url||p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>:(p.gender==='male'?'👨':'👩')}
+              </div>
+              <div style={{ flex:1,minWidth:0 }}>
+                <div style={{ fontSize:13,fontWeight:800,color:textPrimary,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{p.full_name}</div>
+                <div style={{ display:'flex',gap:5,marginTop:3,flexWrap:'wrap' }}>
+                  <span className={`badge ${p.gender==='male'?'badge-male':'badge-female'}`} style={{fontSize:10}}>
+                    {p.gender==='male'?'👨 Erkak':'👩 Ayol'}
+                  </span>
+                  {p.death_date
+                    ?<span className="badge badge-dead" style={{fontSize:10}}>🌿 Vafot</span>
+                    :<span className="badge badge-alive" style={{fontSize:10}}>💚 Tirik</span>
+                  }
+                </div>
+              </div>
+              <div style={{ display:'flex',gap:4,flexShrink:0 }}>
+                <button onClick={()=>navigate(`/admin/persons/${p.id}`)} style={{width:30,height:30,borderRadius:9,border:'none',background:'#eff6ff',color:'#2563eb',cursor:'pointer',fontSize:14}}>👁</button>
+                <button onClick={()=>navigate(`/admin/persons/${p.id}/edit`)} style={{width:30,height:30,borderRadius:9,border:'none',background:'#fffbeb',color:'#d97706',cursor:'pointer',fontSize:14}}>✏️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tug'ilgan kunlar — 2 col → 1 col mobile ── */}
+      <div className="ad-bday-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+
+        {/* Bugun */}
+        <div style={{ background:card, borderRadius:18, padding:'14px 16px', border:`1px solid ${border}` }}>
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10 }}>
+            <div style={{ display:'flex',alignItems:'center',gap:7 }}>
+              <span>🎂</span>
+              <span style={{ fontWeight:900,color:textPrimary,fontSize:14 }}>Bugungi tug'ilganlar</span>
+            </div>
+            {todayBirthdays.length>0&&<span style={{background:'#fef3c7',color:'#d97706',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:700}}>{todayBirthdays.length} ta</span>}
           </div>
+          {todayBirthdays.length===0?(
+            <div style={{textAlign:'center',padding:'12px 0',color:textMuted,fontSize:12}}>📅 Bugun yo'q</div>
+          ):(
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {todayBirthdays.map(p=>(
+                <div key={p.id} onClick={()=>navigate(`/admin/persons/${p.id}`)}
+                  style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderRadius:12,cursor:'pointer',background:'linear-gradient(135deg,#fef3c7,#fef9c3)',border:'1px solid #fde68a'}}>
+                  <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',background:p.gender==='male'?'#3b82f6':'#ec4899',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:12,fontWeight:800,flexShrink:0}}>
+                    {(p.photo_url||p.photo)?<img src={p.photo_url||p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>:p.full_name?.[0]}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#92400e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.full_name}</div>
+                    <div style={{fontSize:11,color:'#b45309'}}>{p.age!=null?`${p.age+1} yosh 🎉`:"Bugun!"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Tug'ilgan kunlar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Bugun */}
-          <div style={{ background: card, borderRadius: 18, padding: '16px 18px', border: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span>🎂</span>
-                <span style={{ fontWeight: 900, color: textPrimary, fontSize: 15 }}>Bugungi tug'ilganlar</span>
-              </div>
-              {todayBirthdays.length > 0 && (
-                <span style={{ background: '#fef3c7', color: '#d97706', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{todayBirthdays.length} ta</span>
-              )}
+        {/* Yaqinlashayotgan */}
+        <div style={{ background:card, borderRadius:18, padding:'14px 16px', border:`1px solid ${border}` }}>
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10 }}>
+            <div style={{ display:'flex',alignItems:'center',gap:7 }}>
+              <span>🗓️</span>
+              <span style={{ fontWeight:900,color:textPrimary,fontSize:14 }}>Yaqin tug'ilgan kunlar</span>
             </div>
-            {todayBirthdays.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '12px 0', color: textMuted, fontSize: 12 }}>📅 Bugun tug'ilganlar yo'q</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {todayBirthdays.map(p => (
-                  <div key={p.id} onClick={() => navigate(`/admin/persons/${p.id}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 12, cursor: 'pointer', background: 'linear-gradient(135deg,#fef3c7,#fef9c3)', border: '1px solid #fde68a' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: p.gender === 'male' ? '#3b82f6' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
-                      {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
+            {upcomingBirthdays.length>0&&<span className="badge badge-male">{upcomingBirthdays.length}</span>}
+          </div>
+          {upcomingBirthdays.length===0?(
+            <div style={{textAlign:'center',padding:'12px 0',color:textMuted,fontSize:12}}>📆 Bu oyda yo'q</div>
+          ):(
+            <div style={{display:'flex',flexDirection:'column',gap:5,maxHeight:240,overflowY:'auto'}}>
+              {upcomingBirthdays.slice(0,8).map(p=>{
+                const days=daysUntil(p.birth_date)
+                return(
+                  <div key={p.id} onClick={()=>navigate(`/admin/persons/${p.id}`)}
+                    style={{display:'flex',alignItems:'center',gap:8,padding:'7px 8px',borderRadius:10,cursor:'pointer',transition:'background 0.15s'}}
+                    onMouseEnter={e=>e.currentTarget.style.background=isDark?'#334155':'#f8fafc'}
+                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <div style={{width:28,height:28,borderRadius:'50%',overflow:'hidden',background:p.gender==='male'?'#6366f1':'#ec4899',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:800,flexShrink:0}}>
+                      {(p.photo_url||p.photo)?<img src={p.photo_url||p.photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>:p.full_name?.[0]}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</div>
-                      <div style={{ fontSize: 11.5, color: '#b45309' }}>{p.age != null ? `${p.age+1} yosh bo'ldi 🎉` : "Tug'ilgan kuni bugun!"}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:11,fontWeight:700,color:textPrimary,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.full_name}</div>
+                      <div style={{fontSize:10,color:textMuted}}>{fmtDate(p.birth_date)}</div>
                     </div>
+                    {days!=null&&(
+                      <span style={{fontSize:11,fontWeight:800,padding:'3px 8px',borderRadius:20,flexShrink:0,background:days<=7?'#fef3c7':(isDark?'#1e1b4b':'#eef2ff'),color:days<=7?'#d97706':'#6366f1'}}>
+                        {days===0?'Bugun!':`${days}k`}
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Yaqinlashayotgan */}
-          <div style={{ background: card, borderRadius: 18, padding: '16px 18px', border: `1px solid ${border}`, flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span>🗓️</span>
-                <span style={{ fontWeight: 900, color: textPrimary, fontSize: 15 }}>Yaqin tug'ilgan kunlar</span>
-              </div>
-              {upcomingBirthdays.length > 0 && (
-                <span className="badge badge-male">{upcomingBirthdays.length}</span>
-              )}
+                )
+              })}
             </div>
-            {upcomingBirthdays.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '12px 0', color: textMuted, fontSize: 12 }}>📆 Bu oyda boshqa yo'q</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 200, overflowY: 'auto' }}>
-                {upcomingBirthdays.slice(0, 8).map(p => {
-                  const days = daysUntil(p.birth_date)
-                  return (
-                    <div key={p.id} onClick={() => navigate(`/admin/persons/${p.id}`)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = isDark ? '#334155' : '#f8fafc'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: p.gender === 'male' ? '#6366f1' : '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
-                        {(p.photo_url || p.photo) ? <img src={p.photo_url || p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : p.full_name?.[0]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</div>
-                        <div style={{ fontSize: 10, color: textMuted }}>{fmtDate(p.birth_date)}</div>
-                      </div>
-                      {days != null && (
-                        <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 9px', borderRadius: 20, flexShrink: 0, background: days <= 7 ? '#fef3c7' : (isDark ? '#1e1b4b' : '#eef2ff'), color: days <= 7 ? '#d97706' : '#6366f1' }}>
-                          {days === 0 ? 'Bugun!' : `${days} kun`}
-                        </span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
