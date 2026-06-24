@@ -31,15 +31,13 @@ const useAuthStore = create(persist(
 
     setUser: (user) => set({ user }),
 
-    // superuser ham admin hisoblanadi
     isAdmin: () => {
       const u = get().user
       return u?.role === 'admin' || u?.is_superuser === true
     },
 
-    // Sahifa qayta yuklanganda token tiklanadi
     restoreToken: async () => {
-      if (api.defaults.headers.Authorization) return // allaqachon bor
+      if (api.defaults.headers.Authorization) return
       const refresh = sessionStorage.getItem('refresh')
       if (!refresh || !get().user) return
       try {
@@ -56,7 +54,14 @@ const useAuthStore = create(persist(
   }),
   {
     name: 'auth',
-    partialize: (s) => ({ user: s.user }),
+    // token ham saqlanadi — sahifa yangilanishida auth header tiklanadi
+    partialize: (s) => ({ user: s.user, token: s.token }),
+    onRehydrateStorage: () => (state) => {
+      if (state?.token) {
+        // Saqlangan token bilan auth headerni tikla (expired bo'lsa interceptor refresh qiladi)
+        api.defaults.headers.Authorization = `Bearer ${state.token}`
+      }
+    },
   }
 ))
 
