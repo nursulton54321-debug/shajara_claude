@@ -599,8 +599,8 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           /* Gender buttons — horizontal row */
           .pf-left .space-y-2 { display: flex !important; flex-direction: row !important; gap: 8px !important; }
           .pf-left .space-y-2 > * { flex: 1; }
-          /* OCR label compact */
-          .pf-left-ocr { margin-top: 0 !important; }
+          /* OCR — mobilda yashiriladi */
+          .pf-left-ocr { display: none !important; }
           /* Hide upload hint text */
           .pf-left .text-xs.text-gray-300 { display: none !important; }
 
@@ -786,7 +786,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
           )}
 
           {/* 16. OCR button */}
-          <div style={{ width: '100%', marginTop: 4 }}>
+          <div className="pf-left-ocr" style={{ width: '100%', marginTop: 4 }}>
             <label style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               width: '100%', padding: '7px 10px', borderRadius: 10, cursor: 'pointer',
