@@ -1007,7 +1007,10 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
         alive_pct  = round(alive / total * 100) if total else 0
         photo_pct  = round(with_photo / total * 100) if total else 0
 
-        alert = f"\n\n🔔 <b>{pending} ta yangi so'rov kutmoqda!</b>" if pending else ""
+        # Kutilayotgan foydalanuvchilar ro'yxati
+        pending_users = []
+        async for pu in TU.objects.filter(status=TU.STATUS_PENDING).order_by('created_at'):
+            pending_users.append(pu)
 
         text = (
             f"📊 <b>ADMIN DASHBOARD</b>\n"
@@ -1037,9 +1040,31 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"  ├ ✅ Tasdiqlangan: <b>{approved}</b>\n"
             f"  ├ ⏳ Kutilmoqda:  <b>{pending}</b>\n"
             f"  └ 🚫 Rad etilgan: <b>{rejected}</b>"
-            f"{alert}"
         )
         await anim.done(text)
+
+        # Kutilayotgan foydalanuvchilar — har biri alohida xabar + tugmalar
+        if pending_users:
+            await update.message.reply_text(
+                f"🔔 <b>{len(pending_users)} ta so'rov kutmoqda:</b>",
+                parse_mode='HTML',
+            )
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            for pu in pending_users:
+                name_link = f'<a href="tg://user?id={pu.telegram_id}">{pu.full_name or "Noma\'lum"}</a>'
+                uname     = f"@{pu.telegram_name}" if pu.telegram_name else ""
+                joined    = pu.created_at.strftime('%d.%m.%Y %H:%M') if pu.created_at else "—"
+                user_text = (
+                    f"⏳ <b>Yangi so'rov</b>\n"
+                    f"👤 {name_link}  {uname}\n"
+                    f"🆔 <code>{pu.telegram_id}</code>\n"
+                    f"📅 {joined}"
+                )
+                kb = InlineKeyboardMarkup([[
+                    InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"approve_{pu.telegram_id}"),
+                    InlineKeyboardButton("❌ Rad etish",  callback_data=f"reject_{pu.telegram_id}"),
+                ]])
+                await update.message.reply_text(user_text, parse_mode='HTML', reply_markup=kb)
     except Exception as e:
         logger.error(f"handle_dashboard xato: {e}", exc_info=True)
         await anim.done("❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
