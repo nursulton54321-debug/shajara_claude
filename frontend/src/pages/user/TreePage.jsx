@@ -46,6 +46,8 @@ function PersonNode({ data }) {
   const dimmed    = data.dimDeceased && dead
   const showGray  = dimmed   // faqat dimmed rejimda kulrang ko'rsatiladi
   const isFocused = data.isFocused
+  // Hover-highlight: agar boshqa kard hover bo'lsa va bu kard bog'liq bo'lmasa — xiralash
+  const dimByHover = !!(data.hoveredId && data.hoveredId !== String(data.id) && !data.connectedIds?.has(String(data.id)))
   const { isDark } = useThemeStore()
   const [hoverPos, setHoverPos] = useState(null)
 
@@ -71,7 +73,12 @@ function PersonNode({ data }) {
 
   return (
     <div
-      style={{ position: 'relative', width: PW, userSelect: 'none', cursor: 'pointer' }}
+      style={{
+        position: 'relative', width: PW, userSelect: 'none', cursor: 'pointer',
+        opacity: dimByHover ? 0.18 : 1,
+        filter: dimByHover ? 'brightness(0.5) grayscale(40%)' : 'none',
+        transition: 'opacity 0.2s, filter 0.2s',
+      }}
       onClick={() => data.onPersonClick && data.onPersonClick(data.id)}
       onMouseEnter={e => {
         const rect = e.currentTarget.getBoundingClientRect()
@@ -2089,6 +2096,7 @@ function TreeFlow({ rawPersons, stats }) {
   const [isMobile, setIsMobile]          = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [focusId, setFocusId]            = useState(null)
   const [focusGen, setFocusGen]          = useState(3)
+  const [hoveredId, setHoveredId]        = useState(null)
   // Mobil ko'rinish: 'tree' | 'list'
   const [viewMode, setViewMode]          = useState(() =>
     typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'tree'
@@ -2367,7 +2375,30 @@ function TreeFlow({ rawPersons, stats }) {
     : 1
   const activeFilters = (filterAlive ? 1 : 0) + (filterGender !== 'all' ? 1 : 0) + (filterGen > 0 ? 1 : 0)
 
-  const visibleNodes = search.trim()
+  // Hover-highlight: hoveredId bo'lganda unga bog'liq shaxslar IDlari
+  const hoveredConnectedIds = useMemo(() => {
+    if (!hoveredId) return null
+    const pid = parseInt(hoveredId.replace('p-', ''), 10)
+    const pm2 = {}
+    rawPersons.forEach(p => { pm2[p.id] = p })
+    const person = pm2[pid]
+    if (!person) return null
+    const ids = new Set([String(pid)])
+    // Ota-ona
+    if (person.father_id) ids.add(String(person.father_id))
+    if (person.mother_id) ids.add(String(person.mother_id))
+    // Bolalar
+    rawPersons.forEach(p => {
+      if (p.father_id === pid || p.mother_id === pid) ids.add(String(p.id))
+    })
+    // Turmush o'rtog'lari
+    ;(person.families || []).forEach(f => {
+      if (f.partner_id) ids.add(String(f.partner_id))
+    })
+    return ids
+  }, [hoveredId, rawPersons])
+
+  const baseNodes = search.trim()
     ? nodes.map(n => {
         if (n.type !== 'personNode') return n
         const match = n.data.full_name?.toLowerCase().includes(search.toLowerCase())
@@ -2376,6 +2407,25 @@ function TreeFlow({ rawPersons, stats }) {
           : { opacity:0.12 } }
       })
     : nodes
+
+  // Hover: edge dimming — bog'liq bo'lmagan qirralar xiralashadi
+  const hoveredEdges = useMemo(() => {
+    if (!hoveredId || !hoveredConnectedIds) return edges
+    return edges.map(e => {
+      // Edge source yoki target connected bo'lsa — yorqin, aks holda xiralash
+      const srcPid = e.source.startsWith('p-') ? e.source.replace('p-', '') : null
+      const tgtPid = e.target.startsWith('p-') ? e.target.replace('p-', '') : null
+      const connected = (srcPid && hoveredConnectedIds.has(srcPid))
+        || (tgtPid && hoveredConnectedIds.has(tgtPid))
+      if (connected) return { ...e, style: { ...e.style, opacity: 1 } }
+      return { ...e, style: { ...e.style, opacity: 0.08 } }
+    })
+  }, [hoveredId, hoveredConnectedIds, edges])
+
+  const visibleNodes = baseNodes.map(n => {
+    if (n.type !== 'personNode') return n
+    return { ...n, data: { ...n.data, hoveredId: hoveredId || null, connectedIds: hoveredConnectedIds } }
+  })
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', background:'linear-gradient(135deg,#eef2ff,#fdf4ff)' }}>
@@ -2943,7 +2993,7 @@ function TreeFlow({ rawPersons, stats }) {
         ref={flowRef}
       >
         <ReactFlow
-          nodes={visibleNodes} edges={edges}
+          nodes={visibleNodes} edges={hoveredEdges}
           onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes} edgeTypes={edgeTypes}
           minZoom={0.04} maxZoom={2.5}
@@ -2951,6 +3001,8 @@ function TreeFlow({ rawPersons, stats }) {
           onlyRenderVisibleElements={rawPersons.length > 60}
           nodesDraggable={true}
           onNodeDragStop={handleNodeDragStop}
+          onNodeMouseEnter={(_e, node) => { if (node.type === 'personNode') setHoveredId(node.id) }}
+          onNodeMouseLeave={() => setHoveredId(null)}
           style={{ background: isDark
             ? 'linear-gradient(150deg,#1e1b4b 0%,#1e1433 50%,#1e1428 100%)'
             : 'linear-gradient(150deg,#eef2ff 0%,#f5f0ff 50%,#fdf4ff 100%)' }}
