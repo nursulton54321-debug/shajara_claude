@@ -1382,15 +1382,37 @@ async def handle_tree(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await anim.done("❌ Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
             return
 
-    # 1. Rasm
-    await update.message.reply_photo(
-        photo=InputFile(io.BytesIO(img_bytes), filename='shajara_daraxti.png'),
-        caption=(
-            "🌳 <b>Matayev & Abdumannonovlar Shajarasi</b>\n"
-            f"👨‍👩‍👧‍👦 Jami: <b>{len(persons)}</b> shaxs"
-        ),
-        parse_mode='HTML',
+    # 1. Rasm — timeout bilan retry
+    from telegram.error import TimedOut, NetworkError
+    from telegram.request import HTTPXRequest
+
+    caption_text = (
+        "🌳 <b>Matayev & Abdumannonovlar Shajarasi</b>\n"
+        f"👨‍👩‍👧‍👦 Jami: <b>{len(persons)}</b> shaxs"
     )
+    sent = False
+    for attempt in range(3):
+        try:
+            await update.message.reply_photo(
+                photo=InputFile(io.BytesIO(img_bytes), filename='shajara_daraxti.png'),
+                caption=caption_text,
+                parse_mode='HTML',
+                write_timeout=60,
+                read_timeout=60,
+                connect_timeout=30,
+            )
+            sent = True
+            break
+        except (TimedOut, NetworkError) as e:
+            logger.warning(f"reply_photo attempt {attempt+1} failed: {e}")
+            if attempt == 2:
+                # Oxirgi urinishda — matn bilan xabar yuboramiz
+                await update.message.reply_text(
+                    f"⚠️ Rasm yuborishda xatolik (tarmoq muammosi).\n\n{caption_text}",
+                    parse_mode='HTML',
+                )
+    if not sent and attempt == 2:
+        pass  # already notified above
 
     # 2. Matnli shajara
     tree_text = _build_text_tree(persons)

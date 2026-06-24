@@ -45,7 +45,14 @@ def build_app():
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN settings.py da yo'q!")
 
-    app = Application.builder().token(token).build()
+    from telegram.request import HTTPXRequest
+    request = HTTPXRequest(
+        connect_timeout=30,
+        read_timeout=60,
+        write_timeout=60,
+        media_write_timeout=120,
+    )
+    app = Application.builder().token(token).request(request).build()
 
     # /start va shaxs qo'shish ConversationHandlerlar (birinchi)
     app.add_handler(get_start_conversation())
