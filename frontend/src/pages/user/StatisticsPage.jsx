@@ -938,43 +938,44 @@ export default function StatisticsPage() {
                 },
               ]
               return (
-                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {cards.map(({ emoji, label, sub, photo, name, age, color, avatarBg, bg, brd }) => (
                     <div key={label} style={{
                       borderRadius: 16, background: bg, border: `1.5px solid ${brd}`,
-                      padding: '14px 12px', display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', gap: 8, minWidth: 0, textAlign: 'center',
+                      padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14,
                       boxShadow: `0 4px 16px ${color}22`,
                     }}>
-                      {/* Badge label */}
-                      <div style={{ fontSize: 9, fontWeight: 800, color, textTransform: 'uppercase',
-                        letterSpacing: '0.06em', opacity: 0.85 }}>{label}</div>
                       {/* Avatar */}
                       <div style={{
-                        width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+                        width: 54, height: 54, borderRadius: 16, flexShrink: 0,
                         background: avatarBg, overflow: 'hidden',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 24, boxShadow: `0 4px 12px ${color}44`,
+                        fontSize: 26, boxShadow: `0 4px 12px ${color}44`,
                         border: `2px solid ${brd}`,
                       }}>
                         {photo
                           ? <img src={photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                           : emoji}
                       </div>
-                      {/* Age big number */}
-                      <div style={{ fontSize: 32, fontWeight: 900, color, lineHeight: 1 }}>
-                        {age != null ? <AnimCount to={age} /> : '—'}
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color, textTransform: 'uppercase',
+                          letterSpacing: '0.07em', opacity: 0.8, marginBottom: 3 }}>{label}</div>
+                        {name && (
+                          <div style={{ fontSize: 14, fontWeight: 900, color, lineHeight: 1.3, marginBottom: 2 }}>
+                            {name}
+                          </div>
+                        )}
+                        {!name && <div style={{ fontSize: 12, color: textSecondary }}>{sub}</div>}
+                        {name && sub && <div style={{ fontSize: 11, color: textSecondary, opacity: 0.7 }}>{sub}</div>}
                       </div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color, opacity: 0.7 }}>yosh</div>
-                      {/* Name */}
-                      {name && (
-                        <div style={{ fontSize: 11, fontWeight: 800, color,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          width: '100%' }} title={name}>{name}</div>
-                      )}
-                      {sub && (
-                        <div style={{ fontSize: 10, color: textSecondary, opacity: 0.75 }}>{sub}</div>
-                      )}
+                      {/* Age */}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>
+                          {age != null ? <AnimCount to={age} /> : '—'}
+                        </div>
+                        {age != null && <div style={{ fontSize: 11, fontWeight: 700, color, opacity: 0.7 }}>yosh</div>}
+                      </div>
                     </div>
                   ))}
                 </div>
