@@ -405,8 +405,8 @@ export default function StatisticsPage() {
   // ── 2.6 Jins + Hayot holati ──
   const totalM   = persons.filter(p => p.gender === 'male').length
   const totalF   = persons.filter(p => p.gender === 'female').length
-  const totalAl  = persons.filter(p => !p.death_date).length
-  const totalDe  = persons.filter(p => p.death_date).length
+  const totalAl  = persons.filter(p => !p.death_date && !p.deceased && !p.is_deceased).length
+  const totalDe  = persons.filter(p => p.death_date || p.deceased || p.is_deceased).length
   const total    = persons.length
 
   const pieGender = [
@@ -438,8 +438,8 @@ export default function StatisticsPage() {
         total:    persons.length,
         male:     persons.filter(p => p.gender === 'male').length,
         female:   persons.filter(p => p.gender === 'female').length,
-        alive:    persons.filter(p => !p.death_date).length,
-        deceased: persons.filter(p => p.death_date).length,
+        alive:    persons.filter(p => !p.death_date && !p.deceased && !p.is_deceased).length,
+        deceased: persons.filter(p => p.death_date || p.deceased || p.is_deceased).length,
       }
       // Lazy import — faqat bosiganda yuklanadi
       const { exportFamilyPDF } = await import('../../utils/exportPDF.js')
@@ -577,8 +577,8 @@ export default function StatisticsPage() {
           {[
             { label:'Erkaklar', value: persons.filter(p=>p.gender==='male').length,   icon:'👨', bg:'rgba(129,140,248,0.25)', clr:'#c7d2fe', brd:'rgba(129,140,248,0.4)' },
             { label:'Ayollar',  value: persons.filter(p=>p.gender==='female').length,  icon:'👩', bg:'rgba(249,168,212,0.25)', clr:'#fbcfe8', brd:'rgba(249,168,212,0.4)' },
-            { label:'Tirik',    value: persons.filter(p=>!p.death_date).length,        icon:'💚', bg:'rgba(110,231,183,0.25)', clr:'#a7f3d0', brd:'rgba(110,231,183,0.4)' },
-            { label:'Vafot',    value: persons.filter(p=>p.death_date).length,         icon:'🕯️', bg:'rgba(209,213,219,0.2)',  clr:'#e5e7eb', brd:'rgba(209,213,219,0.35)' },
+            { label:'Tirik',    value: persons.filter(p=>!p.death_date&&!p.deceased&&!p.is_deceased).length, icon:'💚', bg:'rgba(110,231,183,0.25)', clr:'#a7f3d0', brd:'rgba(110,231,183,0.4)' },
+            { label:'Vafot',    value: persons.filter(p=>p.death_date||p.deceased||p.is_deceased).length,    icon:'🕯️', bg:'rgba(209,213,219,0.2)',  clr:'#e5e7eb', brd:'rgba(209,213,219,0.35)' },
           ].map(({ label, value, icon, bg, clr, brd }) => (
             <div key={label} className="stat-hero-chip" style={{
               background: bg, border:`1px solid ${brd}`, borderRadius:14,

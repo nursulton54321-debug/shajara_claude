@@ -36,14 +36,21 @@ const KEYFRAMES = `
   0%,100% { transform: scale(1) rotate(0deg); opacity:.7 }
   50%      { transform: scale(1.4) rotate(20deg); opacity:1 }
 }
-@media (max-width: 640px) {
-  .as-wrap        { padding: 12px !important; gap: 12px !important; padding-bottom: 100px !important; }
-  .as-stat-grid   { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  .as-main-grid   { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .as-monthly-grid{ grid-template-columns: 1fr !important; gap: 12px !important; }
-  .as-stat-card-val { font-size: 22px !important; }
-  .as-stat-card-icon { width: 30px !important; height: 30px !important; font-size: 14px !important; }
-  .as-title       { font-size: 17px !important; }
+@media (max-width: 768px) {
+  .as-wrap         { padding: 12px !important; gap: 12px !important; padding-bottom: 100px !important; }
+  .as-stat-grid    { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .as-main-grid    { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .as-monthly-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .as-title        { font-size: 17px !important; }
+  .as-pie-row      { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .as-pie-row > div { min-height: 200px !important; }
+  .as-stat-inner   { padding: 9px 10px !important; }
+  .as-stat-num     { font-size: 24px !important; }
+  .as-stat-icon    { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+  .as-month-bar    { height: 100px !important; }
+  .as-bar-label    { font-size: 8px !important; }
+  .as-section-title{ font-size: 13px !important; }
+  .as-progress-row { font-size: 12px !important; }
 }
 `
 
@@ -93,6 +100,7 @@ function StatCard({ icon, label, sublabel, value, pct, grad, glow, delay = 0 }) 
 
   return (
     <div
+      className="as-stat-inner"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -121,7 +129,7 @@ function StatCard({ icon, label, sublabel, value, pct, grad, glow, delay = 0 }) 
       }} />}
 
       {/* Ikonka */}
-      <div style={{
+      <div className="as-stat-icon" style={{
         width:36, height:36, borderRadius:10, flexShrink:0,
         background:'rgba(255,255,255,0.2)', backdropFilter:'blur(4px)',
         display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
@@ -144,7 +152,7 @@ function StatCard({ icon, label, sublabel, value, pct, grad, glow, delay = 0 }) 
 
       {/* Raqam + foiz */}
       <div style={{ flexShrink:0, textAlign:'right' }}>
-        <div style={{ fontSize:32, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-1px' }}>
+        <div className="as-stat-num" style={{ fontSize:32, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-1px' }}>
           {live ? <AnimCount target={value} duration={1000 + delay} /> : 0}
         </div>
         {pct != null && (
@@ -312,7 +320,7 @@ export default function AdminStats() {
           {/* Bar chart */}
           <div style={{ background:cBg, borderRadius:20, padding:20, border:`1px solid ${cBorder}`,
             boxShadow:'0 2px 16px rgba(0,0,0,0.06)' }}>
-            <h2 style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:16 }}>📊 Umumiy ko'rsatkich</h2>
+            <h2 className="as-section-title" style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:16 }}>📊 Umumiy ko'rsatkich</h2>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={summaryData} barSize={38} margin={{ top:22, right:10, left:0, bottom:0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={cGrid} vertical={false} />
@@ -331,10 +339,10 @@ export default function AdminStats() {
           {/* Jins + Hayot holati — bitta card ichida yonma-yon */}
           <div style={{ background:cBg, borderRadius:20, padding:20, border:`1px solid ${cBorder}`,
             boxShadow:'0 2px 16px rgba(0,0,0,0.06)', display:'flex', flexDirection:'column' }}>
-            <h2 style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:12 }}>
+            <h2 className="as-section-title" style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:12 }}>
               👫 Jins nisbati &nbsp;·&nbsp; 💚 Hayot holati
             </h2>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, flex:1 }}>
+            <div className="as-pie-row" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, flex:1 }}>
               {/* Jins nisbati */}
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
                 <div style={{ fontSize:12, fontWeight:700, color:cSecondary, marginBottom:6 }}>👫 Jins nisbati</div>
@@ -468,7 +476,7 @@ export default function AdminStats() {
                 </div>
 
                 {/* Barlar */}
-                <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:140, padding:'0 2px' }}>
+                <div className="as-month-bar" style={{ display:'flex', alignItems:'flex-end', gap:4, height:140, padding:'0 2px' }}>
                   {monthData.map((d, i) => {
                     const isCur   = i === curMonth
                     const isMax   = d.count === maxCount && d.count > 0
@@ -511,7 +519,7 @@ export default function AdminStats() {
                               animation:'shimmer 2s ease infinite', backgroundSize:'200% 100%' }} />
                           )}
                         </div>
-                        <div style={{ fontSize:10, fontWeight: isCur||isMax||isHov?800:500,
+                        <div className="as-bar-label" style={{ fontSize:10, fontWeight: isCur||isMax||isHov?800:500,
                           color: mLabelC(isCur, isMax, isHov),
                           transition:'all 0.2s', transform:isHov?'scale(1.1)':'scale(1)' }}>{d.name}</div>
                       </div>
@@ -535,7 +543,7 @@ export default function AdminStats() {
           {/* ── Foiz ko'rsatkichlari ── */}
           <div style={{ background:cBg, borderRadius:22, padding:20, border:`1px solid ${cBorder}`,
             boxShadow:'0 2px 16px rgba(0,0,0,0.06)', display:'flex', flexDirection:'column' }}>
-            <h2 style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:18 }}>📐 Foiz ko'rsatkichlari</h2>
+            <h2 className="as-section-title" style={{ fontWeight:800, color:cPrimary, fontSize:15, marginBottom:18 }}>📐 Foiz ko'rsatkichlari</h2>
             <div style={{ display:'flex', flexDirection:'column', gap:14, flex:1 }}>
             {[
               { label:'Erkaklar',                    value:stats.male,                  color:'#3b82f6', icon:'👨' },
@@ -546,7 +554,7 @@ export default function AdminStats() {
             ].map(({ label, value, color, icon }) => {
               const pct = Math.round((value||0) / total * 100)
               return (
-                <div key={label}>
+                <div className="as-progress-row" key={label}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:7 }}>
                     <span style={{ fontSize:14, color:cPrimary, fontWeight:700,
                       display:'flex', alignItems:'center', gap:7 }}>
