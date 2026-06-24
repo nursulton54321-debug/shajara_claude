@@ -143,7 +143,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Yangi kreativ bo'limlar ── */}
-      <div className="ad-top-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, animation: 'adSlideIn 0.45s 0.08s ease both' }}>
+      <div className="ad-top-grid" style={{ display: 'grid', gap: 16, animation: 'adSlideIn 0.45s 0.08s ease both' }}>
 
         {/* 1. Tezkor amallar */}
         <div style={{

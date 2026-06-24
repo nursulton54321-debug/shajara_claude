@@ -1060,6 +1060,14 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
   }
 }
 
+/* ── Admin Dashboard grid ───────────────────────────────────── */
+.ad-top-grid    { grid-template-columns: repeat(3, 1fr); }
+.ad-bottom-grid { grid-template-columns: 2fr 1fr; }
+
+@media (max-width: 900px) {
+  .ad-top-grid    { grid-template-columns: 1fr 1fr !important; }
+}
+
 /* ── Admin Dashboard — mobile responsive ───────────────────── */
 @media (max-width: 640px) {
   /* Wrap padding */
