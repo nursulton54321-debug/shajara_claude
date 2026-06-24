@@ -645,6 +645,7 @@ export default function UserLayout() {
 
         {/* Mobile theme toggle — top-right floating, icon only */}
         <button
+          key={isDark ? 'dark' : 'light'}
           onClick={toggle}
           className="mobile-theme-fab"
           style={{

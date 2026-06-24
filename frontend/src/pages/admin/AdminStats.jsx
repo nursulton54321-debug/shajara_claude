@@ -36,6 +36,15 @@ const KEYFRAMES = `
   0%,100% { transform: scale(1) rotate(0deg); opacity:.7 }
   50%      { transform: scale(1.4) rotate(20deg); opacity:1 }
 }
+@media (max-width: 640px) {
+  .as-wrap        { padding: 12px !important; gap: 12px !important; padding-bottom: 100px !important; }
+  .as-stat-grid   { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .as-main-grid   { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .as-monthly-grid{ grid-template-columns: 1fr !important; gap: 12px !important; }
+  .as-stat-card-val { font-size: 22px !important; }
+  .as-stat-card-icon { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+  .as-title       { font-size: 17px !important; }
+}
 `
 
 const MONTH_SHORT = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek']
@@ -288,17 +297,17 @@ export default function AdminStats() {
   return (
     <>
       <style>{KEYFRAMES}</style>
-      <div style={{ padding:24, display:'flex', flexDirection:'column', gap:24,
+      <div className="as-wrap" style={{ padding:24, display:'flex', flexDirection:'column', gap:24,
         background: isDark ? '#0f172a' : '#f8fafc', minHeight:'100%' }}>
-        <h1 style={{ fontSize:22, fontWeight:900, color:cPrimary, margin:0 }}>📈 Statistika</h1>
+        <h1 className="as-title" style={{ fontSize:22, fontWeight:900, color:cPrimary, margin:0 }}>📈 Statistika</h1>
 
         {/* ── Premium stat kartalar ── */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:12 }}>
+        <div className="as-stat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:12 }}>
           {cards.map(c => <StatCard key={c.label} {...c} />)}
         </div>
 
         {/* ── 2-ustun: Bar chart + Jins+Hayot yonma-yon ── */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <div className="as-main-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
 
           {/* Bar chart */}
           <div style={{ background:cBg, borderRadius:20, padding:20, border:`1px solid ${cBorder}`,
@@ -380,7 +389,7 @@ export default function AdminStats() {
         </div>
 
         {/* ── 2-ustun: Oylar diagrammasi + Foiz ko'rsatkichlari ── */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <div className="as-monthly-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
 
           {/* Oylar bo'yicha tug'ilganlar — dark/light mode responsive karta */}
           {(() => {
