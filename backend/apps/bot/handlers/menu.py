@@ -1330,7 +1330,7 @@ async def reminders_person_callback(update: Update, context: ContextTypes.DEFAUL
         pass
 
 
-def _build_text_tree(persons) -> str:
+def _build_text_tree(persons, family_pairs=None) -> str:
     """Matnli shajara daraxti — ierarxik ro'yxat."""
     pmap = {p.id: p for p in persons}
     all_ids = set(pmap)
@@ -1349,18 +1349,32 @@ def _build_text_tree(persons) -> str:
             pmap[c].birth_date or __import__('datetime').date(2100,1,1)
         ))
 
-    # Xotin xaritasi
+    # Juft xaritasi: 1) farzandlar orqali, 2) Family modeli orqali
     spouse_map = {}
     for p in pmap.values():
         f, m = p.father_id, p.mother_id
         if f and m and f in all_ids and m in all_ids:
             spouse_map.setdefault(f, m)
             spouse_map.setdefault(m, f)
+    # Family modeli juftliklari (farzandsiz juftlar uchun)
+    for husband_id, wife_id in (family_pairs or []):
+        if husband_id in all_ids and wife_id in all_ids:
+            spouse_map.setdefault(husband_id, wife_id)
+            spouse_map.setdefault(wife_id, husband_id)
 
+    # spouse_only: juft sifatida bog'liq, lekin o'z farzandlari yo'q
     spouse_only = set()
     for pid, spid in spouse_map.items():
         if not children_of.get(pid) and children_of.get(spid):
             spouse_only.add(pid)
+    # Farzandsiz IKKI TOMONLAMA juft (masalan yangi turmush qurgan)
+    for pid, spid in spouse_map.items():
+        if pid in spouse_only or spid in spouse_only:
+            continue
+        if not children_of.get(pid) and not children_of.get(spid):
+            # Kichikroq id ga biriktiramiz (tartib uchun)
+            if pid > spid:
+                spouse_only.add(pid)
 
     has_parent = set()
     for p in pmap.values():
@@ -1432,7 +1446,7 @@ async def handle_tree(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not tg_user:
         return
 
-    from apps.persons.models import Person
+    from apps.persons.models import Person, Family
 
     persons = []
     async for p in Person.objects.select_related('father', 'mother').order_by(
@@ -1444,8 +1458,13 @@ async def handle_tree(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Bazada hali shaxslar yo'q.")
         return
 
+    # Family modelidan juftliklarni ham olamiz
+    family_pairs = []
+    async for fam in Family.objects.filter(is_active=True).all():
+        family_pairs.append((fam.husband_id, fam.wife_id))
+
     # ── Matnli ro'yxat ──────────────────────────────────────────
-    tree_text = _build_text_tree(persons)
+    tree_text = _build_text_tree(persons, family_pairs)
     header = (
         "🌳 <b>SHAJARA — A'ZOLAR RO'YXATI</b>\n"
         f"👨‍👩‍👧‍👦 Jami: <b>{len(persons)}</b> shaxs\n"
