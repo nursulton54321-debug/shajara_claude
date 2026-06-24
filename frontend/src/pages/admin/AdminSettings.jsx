@@ -5,11 +5,19 @@ import useThemeStore from '../../store/themeStore'
 import useDesignStore, { THEMES, FONTS, FONT_SIZES } from '../../store/designStore'
 import api from '../../api/axios'
 
+const TABS = [
+  { id: 'profile',  icon: '👤', label: 'Profil' },
+  { id: 'password', icon: '🔐', label: 'Parol' },
+  { id: 'theme',    icon: '🎨', label: 'Dizayn' },
+  { id: 'system',   icon: 'ℹ️',  label: 'Tizim' },
+]
+
 export default function AdminSettings() {
   const { user }   = useAuthStore()
   const { isDark } = useThemeStore()
   const { themeId, fontId, fontSizeId, setTheme, setFont, setFontSize } = useDesignStore()
 
+  const [activeTab, setActiveTab] = useState('profile')
   const [profile, setProfile] = useState({
     first_name: user?.first_name || '',
     last_name:  user?.last_name  || '',
@@ -19,12 +27,13 @@ export default function AdminSettings() {
   const [pwdLoading, setPwdLoading] = useState(false)
 
   const bg      = isDark ? '#1e293b' : '#ffffff'
-  const pageBg  = isDark ? '#0f172a' : '#f8fafc'
+  const pageBg  = isDark ? '#0f172a' : '#f1f5f9'
   const border  = isDark ? '#334155' : '#e2e8f0'
   const text1   = isDark ? '#f1f5f9' : '#1e293b'
   const text2   = isDark ? '#94a3b8' : '#64748b'
   const inputBg = isDark ? '#0f172a' : '#f8fafc'
   const inputBr = isDark ? '#475569' : '#d1d5db'
+  const sidebarBg = isDark ? '#161f2e' : '#e8edf5'
 
   const curTheme = THEMES.find(t => t.id === themeId) || THEMES[0]
 
@@ -51,196 +60,472 @@ export default function AdminSettings() {
     } finally { setPwdLoading(false) }
   }
 
-  const Section = ({ title, children }) => (
-    <div style={{ background: bg, borderRadius: 20, border: `1px solid ${border}`,
-      padding: 24, marginBottom: 20, boxShadow: isDark
-        ? '0 4px 24px rgba(0,0,0,0.3)'
-        : '0 4px 24px rgba(0,0,0,0.06)' }}>
-      <h2 style={{ fontWeight: 800, color: text1, marginBottom: 20, fontSize: 15,
-        display: 'flex', alignItems: 'center', gap: 8 }}>{title}</h2>
-      {children}
-    </div>
-  )
-
   const Input = ({ label, type = 'text', value, onChange, placeholder }) => (
     <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: text2,
-        marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</label>
+      <label style={{ display:'block', fontSize:11, fontWeight:700, color:text2,
+        marginBottom:6, textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</label>
       <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-        style={{ width: '100%', background: inputBg, border: `1.5px solid ${inputBr}`,
-          borderRadius: 10, padding: '10px 14px', fontSize: 13, color: text1,
-          outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-        onFocus={e => e.target.style.borderColor = curTheme.p}
-        onBlur={e => e.target.style.borderColor = inputBr}
+        style={{ width:'100%', background:inputBg, border:`1.5px solid ${inputBr}`,
+          borderRadius:12, padding:'11px 14px', fontSize:13, color:text1,
+          outline:'none', boxSizing:'border-box', transition:'border-color 0.2s, box-shadow 0.2s' }}
+        onFocus={e => { e.target.style.borderColor = curTheme.p; e.target.style.boxShadow = `0 0 0 3px ${curTheme.p}22` }}
+        onBlur={e => { e.target.style.borderColor = inputBr; e.target.style.boxShadow = 'none' }}
       />
     </div>
   )
 
-  const SaveBtn = ({ label = '💾 Saqlash', loading }) => (
-    <button type="submit" disabled={loading} style={{
-      background: curTheme.grad, color: 'white', border: 'none', borderRadius: 12,
-      padding: '10px 22px', fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-      alignSelf: 'flex-start', opacity: loading ? 0.7 : 1,
-      boxShadow: `0 4px 14px ${curTheme.p}55`,
-      transition: 'opacity 0.2s, transform 0.1s',
+  const Btn = ({ label, loading, onClick, type = 'submit', secondary = false }) => (
+    <button type={type} onClick={onClick} disabled={loading} style={{
+      background: secondary ? 'transparent' : curTheme.grad,
+      color: secondary ? curTheme.p : 'white',
+      border: secondary ? `2px solid ${curTheme.p}` : 'none',
+      borderRadius:12, padding:'11px 24px', fontSize:13, fontWeight:700,
+      cursor: loading ? 'not-allowed' : 'pointer',
+      opacity: loading ? 0.7 : 1,
+      boxShadow: secondary ? 'none' : `0 4px 14px ${curTheme.p}44`,
+      transition:'all 0.2s',
     }}>{loading ? '⏳ Saqlanmoqda...' : label}</button>
   )
 
-  return (
-    <div style={{ padding: 24, maxWidth: 620, background: pageBg, minHeight: '100%' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 900, color: text1, marginBottom: 24,
-        display: 'flex', alignItems: 'center', gap: 10 }}>
-        ⚙️ Sozlamalar
-      </h1>
+  // ── Avatar initials ──────────────────────────────────────────────
+  const initials = ((profile.first_name?.[0] || '') + (profile.last_name?.[0] || '')).toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'
 
-      {/* ── 1. Profil ─────────────────────────────────────────── */}
-      <Section title="👤 Profil ma'lumotlari">
-        <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+  // ── Tab content ──────────────────────────────────────────────────
+  const renderContent = () => {
+    if (activeTab === 'profile') return (
+      <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
+        {/* Avatar hero */}
+        <div style={{ display:'flex', alignItems:'center', gap:20,
+          background: isDark ? '#0f172a' : '#f8fafc',
+          borderRadius:20, padding:'20px 24px',
+          border:`1px solid ${border}` }}>
+          <div style={{ width:72, height:72, borderRadius:'50%',
+            background:curTheme.grad, display:'flex', alignItems:'center',
+            justifyContent:'center', fontSize:26, fontWeight:900, color:'white',
+            boxShadow:`0 8px 24px ${curTheme.p}55`, flexShrink:0 }}>
+            {initials}
+          </div>
+          <div>
+            <div style={{ fontSize:18, fontWeight:800, color:text1 }}>
+              {profile.first_name || profile.last_name
+                ? `${profile.first_name} ${profile.last_name}`.trim()
+                : user?.username}
+            </div>
+            <div style={{ fontSize:12, color:curTheme.p, fontWeight:700, marginTop:2 }}>
+              {user?.is_superuser ? '⭐ Super Admin' : (user?.role || 'Admin')}
+            </div>
+            <div style={{ fontSize:12, color:text2, marginTop:4 }}>{profile.email}</div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={saveProfile} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             <Input label="Ism"      value={profile.first_name} onChange={e => setProfile({...profile, first_name: e.target.value})} />
             <Input label="Familiya" value={profile.last_name}  onChange={e => setProfile({...profile, last_name:  e.target.value})} />
           </div>
           <Input label="Email" type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-          <SaveBtn />
+          <div style={{ display:'flex', gap:10 }}>
+            <Btn label="💾 Saqlash" />
+          </div>
         </form>
-      </Section>
+      </div>
+    )
 
-      {/* ── 2. Parol ──────────────────────────────────────────── */}
-      <Section title="🔐 Parolni almashtirish">
-        <form onSubmit={savePassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Input label="Joriy parol"   type="password" value={pwd.old}  onChange={e => setPwd({...pwd, old:  e.target.value})} placeholder="••••••••" />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <Input label="Yangi parol"        type="password" value={pwd.new1} onChange={e => setPwd({...pwd, new1: e.target.value})} placeholder="••••••••" />
-            <Input label="Yangi parol (takror)" type="password" value={pwd.new2} onChange={e => setPwd({...pwd, new2: e.target.value})} placeholder="••••••••" />
+    if (activeTab === 'password') return (
+      <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+        {/* Shield banner */}
+        <div style={{ background:curTheme.grad, borderRadius:20, padding:'20px 24px',
+          display:'flex', alignItems:'center', gap:16,
+          boxShadow:`0 8px 24px ${curTheme.p}40` }}>
+          <div style={{ fontSize:40 }}>🛡️</div>
+          <div>
+            <div style={{ color:'white', fontWeight:800, fontSize:16 }}>Xavfsizlik</div>
+            <div style={{ color:'rgba(255,255,255,0.75)', fontSize:12, marginTop:2 }}>
+              Parolingizni muntazam yangilab turing
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={savePassword} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <Input label="Joriy parol" type="password" value={pwd.old}
+            onChange={e => setPwd({...pwd, old: e.target.value})} placeholder="••••••••" />
+          <div style={{ height:1, background:border }} />
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+            <Input label="Yangi parol" type="password" value={pwd.new1}
+              onChange={e => setPwd({...pwd, new1: e.target.value})} placeholder="••••••••" />
+            <Input label="Yangi parol (takror)" type="password" value={pwd.new2}
+              onChange={e => setPwd({...pwd, new2: e.target.value})} placeholder="••••••••" />
           </div>
           {pwd.new1 && pwd.new2 && pwd.new1 !== pwd.new2 && (
-            <div style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>⚠️ Parollar mos kelmadi</div>
+            <div style={{ fontSize:12, color:'#ef4444', fontWeight:600,
+              background:'#fef2f2', borderRadius:8, padding:'8px 12px',
+              border:'1px solid #fecaca' }}>⚠️ Parollar mos kelmadi</div>
           )}
-          <SaveBtn label="🔑 Parolni o'zgartirish" loading={pwdLoading} />
-        </form>
-      </Section>
-
-      {/* ── 3. Tema rangi ─────────────────────────────────────── */}
-      <Section title="🎨 Rang temasi">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          {THEMES.map(t => (
-            <button key={t.id} onClick={() => setTheme(t.id)} style={{
-              background: t.id === themeId
-                ? (isDark ? '#1e293b' : '#f0f0ff')
-                : 'transparent',
-              border: `2px solid ${t.id === themeId ? t.p : (isDark ? '#334155' : '#e2e8f0')}`,
-              borderRadius: 14, padding: '12px 8px', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              transition: 'all 0.2s',
-              boxShadow: t.id === themeId ? `0 0 0 3px ${t.p}30` : 'none',
-            }}>
-              {/* Gradient preview circle */}
-              <div style={{ width: 36, height: 36, borderRadius: '50%',
-                background: t.grad, boxShadow: `0 4px 10px ${t.p}55`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16 }}>{t.emoji}</div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: t.id === themeId ? t.p : text2 }}>
-                {t.name}
-              </span>
-              {t.id === themeId && (
-                <span style={{ fontSize: 9, color: t.p, fontWeight: 800 }}>✓ Aktiv</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      {/* ── 4. Shrift ─────────────────────────────────────────── */}
-      <Section title="🔤 Shrift turi">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {FONTS.map(f => (
-            <button key={f.id} onClick={() => setFont(f.id)} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-              background: f.id === fontId
-                ? (isDark ? curTheme.p + '22' : curTheme.p + '11')
-                : 'transparent',
-              border: `1.5px solid ${f.id === fontId ? curTheme.p : (isDark ? '#334155' : '#e2e8f0')}`,
-              transition: 'all 0.2s',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontFamily: f.family, fontSize: 18, fontWeight: 700,
-                  color: f.id === fontId ? curTheme.p : text1 }}>Aa</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700,
-                    color: f.id === fontId ? curTheme.p : text1, fontFamily: f.family }}>
-                    {f.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: text2, fontFamily: f.family }}>
-                    Shajara — oila daraxti
-                  </div>
-                </div>
+          {/* Strength bar */}
+          {pwd.new1 && (
+            <div>
+              <div style={{ fontSize:11, color:text2, marginBottom:4, fontWeight:600 }}>Parol kuchi</div>
+              <div style={{ height:6, borderRadius:99, background:isDark?'#334155':'#e2e8f0', overflow:'hidden' }}>
+                <div style={{ height:'100%', borderRadius:99, transition:'all 0.3s',
+                  width: pwd.new1.length >= 10 ? '100%' : pwd.new1.length >= 7 ? '60%' : '30%',
+                  background: pwd.new1.length >= 10 ? '#10b981' : pwd.new1.length >= 7 ? '#f59e0b' : '#ef4444',
+                }} />
               </div>
-              {f.id === fontId && (
-                <span style={{ fontSize: 18, color: curTheme.p }}>✓</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </Section>
+            </div>
+          )}
+          <div style={{ display:'flex', gap:10 }}>
+            <Btn label="🔑 Parolni o'zgartirish" loading={pwdLoading} />
+          </div>
+        </form>
+      </div>
+    )
 
-      {/* ── 5. Shrift o'lchami ────────────────────────────────── */}
-      <Section title="📐 Shrift o'lchami">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {FONT_SIZES.map((s, i) => (
-            <button key={s.id} onClick={() => setFontSize(s.id)} style={{
-              padding: '16px 12px', borderRadius: 14, cursor: 'pointer',
-              background: s.id === fontSizeId
-                ? (isDark ? curTheme.p + '22' : curTheme.p + '11')
-                : 'transparent',
-              border: `1.5px solid ${s.id === fontSizeId ? curTheme.p : (isDark ? '#334155' : '#e2e8f0')}`,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              boxShadow: s.id === fontSizeId ? `0 0 0 3px ${curTheme.p}25` : 'none',
-              transition: 'all 0.2s',
-            }}>
-              <span style={{ fontSize: [16, 22, 30][i], fontWeight: 800,
-                color: s.id === fontSizeId ? curTheme.p : text1 }}>A</span>
-              <span style={{ fontSize: 11, fontWeight: 700,
-                color: s.id === fontSizeId ? curTheme.p : text2 }}>{s.name}</span>
-              <span style={{ fontSize: 10, color: text2 }}>{s.base}</span>
-            </button>
-          ))}
+    if (activeTab === 'theme') return (
+      <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
+        {/* Live preview strip */}
+        <div style={{ background:curTheme.grad, borderRadius:20, padding:'18px 22px',
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          boxShadow:`0 8px 28px ${curTheme.p}50`, flexWrap:'wrap', gap:10 }}>
+          <div>
+            <div style={{ color:'rgba(255,255,255,0.65)', fontSize:10, fontWeight:800,
+              textTransform:'uppercase', letterSpacing:'0.12em' }}>Aktiv dizayn</div>
+            <div style={{ color:'white', fontWeight:900, fontSize:18, marginTop:2 }}>
+              {curTheme.emoji} {curTheme.name}
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            {['A', 'Aa', 'AAA'].map((a,i) => (
+              <div key={i} style={{ width:36, height:36, borderRadius:10,
+                background:'rgba(255,255,255,0.15)', display:'flex',
+                alignItems:'center', justifyContent:'center',
+                color:'white', fontWeight:900, fontSize:[11,14,18][i],
+                border: fontSizeId === ['sm','md','lg'][i] ? '2px solid white' : '2px solid transparent' }}>
+                {a}
+              </div>
+            ))}
+          </div>
         </div>
-      </Section>
 
-      {/* ── 6. Joriy dizayn preview ───────────────────────────── */}
-      <div style={{ background: curTheme.grad, borderRadius: 20, padding: 20,
-        marginBottom: 20, boxShadow: `0 8px 32px ${curTheme.p}40` }}>
-        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 700,
-          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-          Joriy dizayn
+        {/* Color themes — 2 rows x 4 cols */}
+        <div>
+          <div style={{ fontSize:12, fontWeight:800, color:text2, marginBottom:12,
+            textTransform:'uppercase', letterSpacing:'0.08em' }}>🎨 Rang temasi</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
+            {THEMES.map(t => {
+              const active = t.id === themeId
+              return (
+                <button key={t.id} onClick={() => setTheme(t.id)} style={{
+                  background: active
+                    ? (isDark ? `${t.p}18` : `${t.p}12`)
+                    : (isDark ? '#0f172a' : '#f8fafc'),
+                  border:`2px solid ${active ? t.p : border}`,
+                  borderRadius:16, padding:'14px 8px', cursor:'pointer',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:7,
+                  transition:'all 0.2s',
+                  boxShadow: active ? `0 0 0 3px ${t.p}30, 0 4px 16px ${t.p}30` : 'none',
+                  transform: active ? 'scale(1.04)' : 'scale(1)',
+                }}>
+                  <div style={{ width:38, height:38, borderRadius:'50%',
+                    background:t.grad, boxShadow:`0 4px 12px ${t.p}60`,
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:17 }}>
+                    {t.emoji}
+                  </div>
+                  <span style={{ fontSize:11, fontWeight:800, color: active ? t.p : text2 }}>
+                    {t.name}
+                  </span>
+                  {active && (
+                    <div style={{ width:20, height:4, borderRadius:99, background:t.grad }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
-        <div style={{ color: 'white', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>
-          {curTheme.emoji} {curTheme.name} · {FONTS.find(f=>f.id===fontId)?.name} · {FONT_SIZES.find(s=>s.id===fontSizeId)?.name}
+
+        {/* Font type */}
+        <div>
+          <div style={{ fontSize:12, fontWeight:800, color:text2, marginBottom:12,
+            textTransform:'uppercase', letterSpacing:'0.08em' }}>🔤 Shrift turi</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+            {FONTS.map(f => {
+              const active = f.id === fontId
+              return (
+                <button key={f.id} onClick={() => setFont(f.id)} style={{
+                  display:'flex', alignItems:'center', gap:12,
+                  padding:'12px 14px', borderRadius:14, cursor:'pointer',
+                  background: active ? (isDark ? `${curTheme.p}18` : `${curTheme.p}10`) : (isDark ? '#0f172a' : '#f8fafc'),
+                  border:`1.5px solid ${active ? curTheme.p : border}`,
+                  transition:'all 0.2s',
+                  boxShadow: active ? `0 0 0 2px ${curTheme.p}25` : 'none',
+                }}>
+                  <div style={{ width:40, height:40, borderRadius:10, flexShrink:0,
+                    background: active ? curTheme.grad : (isDark ? '#1e293b' : '#e2e8f0'),
+                    display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ fontFamily:f.family, fontWeight:900, fontSize:17,
+                      color: active ? 'white' : text2 }}>Aa</span>
+                  </div>
+                  <div style={{ textAlign:'left', overflow:'hidden' }}>
+                    <div style={{ fontSize:13, fontWeight:700, color: active ? curTheme.p : text1,
+                      fontFamily:f.family, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {f.name}
+                    </div>
+                    <div style={{ fontSize:11, color:text2, fontFamily:f.family }}>
+                      Shajara daraxti
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-          Barcha o'zgarishlar darhol qo'llaniladi va saqlanadi
+
+        {/* Font size */}
+        <div>
+          <div style={{ fontSize:12, fontWeight:800, color:text2, marginBottom:12,
+            textTransform:'uppercase', letterSpacing:'0.08em' }}>📐 Matn o'lchami</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+            {FONT_SIZES.map((s, i) => {
+              const active = s.id === fontSizeId
+              return (
+                <button key={s.id} onClick={() => setFontSize(s.id)} style={{
+                  padding:'18px 10px', borderRadius:16, cursor:'pointer',
+                  background: active ? (isDark ? `${curTheme.p}18` : `${curTheme.p}10`) : (isDark ? '#0f172a' : '#f8fafc'),
+                  border:`1.5px solid ${active ? curTheme.p : border}`,
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:6,
+                  boxShadow: active ? `0 0 0 2px ${curTheme.p}25, 0 4px 16px ${curTheme.p}20` : 'none',
+                  transform: active ? 'scale(1.03)' : 'scale(1)',
+                  transition:'all 0.2s',
+                }}>
+                  <span style={{ fontSize:[18,26,36][i], fontWeight:900, lineHeight:1,
+                    color: active ? curTheme.p : text2 }}>A</span>
+                  <span style={{ fontSize:11, fontWeight:800, color: active ? curTheme.p : text2 }}>{s.name}</span>
+                  <span style={{ fontSize:10, color:text2, background: isDark?'#1e293b':'#e2e8f0',
+                    padding:'2px 8px', borderRadius:99 }}>{s.base}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
+    )
 
-      {/* ── 7. Tizim haqida ───────────────────────────────────── */}
-      <Section title="ℹ️ Tizim haqida">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    if (activeTab === 'system') return (
+      <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+        {/* App card */}
+        <div style={{ background:curTheme.grad, borderRadius:20, padding:'24px',
+          boxShadow:`0 8px 28px ${curTheme.p}45` }}>
+          <div style={{ fontSize:40, marginBottom:8 }}>🌳</div>
+          <div style={{ color:'white', fontWeight:900, fontSize:20 }}>Shajara</div>
+          <div style={{ color:'rgba(255,255,255,0.7)', fontSize:12, marginTop:4 }}>
+            Oila daraxti boshqaruv tizimi
+          </div>
+          <div style={{ marginTop:14, display:'flex', gap:8, flexWrap:'wrap' }}>
+            {['Django', 'React', 'React Flow', 'Telegram Bot'].map(tag => (
+              <span key={tag} style={{ background:'rgba(255,255,255,0.2)',
+                color:'white', fontSize:11, fontWeight:700,
+                padding:'3px 10px', borderRadius:99 }}>{tag}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
           {[
-            ['Versiya', '1.0.0'],
-            ['Stack', 'Django + React + React Flow'],
-            ['Foydalanuvchi', `@${user?.username}`],
-            ['Rol', user?.is_superuser ? 'Super Admin' : (user?.role || 'Admin')],
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12,
-              padding: '8px 12px', borderRadius: 10,
-              background: isDark ? '#0f172a' : '#f8fafc', fontSize: 13 }}>
-              <span style={{ color: text2, minWidth: 130, fontWeight: 600 }}>{k}</span>
-              <span style={{ fontWeight: 700, color: text1 }}>{v}</span>
+            { icon:'👤', label:'Foydalanuvchi', value:`@${user?.username}` },
+            { icon:'⭐', label:'Rol',            value: user?.is_superuser ? 'Super Admin' : (user?.role || 'Admin') },
+            { icon:'🏷️', label:'Versiya',        value:'1.0.0' },
+            { icon:'📅', label:'Sana',            value: new Date().toLocaleDateString('uz-UZ') },
+          ].map(({ icon, label, value }) => (
+            <div key={label} style={{ background:isDark?'#0f172a':'#f8fafc',
+              border:`1px solid ${border}`, borderRadius:16,
+              padding:'16px', display:'flex', flexDirection:'column', gap:6 }}>
+              <div style={{ fontSize:22 }}>{icon}</div>
+              <div style={{ fontSize:11, color:text2, fontWeight:700,
+                textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</div>
+              <div style={{ fontSize:14, fontWeight:800, color:text1 }}>{value}</div>
             </div>
           ))}
         </div>
-      </Section>
-    </div>
+
+        {/* Current design summary */}
+        <div style={{ background:isDark?'#0f172a':'#f8fafc',
+          border:`1px solid ${border}`, borderRadius:16, padding:16 }}>
+          <div style={{ fontSize:12, color:text2, fontWeight:700, marginBottom:12,
+            textTransform:'uppercase', letterSpacing:'0.08em' }}>Joriy dizayn sozlamalari</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {[
+              ['Rang temasi', `${curTheme.emoji} ${curTheme.name}`],
+              ['Shrift',      FONTS.find(f=>f.id===fontId)?.name || '—'],
+              ["O'lcham",    FONT_SIZES.find(s=>s.id===fontSizeId)?.name || '—'],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display:'flex', alignItems:'center',
+                justifyContent:'space-between', padding:'6px 0',
+                borderBottom:`1px solid ${isDark?'#1e293b':'#e2e8f0'}` }}>
+                <span style={{ fontSize:13, color:text2, fontWeight:600 }}>{k}</span>
+                <span style={{ fontSize:13, fontWeight:800, color:text1 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {/* ── Mobile tabs (top bar) ─────────────────────────────────── */}
+      <div style={{ display:'none' }} className="settings-mobile-tabs">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`smt-tab ${activeTab === t.id ? 'smt-active' : ''}`}
+            style={{ '--accent': curTheme.p, '--accent-grad': curTheme.grad }}>
+            <span>{t.icon}</span>
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .settings-mobile-tabs { display:flex !important; }
+          .settings-sidebar { display:none !important; }
+        }
+        .settings-mobile-tabs {
+          position: sticky; top: 0; z-index: 10;
+          background: ${pageBg};
+          border-bottom: 1px solid ${border};
+          padding: 8px 12px; gap: 6px; overflow-x: auto;
+        }
+        .smt-tab {
+          display: flex; align-items: center; gap: 5px;
+          padding: 7px 14px; border-radius: 99px; border: none;
+          font-size: 12px; font-weight: 700; cursor: pointer;
+          white-space: nowrap; transition: all 0.2s;
+          background: ${isDark ? '#1e293b' : '#e2e8f0'};
+          color: ${text2};
+        }
+        .smt-tab.smt-active {
+          background: var(--accent-grad);
+          color: white;
+          box-shadow: 0 3px 10px var(--accent)44;
+        }
+        .settings-sidebar-btn {
+          display: flex; align-items: center; gap: 12px;
+          padding: 13px 16px; border-radius: 14px; border: none;
+          font-size: 13px; font-weight: 700; cursor: pointer;
+          transition: all 0.2s; width: 100%; text-align: left;
+          background: transparent; color: ${text2};
+        }
+        .settings-sidebar-btn:hover {
+          background: ${isDark ? '#1e293b' : '#dde4ef'};
+          color: ${text1};
+        }
+        .settings-sidebar-btn.active {
+          background: var(--accent-grad);
+          color: white;
+          box-shadow: 0 4px 14px var(--accent)44;
+        }
+        .settings-sidebar-btn .s-icon {
+          width: 34px; height: 34px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 16px; flex-shrink: 0;
+          background: rgba(255,255,255,0.18);
+          transition: background 0.2s;
+        }
+        .settings-sidebar-btn:not(.active) .s-icon {
+          background: ${isDark ? '#1e293b' : '#dde4ef'};
+        }
+      `}</style>
+
+      {/* ── Main layout ───────────────────────────────────────────── */}
+      <div style={{ display:'flex', height:'100%', minHeight:'calc(100vh - 60px)',
+        background:pageBg, overflow:'hidden' }}>
+
+        {/* Sidebar */}
+        <div className="settings-sidebar" style={{
+          width:220, flexShrink:0, background:sidebarBg,
+          borderRight:`1px solid ${border}`,
+          display:'flex', flexDirection:'column',
+          padding:'24px 12px', gap:4,
+        }}>
+          {/* User mini card */}
+          <div style={{ textAlign:'center', marginBottom:20, padding:'0 4px' }}>
+            <div style={{ width:52, height:52, borderRadius:'50%',
+              background:curTheme.grad, display:'flex', alignItems:'center',
+              justifyContent:'center', fontSize:20, fontWeight:900, color:'white',
+              margin:'0 auto 10px', boxShadow:`0 6px 18px ${curTheme.p}55` }}>
+              {initials}
+            </div>
+            <div style={{ fontSize:13, fontWeight:800, color:text1,
+              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+              {profile.first_name || profile.last_name
+                ? `${profile.first_name} ${profile.last_name}`.trim()
+                : user?.username}
+            </div>
+            <div style={{ fontSize:11, color:curTheme.p, fontWeight:700, marginTop:2 }}>
+              {user?.is_superuser ? '⭐ Super Admin' : 'Admin'}
+            </div>
+          </div>
+
+          <div style={{ height:1, background:border, margin:'0 4px 12px' }} />
+
+          {TABS.map(t => (
+            <button key={t.id}
+              className={`settings-sidebar-btn ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+              style={{ '--accent': curTheme.p, '--accent-grad': curTheme.grad }}>
+              <span className="s-icon">{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
+
+          {/* Bottom decoration */}
+          <div style={{ marginTop:'auto', padding:'12px 4px 0' }}>
+            <div style={{ background:curTheme.grad, borderRadius:14, padding:'12px 14px',
+              boxShadow:`0 4px 14px ${curTheme.p}40` }}>
+              <div style={{ color:'rgba(255,255,255,0.7)', fontSize:10, fontWeight:700,
+                textTransform:'uppercase', letterSpacing:'0.1em' }}>Aktiv tema</div>
+              <div style={{ color:'white', fontWeight:900, fontSize:14, marginTop:3 }}>
+                {curTheme.emoji} {curTheme.name}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex:1, overflow:'auto', padding:'28px 32px' }}>
+          {/* Header */}
+          <div style={{ marginBottom:24, display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ width:44, height:44, borderRadius:14, background:curTheme.grad,
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:20,
+              boxShadow:`0 4px 14px ${curTheme.p}44` }}>
+              {TABS.find(t => t.id === activeTab)?.icon}
+            </div>
+            <div>
+              <h1 style={{ fontSize:20, fontWeight:900, color:text1, margin:0 }}>
+                {TABS.find(t => t.id === activeTab)?.label}
+              </h1>
+              <div style={{ fontSize:12, color:text2, marginTop:2 }}>
+                {activeTab === 'profile'  && 'Shaxsiy ma\'lumotlaringizni tahrirlang'}
+                {activeTab === 'password' && 'Hisobingiz xavfsizligini kuchaytiring'}
+                {activeTab === 'theme'    && 'Interfeys ko\'rinishini o\'zgartiring'}
+                {activeTab === 'system'   && 'Tizim va versiya haqida ma\'lumot'}
+              </div>
+            </div>
+          </div>
+
+          {/* Card */}
+          <div style={{ background:bg, borderRadius:24, border:`1px solid ${border}`,
+            padding:'28px', boxShadow: isDark
+              ? '0 8px 32px rgba(0,0,0,0.35)'
+              : '0 8px 32px rgba(0,0,0,0.07)',
+            maxWidth: activeTab === 'theme' ? 700 : 560,
+          }}>
+            {renderContent()}
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
