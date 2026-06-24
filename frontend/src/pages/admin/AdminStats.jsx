@@ -139,7 +139,7 @@ function StatCard({ icon, label, sublabel, value, pct, grad, glow, delay = 0 }) 
       {/* Matn */}
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontSize:13, fontWeight:800, color:'rgba(255,255,255,0.92)', lineHeight:1.25, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
-        {sublabel && <div style={{ fontSize:11, color:'rgba(255,255,255,0.62)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{sublabel}</div>}
+        {sublabel && <div style={{ fontSize:11, color:'rgba(255,255,255,0.75)', marginTop:3, lineHeight:1.3 }}>{sublabel}</div>}
         {/* Progress bar */}
         <div style={{ marginTop:5, height:3, borderRadius:2, background:'rgba(255,255,255,0.2)', overflow:'hidden' }}>
           <div style={{

@@ -586,21 +586,28 @@ export default function StatisticsPage() {
           ].map(({ label, value, icon, bg, clr, brd, alive, dead }) => (
             <div key={label} className="stat-hero-chip" style={{
               background: bg, border:`1px solid ${brd}`, borderRadius:14,
-              padding:'10px 8px', backdropFilter:'blur(8px)',
-              display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+              padding:'12px 14px', backdropFilter:'blur(8px)',
+              display:'flex', alignItems:'center', gap:10,
             }}>
-              <span className="stat-hero-chip-icon" style={{ fontSize:18 }}>{icon}</span>
-              <span className="stat-hero-chip-num" style={{ fontSize:22, fontWeight:900, color:clr, lineHeight:1 }}>
-                <AnimCount to={value} />
-              </span>
-              <span className="stat-hero-chip-lbl" style={{ fontSize:9, color:'rgba(255,255,255,0.65)',
-                fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</span>
-              {alive != null && (
-                <div style={{ display:'flex', gap:4, marginTop:2 }}>
-                  <span style={{ fontSize:8, color:'rgba(110,231,183,0.9)', fontWeight:700 }}>💚{alive}</span>
-                  <span style={{ fontSize:8, color:'rgba(209,213,219,0.8)', fontWeight:700 }}>🕯️{dead}</span>
+              {/* Icon */}
+              <span className="stat-hero-chip-icon" style={{ fontSize:22, flexShrink:0 }}>{icon}</span>
+
+              {/* Asosiy ma'lumot */}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap:4 }}>
+                  <span className="stat-hero-chip-num" style={{ fontSize:26, fontWeight:900, color:clr, lineHeight:1 }}>
+                    <AnimCount to={value} />
+                  </span>
+                  <span className="stat-hero-chip-lbl" style={{ fontSize:10, color:'rgba(255,255,255,0.65)',
+                    fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</span>
                 </div>
-              )}
+                {alive != null && (
+                  <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                    <span style={{ fontSize:12, color:'rgba(110,231,183,0.95)', fontWeight:700 }}>💚 {alive} tirik</span>
+                    <span style={{ fontSize:12, color:'rgba(209,213,219,0.85)', fontWeight:700 }}>🕯️ {dead} vafot</span>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -687,7 +694,9 @@ export default function StatisticsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: textSecondary }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: textSecondary }} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip
+                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(99,102,241,0.07)' }}
                     contentStyle={{ background: cardBg, border: `1px solid ${borderColor}`, borderRadius: 12, color: textPrimary }}
+                    labelStyle={{ color: textPrimary, fontWeight: 700 }}
                     labelFormatter={name => {
                       const idx = MONTH_SHORT.indexOf(name)
                       return idx >= 0 ? MONTH_NAMES[idx] : name
