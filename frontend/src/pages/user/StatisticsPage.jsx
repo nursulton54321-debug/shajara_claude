@@ -508,108 +508,140 @@ export default function StatisticsPage() {
   )
 
   return (
-    <div style={{ minHeight: '100%', background: isDark ? '#0f172a' : '#f8fafc', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100%', background: isDark ? '#0f172a' : '#f1f5f9', paddingBottom: 80 }}>
       <style>{`
         @media (max-width: 640px) {
-          .stat-header { padding: 14px 14px 12px !important; }
-          .stat-header-title { font-size: 17px !important; }
-          .stat-header-sub { display: none !important; }
-          .stat-header-row { flex-direction: column !important; gap: 10px !important; }
-          .stat-chips { display: grid !important; grid-template-columns: 1fr 1fr 1fr 1fr !important; gap: 5px !important; }
-          .stat-chip { padding: 4px 6px !important; font-size: 10px !important; border-radius: 10px !important; flex-direction: column !important; gap: 1px !important; }
-          .stat-chip-val { font-size: 15px !important; font-weight: 900 !important; }
-          .stat-chip-lbl { font-size: 8px !important; opacity: 0.8 !important; }
-          .stat-export-btns { display: flex !important; gap: 6px !important; width: 100% !important; }
-          .stat-export-btns button { flex: 1 !important; padding: 6px 8px !important; font-size: 11px !important; }
-          .stat-tabs-row { padding: 10px 10px 0 !important; gap: 4px !important; }
-          .stat-tab-btn { padding: 7px 10px !important; font-size: 11px !important; }
-          .stat-tab-label { display: none !important; }
-          .stat-tab-icon { font-size: 18px !important; }
-          .stat-content { padding: 12px 10px !important; gap: 14px !important; }
+          .stat-hero { padding: 16px 14px 14px !important; }
+          .stat-hero-sub { font-size: 10px !important; }
+          .stat-hero-title { font-size: 20px !important; }
+          .stat-hero-meta { font-size: 10px !important; }
+          .stat-hero-chips { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
+          .stat-hero-chip { padding: 8px 4px !important; border-radius: 12px !important; }
+          .stat-hero-chip-num { font-size: 18px !important; }
+          .stat-hero-chip-lbl { font-size: 8px !important; }
+          .stat-hero-chip-icon { font-size: 14px !important; }
+          .stat-export-row { gap: 6px !important; }
+          .stat-export-row button { font-size: 11px !important; padding: 7px 8px !important; }
+          .stat-tabs-wrap { padding: 10px 10px 0 !important; }
+          .stat-tabs-inner { gap: 6px !important; }
+          .stat-tab { flex: 1 !important; padding: 10px 6px !important; flex-direction: column !important; gap: 3px !important; }
+          .stat-tab-lbl { font-size: 8px !important; }
+          .stat-tab-ico { font-size: 20px !important; }
+          .stat-body { padding: 12px 10px !important; gap: 12px !important; }
           .stat-pie-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      {/* ── Header ── */}
-      <div className="stat-header" style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-        padding: '28px 28px 20px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-        <div className="stat-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          {/* Title row */}
-          <div style={{ color: 'white' }}>
-            <div className="stat-header-sub" style={{ fontSize: 11, opacity: 0.65, marginBottom: 2 }}>Tahlil va vizualizatsiya</div>
-            <div className="stat-header-title" style={{ fontSize: 22, fontWeight: 900 }}>📊 Statistika</div>
-            <div className="stat-header-sub" style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
-              {persons.length} ta shaxs · {genStats.length} ta avlod
-            </div>
-          </div>
+      {/* ══════ HERO HEADER ══════ */}
+      <div className="stat-hero" style={{
+        background: 'linear-gradient(135deg,#4338ca 0%,#6d28d9 50%,#7c3aed 100%)',
+        padding: '24px 24px 20px', position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position:'absolute', top:-60, right:-60, width:200, height:200, borderRadius:'50%',
+          background:'rgba(255,255,255,0.06)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:-40, left:-20, width:140, height:140, borderRadius:'50%',
+          background:'rgba(255,255,255,0.04)', pointerEvents:'none' }} />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 380 }}>
-            {/* Mini stat chips — 4 ta grid */}
-            <div className="stat-chips" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {[
-                { label: 'Erkaklar', value: persons.filter(p=>p.gender==='male').length,  color: '#818cf8', icon: '👨' },
-                { label: 'Ayollar',  value: persons.filter(p=>p.gender==='female').length, color: '#f9a8d4', icon: '👩' },
-                { label: 'Tirik',    value: persons.filter(p=>!p.death_date).length,       color: '#6ee7b7', icon: '💚' },
-                { label: 'Vafot',    value: persons.filter(p=>p.death_date).length,        color: '#d1d5db', icon: '🕯️' },
-              ].map(({ label, value, color, icon }) => (
-                <div key={label} className="stat-chip" style={{
-                  padding: '6px 12px', borderRadius: 16, fontWeight: 700,
-                  background: 'rgba(255,255,255,0.14)', color, backdropFilter: 'blur(4px)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  display: 'flex', alignItems: 'center', gap: 5, flex: '1 0 auto',
-                }}>
-                  <span style={{ fontSize: 14 }}>{icon}</span>
-                  <span className="stat-chip-val" style={{ fontSize: 14, fontWeight: 900 }}>{value}</span>
-                  <span className="stat-chip-lbl" style={{ fontSize: 10 }}>{label}</span>
-                </div>
-              ))}
-            </div>
-            {/* Export buttons */}
-            <div className="stat-export-btns" style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleExportPDF} disabled={pdfLoading}
-                style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
-                  backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
-                  opacity: pdfLoading ? 0.6 : 1 }}>
-                {pdfLoading ? '⏳' : '📄'} PDF
-              </button>
-              <button onClick={handleExportBackup} disabled={zipLoading}
-                style={{ padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: 12, fontWeight: 700,
-                  backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 5,
-                  opacity: zipLoading ? 0.6 : 1 }}>
-                {zipLoading ? '⏳' : '📦'} Backup
-              </button>
-            </div>
+        {/* Title */}
+        <div style={{ color:'white', marginBottom:16, position:'relative' }}>
+          <div className="stat-hero-sub" style={{ fontSize:11, opacity:0.65, letterSpacing:'0.08em',
+            textTransform:'uppercase', marginBottom:4 }}>Tahlil va vizualizatsiya</div>
+          <div className="stat-hero-title" style={{ fontSize:26, fontWeight:900, letterSpacing:'-0.5px',
+            display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:28 }}>📊</span> Statistika
           </div>
+          <div className="stat-hero-meta" style={{ fontSize:12, opacity:0.7, marginTop:4 }}>
+            <AnimCount to={persons.length} /> ta shaxs · {genStats.length} ta avlod · {new Date().getFullYear()}-yil
+          </div>
+        </div>
+
+        {/* Stat chips — 4 column grid */}
+        <div className="stat-hero-chips" style={{
+          display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:12,
+        }}>
+          {[
+            { label:'Erkaklar', value: persons.filter(p=>p.gender==='male').length,   icon:'👨', bg:'rgba(129,140,248,0.25)', clr:'#c7d2fe', brd:'rgba(129,140,248,0.4)' },
+            { label:'Ayollar',  value: persons.filter(p=>p.gender==='female').length,  icon:'👩', bg:'rgba(249,168,212,0.25)', clr:'#fbcfe8', brd:'rgba(249,168,212,0.4)' },
+            { label:'Tirik',    value: persons.filter(p=>!p.death_date).length,        icon:'💚', bg:'rgba(110,231,183,0.25)', clr:'#a7f3d0', brd:'rgba(110,231,183,0.4)' },
+            { label:'Vafot',    value: persons.filter(p=>p.death_date).length,         icon:'🕯️', bg:'rgba(209,213,219,0.2)',  clr:'#e5e7eb', brd:'rgba(209,213,219,0.35)' },
+          ].map(({ label, value, icon, bg, clr, brd }) => (
+            <div key={label} className="stat-hero-chip" style={{
+              background: bg, border:`1px solid ${brd}`, borderRadius:14,
+              padding:'10px 8px', backdropFilter:'blur(8px)',
+              display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+            }}>
+              <span className="stat-hero-chip-icon" style={{ fontSize:18 }}>{icon}</span>
+              <span className="stat-hero-chip-num" style={{ fontSize:22, fontWeight:900, color:clr, lineHeight:1 }}>
+                <AnimCount to={value} />
+              </span>
+              <span className="stat-hero-chip-lbl" style={{ fontSize:9, color:'rgba(255,255,255,0.65)',
+                fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Export buttons */}
+        <div className="stat-export-row" style={{ display:'flex', gap:8 }}>
+          <button onClick={handleExportPDF} disabled={pdfLoading} style={{
+            flex:1, padding:'9px 12px', borderRadius:12, border:'1.5px solid rgba(255,255,255,0.25)',
+            cursor:'pointer', background:'rgba(255,255,255,0.12)', color:'white',
+            fontSize:12, fontWeight:700, backdropFilter:'blur(4px)',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+            opacity: pdfLoading ? 0.6 : 1, transition:'all 0.15s',
+          }}>
+            {pdfLoading ? '⏳' : '📄'} PDF yuklab olish
+          </button>
+          <button onClick={handleExportBackup} disabled={zipLoading} style={{
+            flex:1, padding:'9px 12px', borderRadius:12, border:'1.5px solid rgba(255,255,255,0.25)',
+            cursor:'pointer', background:'rgba(255,255,255,0.12)', color:'white',
+            fontSize:12, fontWeight:700, backdropFilter:'blur(4px)',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+            opacity: zipLoading ? 0.6 : 1, transition:'all 0.15s',
+          }}>
+            {zipLoading ? '⏳' : '📦'} Backup ZIP
+          </button>
         </div>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="stat-tabs-row" style={{ display: 'flex', gap: 4, padding: '16px 28px 0', overflowX: 'auto' }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            className="stat-tab-btn"
-            style={{
-              padding: '9px 18px', borderRadius: 12, fontSize: 12, fontWeight: 700,
-              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-              transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
-              background: activeTab === t.id
-                ? 'linear-gradient(135deg,#4f46e5,#7c3aed)'
-                : (isDark ? '#1e293b' : '#f1f5f9'),
-              color: activeTab === t.id ? 'white' : textSecondary,
-              boxShadow: activeTab === t.id ? '0 4px 12px rgba(79,70,229,0.35)' : 'none',
-              flex: '1 0 auto',
-            }}>
-            <span className="stat-tab-icon">{t.icon}</span>
-            <span className="stat-tab-label">{t.label}</span>
-          </button>
-        ))}
+      {/* ══════ TABS ══════ */}
+      <div className="stat-tabs-wrap" style={{
+        padding:'14px 20px 0',
+        background: isDark ? '#0f172a' : '#f1f5f9',
+      }}>
+        <div className="stat-tabs-inner" style={{
+          display:'flex', gap:8, overflowX:'auto',
+          background: isDark ? '#1e293b' : 'white',
+          borderRadius:16, padding:6,
+          boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)',
+          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9',
+        }}>
+          {tabs.map(t => {
+            const active = activeTab === t.id
+            return (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                className="stat-tab"
+                style={{
+                  flex: '1 0 auto', padding:'10px 16px', borderRadius:12,
+                  border:'none', cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                  transition:'all 0.18s',
+                  background: active
+                    ? 'linear-gradient(135deg,#4f46e5,#7c3aed)'
+                    : 'transparent',
+                  color: active ? 'white' : textSecondary,
+                  boxShadow: active ? '0 4px 14px rgba(79,70,229,0.4)' : 'none',
+                  transform: active ? 'scale(1.02)' : 'scale(1)',
+                }}>
+                <span className="stat-tab-ico" style={{ fontSize:17, lineHeight:1 }}>{t.icon}</span>
+                <span className="stat-tab-lbl" style={{ fontSize:11, fontWeight:800, whiteSpace:'nowrap' }}>{t.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="stat-content" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="stat-body" style={{ padding:'18px 20px', display:'flex', flexDirection:'column', gap:18 }}>
 
         {/* ═══════════════════ 2.1 AVLODLAR STATISTIKASI ═══════════════════ */}
         {activeTab === 'generations' && (
@@ -906,40 +938,43 @@ export default function StatisticsPage() {
                 },
               ]
               return (
-                <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
                   {cards.map(({ emoji, label, sub, photo, name, age, color, avatarBg, bg, brd }) => (
                     <div key={label} style={{
-                      flex: 1, borderRadius: 14, background: bg, border: `1px solid ${brd}`,
-                      padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
+                      borderRadius: 16, background: bg, border: `1.5px solid ${brd}`,
+                      padding: '14px 12px', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', gap: 8, minWidth: 0, textAlign: 'center',
+                      boxShadow: `0 4px 16px ${color}22`,
                     }}>
-                      {/* Avatar / photo */}
+                      {/* Badge label */}
+                      <div style={{ fontSize: 9, fontWeight: 800, color, textTransform: 'uppercase',
+                        letterSpacing: '0.06em', opacity: 0.85 }}>{label}</div>
+                      {/* Avatar */}
                       <div style={{
-                        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                        width: 52, height: 52, borderRadius: 16, flexShrink: 0,
                         background: avatarBg, overflow: 'hidden',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 22, boxShadow: `0 2px 8px ${color}55`,
+                        fontSize: 24, boxShadow: `0 4px 12px ${color}44`,
+                        border: `2px solid ${brd}`,
                       }}>
                         {photo
                           ? <img src={photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                           : emoji}
                       </div>
-                      {/* Text */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: textSecondary, opacity: 0.8 }}>{label}</div>
-                        {name
-                          ? <div style={{ fontSize: 12, fontWeight: 900, color, lineHeight: 1.2, marginTop: 1,
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                              title={name}>{name}</div>
-                          : <div style={{ fontSize: 12, color: textSecondary, marginTop: 1 }}>{sub}</div>}
-                        {name && sub && <div style={{ fontSize: 11, color: textSecondary, opacity: 0.65, marginTop: 1 }}>{sub}</div>}
+                      {/* Age big number */}
+                      <div style={{ fontSize: 32, fontWeight: 900, color, lineHeight: 1 }}>
+                        {age != null ? <AnimCount to={age} /> : '—'}
                       </div>
-                      {/* Age */}
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>
-                          {age != null ? <AnimCount to={age} /> : '—'}
-                        </div>
-                        {age != null && <div style={{ fontSize: 10, fontWeight: 700, color, opacity: 0.75 }}>yosh</div>}
-                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color, opacity: 0.7 }}>yosh</div>
+                      {/* Name */}
+                      {name && (
+                        <div style={{ fontSize: 11, fontWeight: 800, color,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          width: '100%' }} title={name}>{name}</div>
+                      )}
+                      {sub && (
+                        <div style={{ fontSize: 10, color: textSecondary, opacity: 0.75 }}>{sub}</div>
+                      )}
                     </div>
                   ))}
                 </div>
