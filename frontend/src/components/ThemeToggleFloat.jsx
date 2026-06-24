@@ -11,7 +11,7 @@ export default function ThemeToggleFloat() {
   const [pressed, setPressed] = useState(false)
   const location = useLocation()
 
-  /* UserLayout ichidagi sahifalarda ko'rsatmaymiz (sidebar togglei bor) */
+  /* Admin va UserLayout sahifalarida ko'rsatmaymiz */
   const isUserLayout = !location.pathname.startsWith('/admin')
     && !location.pathname.startsWith('/login')
     && !location.pathname.startsWith('/register')
@@ -20,6 +20,7 @@ export default function ThemeToggleFloat() {
     && !location.pathname.startsWith('/s/')
 
   if (isUserLayout) return null  /* UserLayout sidebar toggle yetarli */
+  if (location.pathname.startsWith('/admin')) return null  /* Admin sidebar toggle bor */
 
   return (
     <>

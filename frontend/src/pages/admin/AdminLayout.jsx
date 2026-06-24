@@ -43,7 +43,6 @@ const MOBILE_NAV_ITEMS = [
   { to: '/admin/link',        label: "Bog'lash",   icon: '🔗' },
   { to: '/admin/stats',       label: 'Statistika', icon: '📈' },
   { to: '/admin/reminders',   label: 'Eslatma',    icon: '🔔' },
-  { to: '/admin/invites',     label: 'Invitlar',   icon: '📨' },
 ]
 
 export default function AdminLayout() {
