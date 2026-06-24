@@ -1033,3 +1033,29 @@ body:not([data-theme="dark"]) .react-flow__controls-button:hover {
     padding-bottom: 80px !important;
   }
 }
+
+/* ── Mobile FAB + MyProfile fixes ──────────────────────────── */
+@keyframes fabPanelIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+
+/* FAB wrap — faqat mobildan ko'rinadi */
+.mobile-fab-wrap {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .mobile-fab-wrap {
+    display: block;
+  }
+  /* "Profil bog'lanmagan" — mobildan yashirish */
+  .profil-boglanmagan {
+    display: none !important;
+  }
+  /* MyProfile page padding */
+  .p-6.max-w-3xl {
+    padding: 16px 12px !important;
+    padding-bottom: 80px !important;
+  }
+}

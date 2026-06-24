@@ -212,7 +212,7 @@ export default function MyProfilePage() {
                 )}
               </div>
             ) : (
-              <div style={{ ...card, textAlign: 'center', padding: 40 }}>
+              <div className="profil-boglanmagan" style={{ ...card, textAlign: 'center', padding: 40 }}>
                 <div style={{ fontSize: 56, marginBottom: 12 }}>🔍</div>
                 <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
                   Profil bog'lanmagan
