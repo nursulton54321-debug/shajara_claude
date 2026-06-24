@@ -403,11 +403,15 @@ export default function StatisticsPage() {
   const curMonth = today.getMonth()
 
   // ── 2.6 Jins + Hayot holati ──
-  const totalM   = persons.filter(p => p.gender === 'male').length
-  const totalF   = persons.filter(p => p.gender === 'female').length
-  const totalAl  = persons.filter(p => !p.death_date && !p.deceased && !p.is_deceased).length
-  const totalDe  = persons.filter(p => p.death_date || p.deceased || p.is_deceased).length
-  const total    = persons.length
+  const totalM      = persons.filter(p => p.gender === 'male').length
+  const totalF      = persons.filter(p => p.gender === 'female').length
+  const totalAl     = persons.filter(p => !p.death_date && !p.deceased && !p.is_deceased).length
+  const totalDe     = persons.filter(p => p.death_date || p.deceased || p.is_deceased).length
+  const total       = persons.length
+  const maleAlive   = persons.filter(p => p.gender === 'male' && !p.death_date && !p.deceased && !p.is_deceased).length
+  const maleDead    = persons.filter(p => p.gender === 'male' && (p.death_date || p.deceased || p.is_deceased)).length
+  const femaleAlive = persons.filter(p => p.gender === 'female' && !p.death_date && !p.deceased && !p.is_deceased).length
+  const femaleDead  = persons.filter(p => p.gender === 'female' && (p.death_date || p.deceased || p.is_deceased)).length
 
   const pieGender = [
     { name: `Erkaklar — ${totalM} ta`, value: totalM },
@@ -575,11 +579,11 @@ export default function StatisticsPage() {
           display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:12,
         }}>
           {[
-            { label:'Erkaklar', value: persons.filter(p=>p.gender==='male').length,   icon:'👨', bg:'rgba(129,140,248,0.25)', clr:'#c7d2fe', brd:'rgba(129,140,248,0.4)' },
-            { label:'Ayollar',  value: persons.filter(p=>p.gender==='female').length,  icon:'👩', bg:'rgba(249,168,212,0.25)', clr:'#fbcfe8', brd:'rgba(249,168,212,0.4)' },
-            { label:'Tirik',    value: persons.filter(p=>!p.death_date&&!p.deceased&&!p.is_deceased).length, icon:'💚', bg:'rgba(110,231,183,0.25)', clr:'#a7f3d0', brd:'rgba(110,231,183,0.4)' },
-            { label:'Vafot',    value: persons.filter(p=>p.death_date||p.deceased||p.is_deceased).length,    icon:'🕯️', bg:'rgba(209,213,219,0.2)',  clr:'#e5e7eb', brd:'rgba(209,213,219,0.35)' },
-          ].map(({ label, value, icon, bg, clr, brd }) => (
+            { label:'Erkaklar', value: totalM,  alive: maleAlive,   dead: maleDead,   icon:'👨', bg:'rgba(129,140,248,0.25)', clr:'#c7d2fe', brd:'rgba(129,140,248,0.4)' },
+            { label:'Ayollar',  value: totalF,  alive: femaleAlive, dead: femaleDead, icon:'👩', bg:'rgba(249,168,212,0.25)', clr:'#fbcfe8', brd:'rgba(249,168,212,0.4)' },
+            { label:'Tirik',    value: totalAl, alive: null, dead: null, icon:'💚', bg:'rgba(110,231,183,0.25)', clr:'#a7f3d0', brd:'rgba(110,231,183,0.4)' },
+            { label:'Vafot',    value: totalDe, alive: null, dead: null, icon:'🕯️', bg:'rgba(209,213,219,0.2)',  clr:'#e5e7eb', brd:'rgba(209,213,219,0.35)' },
+          ].map(({ label, value, icon, bg, clr, brd, alive, dead }) => (
             <div key={label} className="stat-hero-chip" style={{
               background: bg, border:`1px solid ${brd}`, borderRadius:14,
               padding:'10px 8px', backdropFilter:'blur(8px)',
@@ -591,6 +595,12 @@ export default function StatisticsPage() {
               </span>
               <span className="stat-hero-chip-lbl" style={{ fontSize:9, color:'rgba(255,255,255,0.65)',
                 fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</span>
+              {alive != null && (
+                <div style={{ display:'flex', gap:4, marginTop:2 }}>
+                  <span style={{ fontSize:8, color:'rgba(110,231,183,0.9)', fontWeight:700 }}>💚{alive}</span>
+                  <span style={{ fontSize:8, color:'rgba(209,213,219,0.8)', fontWeight:700 }}>🕯️{dead}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -735,11 +745,19 @@ export default function StatisticsPage() {
                     background: isDark ? '#0f172a' : '#eff6ff', border: `1px solid ${borderColor}` }}>
                     <div style={{ fontSize: 20, fontWeight: 900, color: '#3b82f6' }}><AnimCount to={totalM} /></div>
                     <div style={{ fontSize: 10, color: textSecondary }}>👨 Erkaklar ({total ? Math.round(totalM/total*100) : 0}%)</div>
+                    <div style={{ display:'flex', justifyContent:'center', gap:6, marginTop:4 }}>
+                      <span style={{ fontSize:10, color:'#10b981', fontWeight:700 }}>💚 {maleAlive}</span>
+                      <span style={{ fontSize:10, color:'#94a3b8', fontWeight:700 }}>🕯️ {maleDead}</span>
+                    </div>
                   </div>
                   <div style={{ textAlign: 'center', padding: '8px', borderRadius: 10,
                     background: isDark ? '#0f172a' : '#fdf2f8', border: `1px solid ${borderColor}` }}>
                     <div style={{ fontSize: 20, fontWeight: 900, color: '#ec4899' }}><AnimCount to={totalF} /></div>
                     <div style={{ fontSize: 10, color: textSecondary }}>👩 Ayollar ({total ? Math.round(totalF/total*100) : 0}%)</div>
+                    <div style={{ display:'flex', justifyContent:'center', gap:6, marginTop:4 }}>
+                      <span style={{ fontSize:10, color:'#10b981', fontWeight:700 }}>💚 {femaleAlive}</span>
+                      <span style={{ fontSize:10, color:'#94a3b8', fontWeight:700 }}>🕯️ {femaleDead}</span>
+                    </div>
                   </div>
                 </div>
               </Card>

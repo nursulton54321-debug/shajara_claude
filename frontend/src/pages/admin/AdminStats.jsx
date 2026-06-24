@@ -254,14 +254,20 @@ export default function AdminStats() {
   const total = stats.total || 1
   const vafot = stats.deceased ?? (total - (stats.alive || 0))
 
+  // Jins + hayot holati kesishmasini persons dan hisoblaymiz
+  const maleAlive   = persons.filter(p => p.gender === 'male'   && !p.death_date && !p.deceased && !p.is_deceased).length
+  const maleDead    = persons.filter(p => p.gender === 'male'   && (p.death_date || p.deceased || p.is_deceased)).length
+  const femaleAlive = persons.filter(p => p.gender === 'female' && !p.death_date && !p.deceased && !p.is_deceased).length
+  const femaleDead  = persons.filter(p => p.gender === 'female' && (p.death_date || p.deceased || p.is_deceased)).length
+
   const cards = [
     { icon:'👨‍👩‍👧‍👦', label:"Jami a'zolar",    sublabel:'Bazaga kiritilgan',
       value:stats.total, pct:100,
       grad:'linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)', glow:'rgba(79,70,229,0.45)', delay:0 },
-    { icon:'👨', label:'Erkaklar',             sublabel:`${stats.male} nafar`,
+    { icon:'👨', label:'Erkaklar',             sublabel:`💚 ${maleAlive} tirik · 🕯️ ${maleDead} vafot`,
       value:stats.male, pct:Math.round(stats.male/total*100),
       grad:'linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%)', glow:'rgba(14,165,233,0.45)', delay:80 },
-    { icon:'👩', label:'Ayollar',              sublabel:`${stats.female} nafar`,
+    { icon:'👩', label:'Ayollar',              sublabel:`💚 ${femaleAlive} tirik · 🕯️ ${femaleDead} vafot`,
       value:stats.female, pct:Math.round(stats.female/total*100),
       grad:'linear-gradient(135deg,#ec4899 0%,#db2777 100%)', glow:'rgba(236,72,153,0.45)', delay:160 },
     { icon:'💚', label:"Tirik a'zolar",        sublabel:`${vafot} kishi vafot etgan`,
@@ -358,13 +364,22 @@ export default function AdminStats() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ display:'flex', gap:8, marginTop:4, justifyContent:'center', flexWrap:'wrap' }}>
-                  {genderData.map((d, i) => (
-                    <div key={i} style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, fontWeight:700,
-                      color: i===0 ? '#3b82f6' : '#ec4899' }}>
-                      <div style={{ width:8, height:8, borderRadius:'50%', background: i===0?'#3b82f6':'#ec4899' }} />
-                      {d.name}: {d.value} ({d.pct}%)
-                    </div>
-                  ))}
+                  {genderData.map((d, i) => {
+                    const al = i === 0 ? maleAlive : femaleAlive
+                    const de = i === 0 ? maleDead  : femaleDead
+                    return (
+                      <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, fontWeight:700,
+                          color: i===0 ? '#3b82f6' : '#ec4899' }}>
+                          <div style={{ width:8, height:8, borderRadius:'50%', background: i===0?'#3b82f6':'#ec4899' }} />
+                          {d.name}: {d.value} ({d.pct}%)
+                        </div>
+                        <div style={{ fontSize:10, color:cSecondary }}>
+                          💚 {al} tirik &nbsp;·&nbsp; 🕯️ {de} vafot
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -492,17 +507,18 @@ export default function AdminStats() {
                         style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
                         {isHov && d.count > 0 && (
                           <div style={{ position:'absolute', marginTop:-36,
-                            background: isDark ? 'rgba(255,255,255,0.95)' : 'rgba(30,27,75,0.92)',
+                            background: isDark ? '#1e293b' : '#1e1b4b',
                             borderRadius:8, padding:'3px 8px',
                             fontSize:11, fontWeight:800,
-                            color: isDark ? '#1e293b' : 'white',
-                            boxShadow:'0 4px 16px rgba(0,0,0,0.2)', whiteSpace:'nowrap', zIndex:10 }}>
-                            {d.full}: {d.count}
+                            color: 'white',
+                            border: isDark ? '1px solid #334155' : '1px solid #4f46e5',
+                            boxShadow:'0 4px 16px rgba(0,0,0,0.35)', whiteSpace:'nowrap', zIndex:10 }}>
+                            {d.full}: {d.count} ta
                           </div>
                         )}
                         <div style={{ fontSize:10, fontWeight:900,
                           color: d.count>0 ? mCountC(isCur, isMax) : 'transparent',
-                          minHeight:14 }}>{d.count||''}</div>
+                          minHeight:14 }}>{d.count > 0 ? d.count : ''}</div>
                         <div style={{
                           width:'100%', height: Math.max(barH, d.count>0?5:2),
                           borderRadius:'6px 6px 3px 3px',
