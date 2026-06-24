@@ -1352,72 +1352,28 @@ def _build_text_tree(persons) -> str:
 
 
 async def handle_tree(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Shajara daraxtini rasm + matn sifatida yuboradi."""
+    """Shajara daraxti — matnli ro'yxat + veb saytga havola."""
     tg_user = await _check_approved(update)
     if not tg_user:
         return
 
-    from apps.bot.anim import Anim, frames_tree
     from apps.persons.models import Person
-    from apps.bot.tree_renderer import render_tree
-    import asyncio, io
-    from telegram import InputFile
 
-    async with Anim(update, frames_tree(), interval=0.7) as anim:
-        try:
-            persons = []
-            async for p in Person.objects.select_related('father', 'mother').all():
-                persons.append(p)
+    persons = []
+    async for p in Person.objects.select_related('father', 'mother').order_by(
+        'father__last_name', 'last_name', 'first_name'
+    ).all():
+        persons.append(p)
 
-            if not persons:
-                await anim.done("❌ Bazada hali shaxslar yo'q.")
-                return
+    if not persons:
+        await update.message.reply_text("❌ Bazada hali shaxslar yo'q.")
+        return
 
-            loop = asyncio.get_event_loop()
-            img_bytes = await loop.run_in_executor(None, render_tree, persons)
-            await anim.delete()
-
-        except Exception as e:
-            logger.error(f"Tree render xato: {e}", exc_info=True)
-            await anim.done("❌ Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
-            return
-
-    # 1. Rasm — timeout bilan retry
-    from telegram.error import TimedOut, NetworkError
-    from telegram.request import HTTPXRequest
-
-    caption_text = (
-        "🌳 <b>Matayev & Abdumannonovlar Shajarasi</b>\n"
-        f"👨‍👩‍👧‍👦 Jami: <b>{len(persons)}</b> shaxs"
-    )
-    sent = False
-    for attempt in range(3):
-        try:
-            await update.message.reply_photo(
-                photo=InputFile(io.BytesIO(img_bytes), filename='shajara_daraxti.png'),
-                caption=caption_text,
-                parse_mode='HTML',
-                write_timeout=60,
-                read_timeout=60,
-                connect_timeout=30,
-            )
-            sent = True
-            break
-        except (TimedOut, NetworkError) as e:
-            logger.warning(f"reply_photo attempt {attempt+1} failed: {e}")
-            if attempt == 2:
-                # Oxirgi urinishda — matn bilan xabar yuboramiz
-                await update.message.reply_text(
-                    f"⚠️ Rasm yuborishda xatolik (tarmoq muammosi).\n\n{caption_text}",
-                    parse_mode='HTML',
-                )
-    if not sent and attempt == 2:
-        pass  # already notified above
-
-    # 2. Matnli shajara
+    # ── Matnli ro'yxat ──────────────────────────────────────────
     tree_text = _build_text_tree(persons)
     header = (
-        "🌳 <b>SHAJARA — MATN KO'RINISHI</b>\n"
+        "🌳 <b>SHAJARA — A'ZOLAR RO'YXATI</b>\n"
+        f"👨‍👩‍👧‍👦 Jami: <b>{len(persons)}</b> shaxs\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
     )
     full = header + tree_text
@@ -1425,6 +1381,21 @@ async def handle_tree(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chunks = [full[i:i+chunk_size] for i in range(0, len(full), chunk_size)]
     for chunk in chunks:
         await update.message.reply_text(chunk, parse_mode='HTML')
+
+    # ── Veb sayt havolasi ───────────────────────────────────────
+    from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+    await update.message.reply_text(
+        "🌐 <b>Shajara daraxtini to'liq ko'rish uchun:</b>\n\n"
+        "Veb versiyada interaktiv daraxt, suratlar va barcha "
+        "ma'lumotlar chiroyli ko'rinishda taqdim etiladi.",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                "🌳 Shajara daraxtini ochish",
+                url="https://shajara-frontend.onrender.com/"
+            )
+        ]]),
+    )
 
 
 async def handle_my_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
