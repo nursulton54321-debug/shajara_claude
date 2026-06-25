@@ -2187,6 +2187,7 @@ function TreeFlow({ rawPersons, stats }) {
     const genVals   = Object.values(genMap)
     const genCount  = genVals.length ? Math.max(...genVals) + 1 : 1
     const alive     = rawPersons.filter(p => !p.death_date && !p.deceased && !p.is_deceased)
+    const dead      = rawPersons.filter(p => p.death_date || p.deceased || p.is_deceased)
     const ages      = alive.map(p => calcAge(p.birth_date, null)).filter(a => a != null && a >= 0)
     const avgAge    = ages.length ? Math.round(ages.reduce((s, a) => s + a, 0) / ages.length) : null
     const males     = rawPersons.filter(p => p.gender === 'male').length
@@ -2195,7 +2196,17 @@ function TreeFlow({ rawPersons, stats }) {
       const a = calcAge(p.birth_date, null)
       return (a != null && (!best || a > best.age)) ? { ...p, age: a } : best
     }, null)
-    return { genCount, avgAge, malesPct, maxAge: maxAgeP?.age ?? null }
+    const total     = rawPersons.length
+    const alivePct  = total ? Math.round(alive.length / total * 100) : 0
+    const deadPct   = total ? Math.round(dead.length  / total * 100) : 0
+    const deadMales = dead.filter(p => p.gender === 'male').length
+    const avgDeadAge = (() => {
+      const da = dead.map(p => calcAge(p.birth_date, p.death_date)).filter(a => a != null && a > 0)
+      return da.length ? Math.round(da.reduce((s,a)=>s+a,0)/da.length) : null
+    })()
+    return { genCount, avgAge, malesPct, maxAge: maxAgeP?.age ?? null,
+      aliveCount: alive.length, deadCount: dead.length, alivePct, deadPct,
+      deadMales, avgDeadAge, total }
   }, [rawPersons])
 
   const quote = useMemo(() => FAMILY_QUOTES[Math.floor(Math.random() * FAMILY_QUOTES.length)], [])
@@ -2522,6 +2533,10 @@ function TreeFlow({ rawPersons, stats }) {
           minHeight: 60, flexShrink: 0,
         }}>
           <style>{`
+            @keyframes statFadeIn {
+              0%   { opacity:0; transform:translateY(-50%) translateX(var(--stat-dx,0)) scale(0.88) }
+              100% { opacity:1; transform:translateY(-50%) translateX(0) scale(1) }
+            }
             @keyframes ribbonShimmer {
               0%   { background-position:-200% center }
               100% { background-position: 200% center }
@@ -3147,6 +3162,110 @@ function TreeFlow({ rawPersons, stats }) {
           {/* Focus mode exit banner — ReactFlow Panel ichida, har doim overlay'lardan ustida */}
           {/* Mobile: Shajara nomi — faqat mobil ekranda ko'rinadi */}
           {isMobile && !loading && rawPersons.length > 0 && (
+            {/* ── Deceased stats overlay — left (alive) + right (dead) ── */}
+            {dimDeceased && extraStats && (() => {
+              const panelBase = {
+                position: 'fixed', top: '50%', transform: 'translateY(-50%)',
+                zIndex: 50, pointerEvents: 'none',
+                display: 'flex', flexDirection: 'column', gap: 12,
+                animation: 'statFadeIn 0.5s cubic-bezier(.16,1,.3,1) both',
+              }
+              const card = (accent, bg) => ({
+                borderRadius: 20, padding: '18px 22px', minWidth: 160,
+                background: isDark ? `rgba(15,23,42,0.94)` : `rgba(255,255,255,0.96)`,
+                border: `2px solid ${accent}`,
+                boxShadow: `0 8px 32px ${accent}44`,
+                backdropFilter: 'blur(14px)',
+                textAlign: 'center',
+              })
+              const bigNum = (color) => ({
+                fontSize: 42, fontWeight: 900, lineHeight: 1,
+                background: color,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                letterSpacing: '-1px',
+              })
+              const label = { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b', marginBottom: 6 }
+              const sub = { fontSize: 12, color: isDark ? '#64748b' : '#94a3b8', marginTop: 6, fontWeight: 600 }
+
+              return (
+                <>
+                  {/* LEFT — Tiriklar */}
+                  <div style={{ ...panelBase, left: 56, animationDelay: '0s', '--stat-dx': '-30px' }}>
+                    <div style={card('#22c55e', '#dcfce7')}>
+                      <div style={label}>💚 Tiriklar</div>
+                      <div style={bigNum('linear-gradient(135deg,#22c55e,#16a34a)')}>
+                        {extraStats.aliveCount}
+                      </div>
+                      <div style={sub}>nafar</div>
+                      <div style={{
+                        marginTop: 12, padding: '6px 0',
+                        borderTop: `1px solid ${isDark ? '#1e293b' : '#f0fdf4'}`,
+                        fontSize: 13, fontWeight: 800,
+                        color: '#22c55e',
+                      }}>
+                        {extraStats.alivePct}%
+                      </div>
+                      <div style={{ ...sub, marginTop: 2 }}>jami oiladan</div>
+                      {extraStats.avgAge && (
+                        <div style={{ marginTop: 10, fontSize: 11, color: isDark ? '#4ade80' : '#16a34a', fontWeight: 700 }}>
+                          O'rtacha yosh: {extraStats.avgAge}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{
+                      ...card('#22c55e', ''),
+                      padding: '12px 18px',
+                    }}>
+                      <div style={label}>👨 Erkak</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#22c55e' }}>
+                        {rawPersons.filter(p => p.gender === 'male' && !p.death_date && !p.deceased && !p.is_deceased).length}
+                      </div>
+                      <div style={{ ...label, marginTop: 8 }}>👩 Ayol</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#4ade80' }}>
+                        {rawPersons.filter(p => p.gender !== 'male' && !p.death_date && !p.deceased && !p.is_deceased).length}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT — Vafot etganlar */}
+                  <div style={{ ...panelBase, right: 56, animationDelay: '0.1s', '--stat-dx': '30px' }}>
+                    <div style={card('#94a3b8', '#f1f5f9')}>
+                      <div style={label}>🕯️ Vafot etganlar</div>
+                      <div style={bigNum('linear-gradient(135deg,#94a3b8,#64748b)')}>
+                        {extraStats.deadCount}
+                      </div>
+                      <div style={sub}>nafar</div>
+                      <div style={{
+                        marginTop: 12, padding: '6px 0',
+                        borderTop: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
+                        fontSize: 13, fontWeight: 800,
+                        color: '#94a3b8',
+                      }}>
+                        {extraStats.deadPct}%
+                      </div>
+                      <div style={{ ...sub, marginTop: 2 }}>jami oiladan</div>
+                      {extraStats.avgDeadAge && (
+                        <div style={{ marginTop: 10, fontSize: 11, color: isDark ? '#94a3b8' : '#475569', fontWeight: 700 }}>
+                          O'rtacha umr: {extraStats.avgDeadAge} yosh
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ ...card('#94a3b8', ''), padding: '12px 18px' }}>
+                      <div style={label}>👨 Erkak</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#94a3b8' }}>
+                        {extraStats.deadMales}
+                      </div>
+                      <div style={{ ...label, marginTop: 8 }}>👩 Ayol</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#94a3b8' }}>
+                        {extraStats.deadCount - extraStats.deadMales}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+
             <Panel position="top-center" style={{ marginTop: 8 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 7,
