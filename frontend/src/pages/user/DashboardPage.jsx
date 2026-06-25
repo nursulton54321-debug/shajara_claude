@@ -267,34 +267,34 @@ function BirthdayStatCard({ stats, bdays, idx }) {
       {hov && thisMonthBdays.length > 0 && (
         <div style={{
           position:'absolute', top:'calc(100% + 8px)', left:0, right:0,
-          background:'var(--bg-app)',
+          background: isDark ? '#1e293b' : '#ffffff',
           borderRadius:14, overflow:'hidden',
-          boxShadow:'0 12px 40px rgba(0,0,0,0.35)',
-          border:'1.5px solid #f59e0b66',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.4)',
+          border: isDark ? '1.5px solid #f59e0b55' : '1.5px solid #fde68a',
           zIndex:999, animation:'slideUp 0.18s ease',
           minWidth:220,
         }}>
-          <div style={{ padding:'8px 12px', background:'linear-gradient(135deg,#f59e0b,#d97706)', fontSize:11, fontWeight:800, color:'white' }}>
+          <div style={{ padding:'8px 12px', background:'linear-gradient(135deg,#f59e0b,#d97706)', fontSize:11, fontWeight:800, color:'#fff' }}>
             🎂 {thisMonthBdays.length} ta — bu oy tug'ilgan kunlar
           </div>
           {thisMonthBdays.slice(0,6).map(p => (
             <div key={p.id} style={{
               display:'flex', alignItems:'center', gap:8, padding:'7px 12px',
-              borderBottom:'1px solid var(--border)',
-              fontSize:12,
+              background: isDark ? '#1e293b' : '#ffffff',
+              borderBottom: isDark ? '1px solid #334155' : '1px solid #fef3c7',
             }}>
               <span style={{ fontSize:16 }}>{p.gender==='male'?'👨':'👩'}</span>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontWeight:700, color:'var(--text-primary)', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.full_name}</div>
-                <div style={{ color:'#f59e0b', fontSize:10, fontWeight:600 }}>{fmtDate(p.birth_date)}</div>
+                <div style={{ fontWeight:700, fontSize:12, color: isDark ? '#f1f5f9' : '#1e293b', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.full_name}</div>
+                <div style={{ fontSize:10, fontWeight:600, color:'#f59e0b' }}>{fmtDate(p.birth_date)}</div>
               </div>
               {daysUntil(p.birth_date) === 0 && (
-                <span style={{ fontSize:10, fontWeight:800, color:'#d97706', background:'#fef3c733', padding:'2px 6px', borderRadius:8, border:'1px solid #f59e0b55' }}>Bugun!</span>
+                <span style={{ fontSize:10, fontWeight:800, padding:'2px 6px', borderRadius:8, color:'#d97706', background: isDark?'#3d2200':'#fef3c7' }}>Bugun!</span>
               )}
             </div>
           ))}
           {thisMonthBdays.length > 6 && (
-            <div style={{ padding:'6px 12px', fontSize:11, color:'#f59e0b', fontWeight:700, textAlign:'center' }}>
+            <div style={{ padding:'6px 12px', fontSize:11, fontWeight:700, textAlign:'center', color:'#f59e0b', background: isDark?'#1e293b':'#fff' }}>
               +{thisMonthBdays.length-6} ta ko'proq
             </div>
           )}
