@@ -276,15 +276,17 @@ function PersonCard({ person, label, accent, onClick, selected }) {
   )
 }
 
-function SearchInput({ label, value, onChange, persons, selectedId, onSelect, accent }) {
+function SearchInput({ label, persons, selectedId, onSelect, accent }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const { isDark } = useThemeStore()
+  const wrapRef = useRef(null)
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
 
   const filtered = useMemo(() => {
     if (!Array.isArray(persons)) return []
     const lower = q.trim().toLowerCase()
-    if (!lower) return persons.slice(0, 15)
+    if (!lower) return persons.slice(0, 20)
     return persons.filter(p =>
       p.full_name?.toLowerCase().includes(lower) ||
       p.first_name?.toLowerCase().includes(lower) ||
@@ -293,60 +295,84 @@ function SearchInput({ label, value, onChange, persons, selectedId, onSelect, ac
     ).slice(0, 20)
   }, [q, persons])
 
-  const selected = persons.find(p => p.id === selectedId)
+  const selected = Array.isArray(persons) ? persons.find(p => p.id === selectedId) : null
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleOpen = () => {
+    if (wrapRef.current) {
+      const r = wrapRef.current.getBoundingClientRect()
+      setDropPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
+    }
+    setOpen(o => !o)
+  }
 
   return (
-    <div className="rel-search-wrap" style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+    <div ref={wrapRef} className="rel-search-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase',
         letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
 
       <div
-        onClick={() => setOpen(o => !o)}
+        onClick={handleOpen}
         style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
           borderRadius: 14, border: `2px solid ${open ? accent : (isDark ? '#334155' : '#e2e8f0')}`,
           background: isDark ? '#1e293b' : 'white', cursor: 'pointer', transition: 'border-color 0.15s',
           boxShadow: open ? `0 0 0 3px ${accent}20` : '0 1px 4px rgba(0,0,0,0.06)',
+          minWidth: 0,
         }}
       >
         {selected ? (
           <>
-            <div style={{ width: 32, height: 32, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+            <div style={{ width: 30, height: 30, borderRadius: 9, overflow: 'hidden', flexShrink: 0,
               background: selected.gender === 'male' ? '#ede9fe' : '#fce7f3',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
               {selected.photo_url || selected.photo
                 ? <img src={selected.photo_url || selected.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                 : <span>{selected.gender === 'male' ? '👨' : '👩'}</span>}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: isDark ? '#f1f5f9' : '#0f172a' }}>{selected.full_name}</div>
-              <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>
+            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: isDark ? '#f1f5f9' : '#0f172a',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.full_name}</div>
+              <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#94a3b8' }}>
                 {selected.birth_date ? new Date(selected.birth_date + 'T00:00:00').getFullYear() : ''}
                 {selected.gender === 'male' ? ' · Erkak' : ' · Ayol'}
               </div>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); onSelect(null); setQ('') }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 16, padding: '0 2px' }}>
+              onClick={e => { e.stopPropagation(); onSelect(null); setQ(''); setOpen(false) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 16, padding: '0 2px', flexShrink: 0 }}>
               ✕
             </button>
           </>
         ) : (
           <>
-            <span style={{ fontSize: 18 }}>🔍</span>
-            <span style={{ fontSize: 13, color: isDark ? '#64748b' : '#94a3b8' }}>Shaxsni tanlang...</span>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>🔍</span>
+            <span style={{ fontSize: 13, color: isDark ? '#64748b' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Shaxsni tanlang...
+            </span>
           </>
         )}
-        <span style={{ color: '#94a3b8', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: '#94a3b8', fontSize: 11, flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
       </div>
 
-      {/* Dropdown */}
+      {/* Dropdown — fixed position to avoid overflow:hidden clipping */}
       {open && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+          position: 'fixed',
+          top: dropPos.top, left: dropPos.left, width: dropPos.width,
+          zIndex: 9999,
           background: isDark ? '#1e293b' : 'white',
           borderRadius: 14, border: isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)', marginTop: 4, overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflow: 'hidden',
         }}>
           <div style={{ padding: '8px 10px', borderBottom: isDark ? '1px solid #334155' : '1px solid #f1f5f9' }}>
             <input
@@ -360,10 +386,11 @@ function SearchInput({ label, value, onChange, persons, selectedId, onSelect, ac
                 fontSize: 13, outline: 'none',
                 background: isDark ? '#0f172a' : '#f8fafc',
                 color: isDark ? '#f1f5f9' : '#0f172a',
+                boxSizing: 'border-box',
               }}
             />
           </div>
-          <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+          <div style={{ maxHeight: 260, overflowY: 'auto' }}>
             {filtered.length === 0 ? (
               <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
                 Topilmadi
@@ -388,7 +415,8 @@ function SearchInput({ label, value, onChange, persons, selectedId, onSelect, ac
                     : <span>{p.gender === 'male' ? '👨' : '👩'}</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#f1f5f9' : '#0f172a' }}>{p.full_name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#f1f5f9' : '#0f172a',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</div>
                   <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>
                     {p.birth_date ? new Date(p.birth_date + 'T00:00:00').getFullYear() : '—'}
                     {p.death_date ? ` – ${new Date(p.death_date + 'T00:00:00').getFullYear()}` : ''}
@@ -603,7 +631,7 @@ export default function RelationshipPage() {
         <div className="rel-selector" style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '20px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
           border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 20,
-          overflow: 'hidden', position: 'relative' }}>
+          position: 'relative' }}>
           {/* Decorative gradient strip */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3,
             background: 'linear-gradient(90deg,#6366f1,#ec4899)', borderRadius: '24px 24px 0 0' }} />
