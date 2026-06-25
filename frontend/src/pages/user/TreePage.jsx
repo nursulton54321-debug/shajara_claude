@@ -2388,14 +2388,16 @@ function TreeFlow({ rawPersons, stats }) {
     if (!pm2[pid]) return null
 
     const ids = new Set()
+    const visitedAnc = new Set()
+    const visitedDesc = new Set()
 
     // Barcha ajdodlarni rekursiv qo'shish (yuqoriga)
     const addAncestors = (id) => {
-      if (ids.has(String(id))) return
+      if (visitedAnc.has(id)) return
+      visitedAnc.add(id)
       ids.add(String(id))
       const p = pm2[id]
       if (!p) return
-      // Juftlarini ham qo'sh
       ;(p.families || []).forEach(f => { if (f.partner_id) ids.add(String(f.partner_id)) })
       if (p.father_id) addAncestors(p.father_id)
       if (p.mother_id) addAncestors(p.mother_id)
@@ -2403,11 +2405,11 @@ function TreeFlow({ rawPersons, stats }) {
 
     // Barcha avlodlarni rekursiv qo'shish (pastga)
     const addDescendants = (id) => {
-      if (ids.has(String(id))) return
+      if (visitedDesc.has(id)) return
+      visitedDesc.add(id)
       ids.add(String(id))
       const p = pm2[id]
       if (!p) return
-      // Juftlarini ham qo'sh
       ;(p.families || []).forEach(f => { if (f.partner_id) ids.add(String(f.partner_id)) })
       rawPersons.forEach(child => {
         if (child.father_id === id || child.mother_id === id) addDescendants(child.id)
