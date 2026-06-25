@@ -897,8 +897,9 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     }
   })
 
-  // Har bir avlod qatorini (Y-darajasi) alohida x=0 ga markazlashtirish
+  // Butun daraxtni eng keng qator markaziga nisbatan siljitish
   {
+    // Eng keng qatorni topish
     const yRows = new Map()
     persons.forEach(p => {
       if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
@@ -906,21 +907,28 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       if (!yRows.has(yn)) yRows.set(yn, [])
       yRows.get(yn).push(p.id)
     })
+
+    let widestCenter = 0, widestWidth = 0
     yRows.forEach(pids => {
       const xs = pids.map(pid => g.node(`p-${pid}`).x)
-      const rowCenter = (Math.min(...xs) + Math.max(...xs)) / 2
-      if (!rowCenter) return
-      pids.forEach(pid => { g.node(`p-${pid}`).x -= rowCenter })
+      const w = Math.max(...xs) - Math.min(...xs)
+      if (w > widestWidth) {
+        widestWidth = w
+        widestCenter = (Math.min(...xs) + Math.max(...xs)) / 2
+      }
     })
-    // CC nodelarni ham mos ravishda siljitish
-    Object.keys(coupleInfo).forEach(cid => {
-      if (!g.hasNode(cid)) return
-      const cc = g.node(cid)
-      const { fatherId, motherId } = coupleInfo[cid]
-      const fN = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
-      const mN = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
-      if (fN || mN) cc.x = fN && mN ? (fN.x + mN.x) / 2 : (fN || mN).x
-    })
+
+    // Barcha nodelarni widestCenter ga nisbatan siljitish
+    if (widestCenter !== 0) {
+      persons.forEach(p => {
+        if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+        g.node(`p-${p.id}`).x -= widestCenter
+      })
+      Object.keys(coupleInfo).forEach(cid => {
+        if (!g.hasNode(cid)) return
+        g.node(cid).x -= widestCenter
+      })
+    }
   }
 
   // Snap CC to midpoint (runs after final spacing so X positions are settled)
