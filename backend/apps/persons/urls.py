@@ -15,6 +15,7 @@ urlpatterns = [
     path('import/csv/', views.PersonImportCSVView.as_view()),
     # Backup ZIP
     path('export/backup/', views.BackupZipView.as_view()),
+    path('import/backup/', views.ImportZipView.as_view()),
     # Audit Log
     path('audit/', views.AuditLogListView.as_view()),
     # 4.1 Invite

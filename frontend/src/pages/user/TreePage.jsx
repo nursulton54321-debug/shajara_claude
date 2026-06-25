@@ -635,6 +635,48 @@ function computeGenerations(persons) {
 }
 
 // ── Build layout ───────────────────────────────────────────────
+// Har bir avlod qatorini x=0 markazga joylashtirish
+function centerRows(nodes) {
+  // 1. personNode'larni _gen bo'yicha guruhlash
+  const groups = new Map()
+  nodes.forEach(nd => {
+    if (nd.type !== 'personNode') return
+    const gen = nd.data._gen ?? 0
+    if (!groups.has(gen)) groups.set(gen, [])
+    groups.get(gen).push(nd)
+  })
+
+  // 2. Har qatorni markazlashtirish
+  groups.forEach(group => {
+    const xs = group.map(nd => nd.position.x + PW / 2)
+    const mid = (Math.min(...xs) + Math.max(...xs)) / 2
+    group.forEach(nd => { nd.position = { ...nd.position, x: nd.position.x - mid } })
+  })
+
+  // 3. coupleNode'larni ota-ona o'rtasiga joylashtirish
+  const posById = {}
+  nodes.forEach(nd => { posById[nd.id] = nd.position })
+  nodes.forEach(nd => {
+    if (nd.type !== 'coupleNode') return
+    const { fatherId, motherId } = nd.data
+    const fp = fatherId ? posById[`p-${fatherId}`] : null
+    const mp = motherId ? posById[`p-${motherId}`] : null
+    if (!fp && !mp) return
+    const fx = fp ? fp.x + PW / 2 : null
+    const mx = mp ? mp.x + PW / 2 : null
+    const cx = (fx != null && mx != null ? (fx + mx) / 2 : (fx ?? mx)) - CW / 2
+    nd.position = { ...nd.position, x: cx }
+  })
+
+  // 4. genLabel'larni eng chap personNode ga nisbatan joylashtirish
+  const minX = Math.min(...nodes.filter(nd => nd.type === 'personNode').map(nd => nd.position.x))
+  nodes.forEach(nd => {
+    if (nd.type === 'genLabel') nd.position = { ...nd.position, x: minX - 128 }
+  })
+
+  return nodes
+}
+
 function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, focusedId, onFocusClick) {
   if (!persons.length) return { nodes: [], edges: [] }
 
@@ -897,40 +939,6 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     }
   })
 
-  // Butun daraxtni eng keng qator markaziga nisbatan siljitish
-  {
-    // Eng keng qatorni topish
-    const yRows = new Map()
-    persons.forEach(p => {
-      if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-      const yn = Math.round(g.node(`p-${p.id}`).y)
-      if (!yRows.has(yn)) yRows.set(yn, [])
-      yRows.get(yn).push(p.id)
-    })
-
-    let widestCenter = 0, widestWidth = 0
-    yRows.forEach(pids => {
-      const xs = pids.map(pid => g.node(`p-${pid}`).x)
-      const w = Math.max(...xs) - Math.min(...xs)
-      if (w > widestWidth) {
-        widestWidth = w
-        widestCenter = (Math.min(...xs) + Math.max(...xs)) / 2
-      }
-    })
-
-    // Barcha nodelarni widestCenter ga nisbatan siljitish
-    if (widestCenter !== 0) {
-      persons.forEach(p => {
-        if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-        g.node(`p-${p.id}`).x -= widestCenter
-      })
-      Object.keys(coupleInfo).forEach(cid => {
-        if (!g.hasNode(cid)) return
-        g.node(cid).x -= widestCenter
-      })
-    }
-  }
-
   // Snap CC to midpoint (runs after final spacing so X positions are settled)
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid)) return
@@ -954,11 +962,6 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     const gen = generations[p.id] ?? 0
     if (genYMap[gen] === undefined || n.y < genYMap[gen]) genYMap[gen] = n.y
   })
-  let minX = Infinity
-  persons.forEach(p => {
-    if (!hiddenP.has(p.id) && g.hasNode(`p-${p.id}`))
-      minX = Math.min(minX, g.node(`p-${p.id}`).x - PW / 2)
-  })
 
   const nodes = []
 
@@ -967,7 +970,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     const n = g.node(`p-${p.id}`)
     nodes.push({
       id: `p-${p.id}`, type: 'personNode',
-      data: { ...p, dimDeceased, onPersonClick, onFocusClick, isFocused: focusedId === p.id },
+      data: { ...p, _gen: generations[p.id] ?? 0, dimDeceased, onPersonClick, onFocusClick, isFocused: focusedId === p.id },
       position: { x: n.x - PW / 2, y: n.y - PH / 2 },
     })
   })
@@ -987,6 +990,11 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
+  // Gen labels
+  let minX = Infinity
+  nodes.forEach(nd => {
+    if (nd.type === 'personNode' && nd.position.x < minX) minX = nd.position.x
+  })
   Object.entries(genYMap).forEach(([gen, y]) => {
     nodes.push({
       id: `gen-${gen}`, type: 'genLabel',
@@ -2324,7 +2332,7 @@ function TreeFlow({ rawPersons, stats }) {
     const pool = rawPersons
     const filtered = focusFilter(pool, null, focusGen)
     const { nodes: n, edges: e } = buildLayout(filtered, collapsed, toggleCouple, dimDeceased, handlePersonClick, focusId, handleFocusClick)
-    setNodes(n)
+    setNodes(centerRows(n))
     setEdges(e)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, focusGen])
@@ -2345,10 +2353,10 @@ function TreeFlow({ rawPersons, stats }) {
 
     const filtered = focusFilter(pool, focusId, focusGen)
     const { nodes: n, edges: e } = buildLayout(filtered, collapsed, toggleCouple, dimDeceased, handlePersonClick, focusId, handleFocusClick)
-    // Saqlangan pozitsiyalarni qo'llash (focus rejimida emas — focus layout o'z pozitsiyalarini beradi)
-    setNodes(n)
+    const centered = centerRows(n)
+    setNodes(centered)
     setEdges(e)
-    setVisibleCount(n.filter(x => x.type === 'personNode').length)
+    setVisibleCount(centered.filter(x => x.type === 'personNode').length)
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, handleFocusClick,
       focusId, focusGen, filterAlive, filterGender, filterGen])
 

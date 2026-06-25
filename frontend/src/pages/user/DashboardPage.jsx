@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
-import { getStatistics, getBirthdays, exportCSV, importCSV, exportBackup, getPersons } from '../../api/persons'
+import { getStatistics, getBirthdays, importCSV, exportBackup, importBackup, getPersons } from '../../api/persons'
+import { exportFamilyPDF } from '../../utils/exportPDF'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import toast from 'react-hot-toast'
 import OnboardingWizard from '../../components/OnboardingWizard'
@@ -1050,6 +1051,7 @@ export default function DashboardPage() {
   const [onboarding, setOnb]  = useState(false)
   const [loadErr, setLoadErr] = useState(null)
   const fileRef  = useRef(null)
+  const zipRef   = useRef(null)
   const navigate = useNavigate()
   const { isDark } = useThemeStore()
 
@@ -1100,25 +1102,37 @@ export default function DashboardPage() {
       toast.success('✅ Backup yuklandi!',{id})
     } catch { toast.error('❌ Xato',{id}) }
   }
-  const handleExportCSV = async () => {
-    const id = toast.loading('CSV...')
+  const handleExportPDF = async () => {
+    const id = toast.loading('📄 PDF tayyorlanmoqda...')
     try {
-      const res = await exportCSV()
-      const url = URL.createObjectURL(new Blob([res.data]))
-      const a = document.createElement('a'); a.href=url; a.download=`shajara-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url)
-      toast.success('✅ CSV yuklandi!',{id})
-    } catch { toast.error('❌ Xato',{id}) }
+      // Avlodlar bo'yicha guruhlash (genStats)
+      const genMap = {}
+      persons.forEach(p => {
+        const gen = p.generation ?? 0
+        if (!genMap[gen]) genMap[gen] = []
+        genMap[gen].push(p)
+      })
+      const genStats = Object.entries(genMap)
+        .sort(([a],[b]) => Number(a)-Number(b))
+        .map(([gen, pList]) => ({
+          generation: Number(gen),
+          count: pList.length,
+          males: pList.filter(p => p.gender==='male').length,
+          females: pList.filter(p => p.gender==='female').length,
+        }))
+      await exportFamilyPDF({ persons, genStats, stats })
+      toast.success('✅ PDF yuklandi!', {id})
+    } catch(e) { toast.error('❌ PDF xatosi', {id}); console.error(e) }
   }
-  const handleImportCSV = async (e) => {
+  const handleImportBackup = async (e) => {
     const file = e.target.files?.[0]; if(!file) return
-    setImp(true); const id = toast.loading('Import...')
+    setImp(true); const id = toast.loading('📦 Import qilinmoqda...')
     try {
-      const res = await importCSV(file)
-      const {created,updated,errors} = res.data
-      toast.success(`✅ ${created} qo'shildi, ${updated} yangilandi`,{id})
-      if(errors?.length) toast.error(`⚠️ ${errors.length} xato`)
-      getStatistics().then(r=>setStats(r.data))
-    } catch { toast.error('❌ Import xatosi',{id})
+      const res = await importBackup(file)
+      const {persons: pc, families: fc} = res.data
+      toast.success(`✅ ${pc} shaxs, ${fc} oila tiklandi`, {id})
+      await loadData()
+    } catch { toast.error('❌ Import xatosi', {id})
     } finally { setImp(false); e.target.value='' }
   }
 
@@ -1131,10 +1145,10 @@ export default function DashboardPage() {
 
   /* ── Top buttons ── */
   const topBtns = [
-    { l:'📊 Statistika', fn:()=>navigate('/statistics'), g:'linear-gradient(135deg,#7c3aed,#4f46e5)' },
-    { l:'⬇️ CSV',        fn:handleExportCSV,             g:'linear-gradient(135deg,#3b82f6,#6366f1)' },
-    { l:importing?'⏳':'⬆️ Import', fn:()=>fileRef.current?.click(), g:'linear-gradient(135deg,#64748b,#475569)', d:importing },
-    { l:'📦 Backup',     fn:handleExportBackup,          g:'linear-gradient(135deg,#0ea5e9,#0284c7)' },
+    { l:'📊 Statistika', fn:()=>navigate('/statistics'),         g:'linear-gradient(135deg,#7c3aed,#4f46e5)' },
+    { l:'📄 PDF',        fn:handleExportPDF,                     g:'linear-gradient(135deg,#3b82f6,#6366f1)' },
+    { l:importing?'⏳':'⬆️ Import', fn:()=>zipRef.current?.click(), g:'linear-gradient(135deg,#64748b,#475569)', d:importing },
+    { l:'📦 Backup',     fn:handleExportBackup,                  g:'linear-gradient(135deg,#0ea5e9,#0284c7)' },
   ]
 
   return (
@@ -1154,7 +1168,8 @@ export default function DashboardPage() {
             {topBtns.map(({ l,fn,g,d }) => (
               <TopBtn key={l} label={l} onClick={fn} grad={g} disabled={d} />
             ))}
-            <input ref={fileRef} type="file" accept=".csv" style={{display:'none'}} onChange={handleImportCSV}/>
+            <input ref={fileRef} type="file" accept=".csv" style={{display:'none'}} onChange={(e)=>{const f=e.target.files?.[0];if(f)importCSV(f).finally(()=>{e.target.value=''})}}/>
+            <input ref={zipRef} type="file" accept=".zip" style={{display:'none'}} onChange={handleImportBackup}/>
           </div>
         </div>
 

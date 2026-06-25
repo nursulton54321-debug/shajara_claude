@@ -41,6 +41,12 @@ export const importCSV = (file) => {
   return api.post('/persons/import/csv/', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
 
+export const importBackup = (file) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return api.post('/persons/import/backup/', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+
 // 5.2 Did You Know
 export const getDidYouKnow = () => api.get('/persons/did-you-know/')
 

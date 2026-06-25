@@ -523,6 +523,111 @@ class BackupZipView(APIView):
         return response
 
 
+class ImportZipView(APIView):
+    """ZIP backup'dan ma'lumotlarni tiklash"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'Fayl yuklanmadi'}, status=400)
+        if not file.name.endswith('.zip'):
+            return Response({'error': 'ZIP fayl yuklang'}, status=400)
+
+        try:
+            buf = io.BytesIO(file.read())
+            with zipfile.ZipFile(buf, 'r') as zf:
+                names = zf.namelist()
+
+                # ── 1. persons.json ──────────────────────────────
+                if 'persons.json' not in names:
+                    return Response({'error': 'persons.json topilmadi'}, status=400)
+
+                persons_data = json.loads(zf.read('persons.json').decode('utf-8'))
+
+                # Avval rasmlarni saqlash (id → path mapping)
+                photo_map = {}
+                for name in names:
+                    if name.startswith('photos/') and name != 'photos/':
+                        fname = os.path.basename(name)
+                        if fname:
+                            img_buf = io.BytesIO(zf.read(name))
+                            from django.core.files.base import ContentFile
+                            photo_map[fname] = ContentFile(img_buf.read(), name=fname)
+
+                # Shaxslarni yaratish (2 bosqich: avval parent yo'q, keyin bog'lash)
+                id_map = {}  # old_id → new Person
+
+                # 1-bosqich: father_id/mother_id siz yaratish
+                for pd in persons_data:
+                    old_id = pd['id']
+                    p, _ = Person.objects.get_or_create(
+                        first_name=pd.get('first_name', ''),
+                        last_name=pd.get('last_name', ''),
+                        middle_name=pd.get('middle_name', '') or '',
+                        gender=pd.get('gender', ''),
+                        birth_date=pd.get('birth_date') or None,
+                        defaults={
+                            'death_date':  pd.get('death_date') or None,
+                            'birth_place': pd.get('birth_place', '') or '',
+                            'phone':       pd.get('phone', '') or '',
+                            'child_number':pd.get('child_number') or 0,
+                        }
+                    )
+                    id_map[old_id] = p
+
+                    # Rasm
+                    photo_fname = os.path.basename(pd.get('photo_file') or '')
+                    if photo_fname and photo_fname in photo_map and not p.photo:
+                        p.photo.save(photo_fname, photo_map[photo_fname], save=True)
+
+                # 2-bosqich: ota-ona bog'lash
+                for pd in persons_data:
+                    p = id_map.get(pd['id'])
+                    if not p:
+                        continue
+                    changed = False
+                    if pd.get('father_id') and pd['father_id'] in id_map:
+                        p.father = id_map[pd['father_id']]
+                        changed = True
+                    if pd.get('mother_id') and pd['mother_id'] in id_map:
+                        p.mother = id_map[pd['mother_id']]
+                        changed = True
+                    if changed:
+                        p.save(update_fields=['father', 'mother'])
+
+                # ── 2. families.json ─────────────────────────────
+                created_fam = 0
+                if 'families.json' in names:
+                    families_data = json.loads(zf.read('families.json').decode('utf-8'))
+                    for fd in families_data:
+                        h = id_map.get(fd.get('husband_id'))
+                        w = id_map.get(fd.get('wife_id'))
+                        if h or w:
+                            Family.objects.get_or_create(
+                                husband=h, wife=w,
+                                defaults={
+                                    'wedding_date': fd.get('wedding_date') or None,
+                                    'divorce_date': fd.get('divorce_date') or None,
+                                    'is_divorced':  fd.get('is_divorced', False),
+                                    'is_active':    fd.get('is_active', True),
+                                    'note':         fd.get('note', '') or '',
+                                    'order':        fd.get('order', 0) or 0,
+                                }
+                            )
+                            created_fam += 1
+
+            log_action(request, 'import', model_name='Backup',
+                       changes={'persons': len(persons_data), 'families': created_fam})
+            return Response({'persons': len(persons_data), 'families': created_fam})
+
+        except zipfile.BadZipFile:
+            return Response({'error': 'Noto\'g\'ri ZIP fayl'}, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+
 # ── Audit Log ──────────────────────────────────────────────────
 
 class AuditLogListView(APIView):
