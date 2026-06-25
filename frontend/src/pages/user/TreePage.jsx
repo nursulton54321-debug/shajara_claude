@@ -897,26 +897,30 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     }
   })
 
-  // Center the entire tree around x=0 so no generation drifts left/right
+  // Har bir avlod qatorini (Y-darajasi) alohida x=0 ga markazlashtirish
   {
-    let treeMinX = Infinity, treeMaxX = -Infinity
+    const yRows = new Map()
     persons.forEach(p => {
       if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-      const nx = g.node(`p-${p.id}`).x
-      if (nx < treeMinX) treeMinX = nx
-      if (nx > treeMaxX) treeMaxX = nx
+      const yn = Math.round(g.node(`p-${p.id}`).y)
+      if (!yRows.has(yn)) yRows.set(yn, [])
+      yRows.get(yn).push(p.id)
     })
-    if (isFinite(treeMinX) && isFinite(treeMaxX)) {
-      const treeCenter = (treeMinX + treeMaxX) / 2
-      persons.forEach(p => {
-        if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-        g.node(`p-${p.id}`).x -= treeCenter
-      })
-      Object.keys(coupleInfo).forEach(cid => {
-        if (!g.hasNode(cid)) return
-        g.node(cid).x -= treeCenter
-      })
-    }
+    yRows.forEach(pids => {
+      const xs = pids.map(pid => g.node(`p-${pid}`).x)
+      const rowCenter = (Math.min(...xs) + Math.max(...xs)) / 2
+      if (!rowCenter) return
+      pids.forEach(pid => { g.node(`p-${pid}`).x -= rowCenter })
+    })
+    // CC nodelarni ham mos ravishda siljitish
+    Object.keys(coupleInfo).forEach(cid => {
+      if (!g.hasNode(cid)) return
+      const cc = g.node(cid)
+      const { fatherId, motherId } = coupleInfo[cid]
+      const fN = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
+      const mN = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
+      if (fN || mN) cc.x = fN && mN ? (fN.x + mN.x) / 2 : (fN || mN).x
+    })
   }
 
   // Snap CC to midpoint (runs after final spacing so X positions are settled)
