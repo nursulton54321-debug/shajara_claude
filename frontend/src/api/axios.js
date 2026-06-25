@@ -52,14 +52,13 @@ api.interceptors.response.use(
         })
       }
 
-      const refresh = sessionStorage.getItem('refresh')
+      const refresh = localStorage.getItem('refresh') || sessionStorage.getItem('refresh')
       if (refresh) {
         _refreshing = true
         try {
           const res = await api.post('/auth/refresh/', { refresh })
           const newToken = res.data.access
 
-          // Zustand store ni yangilash (import qilmasdan localStorage orqali)
           const stored = JSON.parse(localStorage.getItem('auth') || '{}')
           if (stored.state) {
             stored.state.token = newToken
@@ -67,7 +66,6 @@ api.interceptors.response.use(
           }
           api.defaults.headers.Authorization = `Bearer ${newToken}`
 
-          // Navbatdagi barcha so'rovlarni qayta yubor
           _processQueue(null, newToken)
           _refreshing = false
 
