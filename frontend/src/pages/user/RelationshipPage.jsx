@@ -282,13 +282,15 @@ function SearchInput({ label, value, onChange, persons, selectedId, onSelect, ac
   const { isDark } = useThemeStore()
 
   const filtered = useMemo(() => {
-    if (!q) return persons.slice(0, 10)
-    const lower = q.toLowerCase()
+    if (!Array.isArray(persons)) return []
+    const lower = q.trim().toLowerCase()
+    if (!lower) return persons.slice(0, 15)
     return persons.filter(p =>
       p.full_name?.toLowerCase().includes(lower) ||
       p.first_name?.toLowerCase().includes(lower) ||
-      p.last_name?.toLowerCase().includes(lower)
-    ).slice(0, 12)
+      p.last_name?.toLowerCase().includes(lower) ||
+      p.middle_name?.toLowerCase().includes(lower)
+    ).slice(0, 20)
   }, [q, persons])
 
   const selected = persons.find(p => p.id === selectedId)
@@ -426,8 +428,8 @@ export default function RelationshipPage() {
   }, [persons])
 
   useEffect(() => {
-    getPersons()
-      .then(r => { setPersons(r.data); setLoading(false) })
+    getPersons({ page_size: 9999 })
+      .then(r => { setPersons(r.data.results || r.data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
