@@ -50,41 +50,38 @@ function StatPanel({ accent, title, count, pct, sub1label, sub1val, sub2label, s
 
   if (compact) return (
     <div style={{
-      background: bg, border, borderRadius: 16, padding: '10px 14px',
-      boxShadow: `0 4px 20px ${accent}33`, backdropFilter: 'blur(18px)',
-      textAlign: 'center', flex: 1,
+      background: bg, border, borderRadius: 14, padding: '8px 10px',
+      boxShadow: `0 4px 16px ${accent}33`, backdropFilter: 'blur(18px)', flex: 1,
     }}>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
-        textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b', marginBottom: 4 }}>
-        {title}
+      {/* Row 1: title + count + pct */}
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:5 }}>
+        <span style={{ fontSize:9, fontWeight:700, textTransform:'uppercase',
+          letterSpacing:'0.05em', color: isDark?'#94a3b8':'#64748b', whiteSpace:'nowrap' }}>
+          {title}
+        </span>
+        <span style={{
+          fontSize:22, fontWeight:900, lineHeight:1,
+          background:`linear-gradient(135deg,${accent},${accent}aa)`,
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+          letterSpacing:'-0.5px',
+        }}>{count}</span>
+        <span style={{ fontSize:9, color: isDark?'#64748b':'#94a3b8' }}>nafar</span>
+        <span style={{ marginLeft:'auto', fontSize:18, fontWeight:900, color:accent }}>{pct}%</span>
       </div>
-      <div style={{
-        fontSize: 30, fontWeight: 900, lineHeight: 1,
-        background: `linear-gradient(135deg,${accent},${accent}aa)`,
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        letterSpacing: '-1px',
-      }}>
-        {count}
+      {/* Row 2: erkak / ayol / extra */}
+      <div style={{ display:'flex', alignItems:'center', gap:8,
+        borderTop:`1px solid ${divider}`, paddingTop:5 }}>
+        <span style={{ fontSize:9, color: isDark?'#64748b':'#94a3b8' }}>{sub1label}</span>
+        <span style={{ fontSize:14, fontWeight:900, color:accent }}>{sub1val}</span>
+        <span style={{ fontSize:9, color: isDark?'#64748b':'#94a3b8', marginLeft:4 }}>{sub2label}</span>
+        <span style={{ fontSize:14, fontWeight:900, color:accent }}>{sub2val}</span>
+        {extra && (
+          <span style={{ marginLeft:'auto', fontSize:9, color:accent, fontWeight:700,
+            background:`${accent}18`, borderRadius:5, padding:'2px 5px', whiteSpace:'nowrap' }}>
+            {extra}
+          </span>
+        )}
       </div>
-      <div style={{ fontSize: 9, color: isDark ? '#64748b' : '#94a3b8', marginTop: 2 }}>nafar</div>
-      <div style={{ fontSize: 18, fontWeight: 900, color: accent, margin: '4px 0' }}>{pct}%</div>
-      <div style={{ borderTop: `1px solid ${divider}`, paddingTop: 6, display: 'flex', justifyContent: 'space-around', gap: 4 }}>
-        <div>
-          <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#94a3b8' }}>{sub1label}</div>
-          <div style={{ fontSize: 14, fontWeight: 900, color: accent }}>{sub1val}</div>
-        </div>
-        <div style={{ width: 1, background: divider }} />
-        <div>
-          <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#94a3b8' }}>{sub2label}</div>
-          <div style={{ fontSize: 14, fontWeight: 900, color: accent }}>{sub2val}</div>
-        </div>
-      </div>
-      {extra && (
-        <div style={{ marginTop: 5, fontSize: 9, color: accent, fontWeight: 700,
-          background: `${accent}18`, borderRadius: 6, padding: '3px 6px' }}>
-          {extra}
-        </div>
-      )}
     </div>
   )
 
