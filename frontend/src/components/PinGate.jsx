@@ -285,7 +285,7 @@ export default function PinGate({ children }) {
     if (code.length < 4) return
     setLoading(true); setError('')
     try {
-      await api.post('/auth/verify-pin/', { pin: code })
+      await api.post('/auth/verify-pin/', { pin: code }, { headers: { Authorization: undefined } })
       sessionStorage.setItem(KEY_EXP, String(Date.now() + PIN_TTL))
       setSuccess(true)
       setTimeout(() => { setUnlocked(true); navigate('/tree') }, 950)

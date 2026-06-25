@@ -787,10 +787,10 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         today = timezone.now().date()
 
         # ── Barcha ma'lumotlarni VALUES orqali bir queryset bilan ──────
-        # id, gender, birth_date, death_date, father_id, last_name, first_name, photo
+        # id, gender, birth_date, death_date, deceased, father_id, last_name, first_name, photo
         rows = []
         async for row in Person.objects.values_list(
-            'id', 'gender', 'birth_date', 'death_date',
+            'id', 'gender', 'birth_date', 'death_date', 'deceased',
             'father_id', 'last_name', 'first_name', 'photo'
         ):
             rows.append(row)
@@ -798,9 +798,9 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total    = len(rows)
         male     = sum(1 for r in rows if r[1] == 'male')
         female   = sum(1 for r in rows if r[1] == 'female')
-        alive    = sum(1 for r in rows if r[3] is None)
-        deceased = sum(1 for r in rows if r[3] is not None)
-        with_photo = sum(1 for r in rows if r[7])
+        deceased = sum(1 for r in rows if r[4] or r[3] is not None)
+        alive    = total - deceased
+        with_photo = sum(1 for r in rows if r[8])
 
         # ── Oylar bo'yicha ───────────────────────────────────────────
         monthly = [0] * 12
@@ -821,7 +821,7 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         oldest = None; youngest = None; oldest_dec = None
 
         for r in rows:
-            pid, gender, birth, death, father_id, lname, fname, photo = r
+            pid, gender, birth, death, is_dec, father_id, lname, fname, photo = r
             full_name = f"{lname or ''} {fname or ''}".strip()
             age = _calc_age(birth, death)
             if age is None:
@@ -845,7 +845,7 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # ── Ko'p farzandli ───────────────────────────────────────────
         ch_counts: dict[int, int] = {}
         for r in rows:
-            fid = r[4]  # father_id
+            fid = r[5]  # father_id
             if fid:
                 ch_counts[fid] = ch_counts.get(fid, 0) + 1
         # mother_id — alohida query
@@ -857,11 +857,11 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             best_id = max(ch_counts, key=lambda x: ch_counts[x])
             best_row = next((r for r in rows if r[0] == best_id), None)
             if best_row:
-                bname = f"{best_row[5] or ''} {best_row[6] or ''}".strip()
+                bname = f"{best_row[6] or ''} {best_row[7] or ''}".strip()
                 most_ch = (ch_counts[best_id], bname)
 
         # ── Avlod chuqurligi (iterativ, sikldan himoyalangan) ─────────
-        id_to_fid = {r[0]: r[4] for r in rows}
+        id_to_fid = {r[0]: r[5] for r in rows}
         gen_map: dict[int, int] = {}
         for pid in id_to_fid:
             depth = 1
@@ -955,17 +955,17 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # A'zolar
         rows = []
-        async for row in Person.objects.values_list('gender', 'death_date', 'created_at', 'photo'):
+        async for row in Person.objects.values_list('gender', 'deceased', 'death_date', 'created_at', 'photo'):
             rows.append(row)
 
         total    = len(rows)
         male     = sum(1 for r in rows if r[0] == 'male')
         female   = total - male
-        deceased = sum(1 for r in rows if r[1] is not None)
+        deceased = sum(1 for r in rows if r[1] or r[2] is not None)
         alive    = total - deceased
-        with_photo = sum(1 for r in rows if r[3])
-        new_week  = sum(1 for r in rows if r[2] and r[2].date() >= week_ago)
-        new_month = sum(1 for r in rows if r[2] and r[2].date() >= month_ago)
+        with_photo = sum(1 for r in rows if r[4])
+        new_week  = sum(1 for r in rows if r[3] and r[3].date() >= week_ago)
+        new_month = sum(1 for r in rows if r[3] and r[3].date() >= month_ago)
 
         # Tug'ilgan kunlar
         bday_today    = await Person.objects.filter(
@@ -1065,6 +1065,39 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton("❌ Rad etish",  callback_data=f"reject_{pu.telegram_id}"),
                 ]])
                 await update.message.reply_text(user_text, parse_mode='HTML', reply_markup=kb)
+
+        # Kutilayotgan shaxs qo'shish so'rovlari
+        pending_persons = context.bot_data.get('pending_persons', {})
+        if pending_persons:
+            await update.message.reply_text(
+                f"📬 <b>{len(pending_persons)} ta yangi shaxs so'rovi kutmoqda:</b>",
+                parse_mode='HTML',
+            )
+            for req_key, req in list(pending_persons.items()):
+                d = req.get('data', {})
+                submitter = req.get('submitter_name') or "Noma'lum"
+                sub_id    = req.get('submitter_tg_id', '')
+                sub_link  = f'<a href="tg://user?id={sub_id}">{submitter}</a>' if sub_id else submitter
+
+                full = f"{d.get('last_name', '')} {d.get('first_name', '')} {d.get('middle_name', '')}".strip()
+                gender_icon = "👨" if d.get('gender') == 'male' else "👩"
+                birth = d.get('birth_date') or '—'
+                place = d.get('birth_place') or '—'
+
+                req_text = (
+                    f"📬 <b>Yangi shaxs so'rovi</b>\n"
+                    f"👤 Yuboruvchi: {sub_link}\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"{gender_icon} <b>{full or '—'}</b>\n"
+                    f"🎂 Tug'ilgan: <b>{birth}</b>\n"
+                    f"📍 Joyi: {place}"
+                )
+                req_kb = InlineKeyboardMarkup([[
+                    InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"addp_approve_{req_key}"),
+                    InlineKeyboardButton("❌ Rad etish",  callback_data=f"addp_reject_{req_key}"),
+                ]])
+                await update.message.reply_text(req_text, parse_mode='HTML', reply_markup=req_kb)
+
     except Exception as e:
         logger.error(f"handle_dashboard xato: {e}", exc_info=True)
         await anim.done("❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
