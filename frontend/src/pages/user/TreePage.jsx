@@ -43,10 +43,51 @@ const calcAge = (birth, death) => {
 const HoverCtx = createContext({ hoveredId: null, connectedIds: null })
 
 // ── StatPanel — tirik/vafot etgan statistika paneli ───────────
-function StatPanel({ accent, title, count, pct, sub1label, sub1val, sub2label, sub2val, extra, isDark }) {
+function StatPanel({ accent, title, count, pct, sub1label, sub1val, sub2label, sub2val, extra, isDark, compact }) {
   const bg = isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.97)'
   const border = `2px solid ${accent}`
   const divider = isDark ? '#1e293b' : '#f1f5f9'
+
+  if (compact) return (
+    <div style={{
+      background: bg, border, borderRadius: 16, padding: '10px 14px',
+      boxShadow: `0 4px 20px ${accent}33`, backdropFilter: 'blur(18px)',
+      textAlign: 'center', flex: 1,
+    }}>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+        textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b', marginBottom: 4 }}>
+        {title}
+      </div>
+      <div style={{
+        fontSize: 30, fontWeight: 900, lineHeight: 1,
+        background: `linear-gradient(135deg,${accent},${accent}aa)`,
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        letterSpacing: '-1px',
+      }}>
+        {count}
+      </div>
+      <div style={{ fontSize: 9, color: isDark ? '#64748b' : '#94a3b8', marginTop: 2 }}>nafar</div>
+      <div style={{ fontSize: 18, fontWeight: 900, color: accent, margin: '4px 0' }}>{pct}%</div>
+      <div style={{ borderTop: `1px solid ${divider}`, paddingTop: 6, display: 'flex', justifyContent: 'space-around', gap: 4 }}>
+        <div>
+          <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#94a3b8' }}>{sub1label}</div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: accent }}>{sub1val}</div>
+        </div>
+        <div style={{ width: 1, background: divider }} />
+        <div>
+          <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#94a3b8' }}>{sub2label}</div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: accent }}>{sub2val}</div>
+        </div>
+      </div>
+      {extra && (
+        <div style={{ marginTop: 5, fontSize: 9, color: accent, fontWeight: 700,
+          background: `${accent}18`, borderRadius: 6, padding: '3px 6px' }}>
+          {extra}
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div style={{
       background: bg, border, borderRadius: 20, padding: '18px 22px',
@@ -66,11 +107,8 @@ function StatPanel({ accent, title, count, pct, sub1label, sub1val, sub2label, s
         {count}
       </div>
       <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8', marginTop: 4, fontWeight: 600 }}>nafar</div>
-      <div style={{
-        margin: '10px 0 8px', padding: '8px 0',
-        borderTop: `1px solid ${divider}`,
-        fontSize: 26, fontWeight: 900, color: accent,
-      }}>
+      <div style={{ margin: '10px 0 8px', padding: '8px 0', borderTop: `1px solid ${divider}`,
+        fontSize: 26, fontWeight: 900, color: accent }}>
         {pct}%
       </div>
       <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: 10 }}>
@@ -3275,7 +3313,7 @@ function TreeFlow({ rawPersons, stats }) {
         </ReactFlow>
 
         {/* ── Deceased stat panels — rendered into document.body so position:fixed works ── */}
-        {dimDeceased && extraStats && createPortal(
+        {dimDeceased && extraStats && viewMode === 'tree' && createPortal(
           <>
             <style>{`
               @keyframes statSlideL {
@@ -3286,51 +3324,76 @@ function TreeFlow({ rawPersons, stats }) {
                 from { opacity:0; transform:translateY(-50%) translateX(40px)  scale(0.9) }
                 to   { opacity:1; transform:translateY(-50%) translateX(0)     scale(1)   }
               }
+              @keyframes statSlideUp {
+                from { opacity:0; transform:translateY(20px) scale(0.92) }
+                to   { opacity:1; transform:translateY(0)    scale(1)    }
+              }
             `}</style>
 
-            {/* LEFT — Tiriklar */}
-            <div style={{
-              position:'fixed', left:190, top:'50%',
-              transform:'translateY(calc(-50% + 54px))',
-              zIndex:9999, pointerEvents:'none',
-              display:'flex', flexDirection:'column', gap:10,
-              animation:'statSlideL 0.55s cubic-bezier(.16,1,.3,1) both',
-            }}>
-              <StatPanel
-                accent="#22c55e"
-                title="💚 Tiriklar"
-                count={extraStats.aliveCount}
-                pct={extraStats.alivePct}
-                sub1label="👨 Erkak"
-                sub1val={rawPersons.filter(p=>p.gender==='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
-                sub2label="👩 Ayol"
-                sub2val={rawPersons.filter(p=>p.gender!=='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
-                extra={extraStats.avgAge ? `O'rtacha yosh: ${extraStats.avgAge}` : null}
-                isDark={isDark}
-              />
-            </div>
+            {isMobile ? (
+              /* ── MOBIL: ikkala panel pastki qismda yonma-yon, kichik ── */
+              <div style={{
+                position:'fixed', left:8, right:8, bottom:72,
+                zIndex:9999, pointerEvents:'none',
+                display:'flex', gap:8,
+                animation:'statSlideUp 0.45s cubic-bezier(.16,1,.3,1) both',
+              }}>
+                <StatPanel compact
+                  accent="#22c55e" title="💚 Tiriklar"
+                  count={extraStats.aliveCount} pct={extraStats.alivePct}
+                  sub1label="👨" sub1val={rawPersons.filter(p=>p.gender==='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
+                  sub2label="👩" sub2val={rawPersons.filter(p=>p.gender!=='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
+                  extra={extraStats.avgAge ? `~${extraStats.avgAge} yosh` : null}
+                  isDark={isDark}
+                />
+                <StatPanel compact
+                  accent="#94a3b8" title="🕯️ Vafot etgan"
+                  count={extraStats.deadCount} pct={extraStats.deadPct}
+                  sub1label="👨" sub1val={extraStats.deadMales}
+                  sub2label="👩" sub2val={extraStats.deadCount - extraStats.deadMales}
+                  extra={extraStats.avgDeadAge ? `~${extraStats.avgDeadAge} yosh` : null}
+                  isDark={isDark}
+                />
+              </div>
+            ) : (
+              <>
+                {/* DESKTOP LEFT — Tiriklar */}
+                <div style={{
+                  position:'fixed', left:190, top:'50%',
+                  transform:'translateY(calc(-50% + 54px))',
+                  zIndex:9999, pointerEvents:'none',
+                  display:'flex', flexDirection:'column', gap:10,
+                  animation:'statSlideL 0.55s cubic-bezier(.16,1,.3,1) both',
+                }}>
+                  <StatPanel
+                    accent="#22c55e" title="💚 Tiriklar"
+                    count={extraStats.aliveCount} pct={extraStats.alivePct}
+                    sub1label="👨 Erkak" sub1val={rawPersons.filter(p=>p.gender==='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
+                    sub2label="👩 Ayol"  sub2val={rawPersons.filter(p=>p.gender!=='male'&&!p.death_date&&!p.deceased&&!p.is_deceased).length}
+                    extra={extraStats.avgAge ? `O'rtacha yosh: ${extraStats.avgAge}` : null}
+                    isDark={isDark}
+                  />
+                </div>
 
-            {/* RIGHT — Vafot etganlar */}
-            <div style={{
-              position:'fixed', right:16, top:'50%',
-              transform:'translateY(calc(-50% + 54px))',
-              zIndex:9999, pointerEvents:'none',
-              display:'flex', flexDirection:'column', gap:10,
-              animation:'statSlideR 0.55s cubic-bezier(.16,1,.3,1) both',
-            }}>
-              <StatPanel
-                accent="#94a3b8"
-                title="🕯️ Vafot etganlar"
-                count={extraStats.deadCount}
-                pct={extraStats.deadPct}
-                sub1label="👨 Erkak"
-                sub1val={extraStats.deadMales}
-                sub2label="👩 Ayol"
-                sub2val={extraStats.deadCount - extraStats.deadMales}
-                extra={extraStats.avgDeadAge ? `O'rtacha umr: ${extraStats.avgDeadAge} yosh` : null}
-                isDark={isDark}
-              />
-            </div>
+                {/* DESKTOP RIGHT — Vafot etganlar */}
+                <div style={{
+                  position:'fixed', right:16, top:'50%',
+                  transform:'translateY(calc(-50% + 54px))',
+                  zIndex:9999, pointerEvents:'none',
+                  display:'flex', flexDirection:'column', gap:10,
+                  animation:'statSlideR 0.55s cubic-bezier(.16,1,.3,1) both',
+                }}>
+                  <StatPanel
+                    accent="#94a3b8" title="🕯️ Vafot etganlar"
+                    count={extraStats.deadCount} pct={extraStats.deadPct}
+                    sub1label="👨 Erkak" sub1val={extraStats.deadMales}
+                    sub2label="👩 Ayol"  sub2val={extraStats.deadCount - extraStats.deadMales}
+                    extra={extraStats.avgDeadAge ? `O'rtacha umr: ${extraStats.avgDeadAge} yosh` : null}
+                    isDark={isDark}
+                  />
+                </div>
+              </>
+            )}
           </>,
           document.body
         )}
