@@ -1200,13 +1200,13 @@ def _gemini_client():
 
 # Sinab ko'riladigan modellar (birinchi ishlaydigani tanlanadi)
 GEMINI_MODELS_PRIORITY = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite-preview-06-17',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-2.5-flash',
     'gemini-flash-latest',
 ]
-GEMINI_MODEL = 'gemini-2.0-flash'  # default
+GEMINI_MODEL = 'gemini-2.5-flash'  # default
 
 # Groq modellari (bepul fallback)
 GROQ_MODELS_PRIORITY = [
@@ -1347,7 +1347,10 @@ def _gemini_call(client, prompt, img_bytes=None, img_mime=None):
             else:
                 contents = prompt
             resp = client.models.generate_content(model=model, contents=contents)
-            return resp.text.strip(), model
+            text = resp.text
+            if not text:
+                raise Exception(f'{model}: bo\'sh javob')
+            return text.strip(), model
         except Exception as e:
             last_err = e
             continue
@@ -1371,7 +1374,10 @@ def _gemini_chat(client, system_prompt, history, message):
                 history=chat_history,
             )
             resp = chat.send_message(message)
-            return resp.text.strip(), model
+            text = resp.text
+            if not text:
+                raise Exception(f'{model}: bo\'sh javob')
+            return text.strip(), model
         except Exception as e:
             last_err = e
             continue
@@ -1386,22 +1392,28 @@ class AiExplainView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        import logging
+        log = logging.getLogger(__name__)
         d = request.data
-        name_a         = d.get('name_a', 'Shaxs A')
-        name_b         = d.get('name_b', 'Shaxs B')
-        relation_label = d.get('relation_label', '')
-        lca_name       = d.get('lca_name', '')
-        depth_a        = int(d.get('depth_a', 0))
-        depth_b        = int(d.get('depth_b', 0))
-        path_names     = d.get('path_names', [])
-
-        api_key = getattr(settings, 'GEMINI_API_KEY', '')
+        name_a         = d.get('name_a') or 'Shaxs A'
+        name_b         = d.get('name_b') or 'Shaxs B'
+        relation_label = d.get('relation_label') or ''
+        lca_name       = d.get('lca_name') or ''
+        try:
+            depth_a = int(d.get('depth_a') or 0)
+        except (TypeError, ValueError):
+            depth_a = 0
+        try:
+            depth_b = int(d.get('depth_b') or 0)
+        except (TypeError, ValueError):
+            depth_b = 0
+        path_names = d.get('path_names') or []
 
         gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
         groq_key   = getattr(settings, 'GROQ_API_KEY', '')
         if gemini_key or groq_key:
             try:
-                chain_str = ' → '.join(path_names) if path_names else '—'
+                chain_str = ' → '.join(str(n) for n in path_names) if path_names else '—'
                 prompt = (
                     f"O'zbek tilida 2-3 ta qisqa, do'stona gap yoz (emoji ishlatma):\n"
                     f"Ikki shaxs: {name_a} va {name_b}.\n"
@@ -1412,11 +1424,15 @@ class AiExplainView(APIView):
                     f"Oddiy, tushunarli tarzda tushuntir. Faqat asosiy ma'lumot."
                 )
                 text, used_model = _ai_call(prompt)
-                return Response({'text': text, 'source': used_model})
-            except Exception:
-                pass  # template ga tushadi
+                if text:
+                    return Response({'text': text, 'source': used_model})
+            except Exception as e:
+                log.warning(f"[AiExplain] AI xato, template ga tushadi: {e}")
 
-        text = _rel_template(name_a, name_b, relation_label, lca_name, depth_a, depth_b, path_names)
+        try:
+            text = _rel_template(name_a, name_b, relation_label, lca_name, depth_a, depth_b, path_names)
+        except Exception:
+            text = f"{name_a} va {name_b} o'rtasida '{relation_label}' munosabati aniqlandi."
         return Response({'text': text, 'source': 'template'})
 
 
