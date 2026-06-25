@@ -267,10 +267,10 @@ function BirthdayStatCard({ stats, bdays, idx }) {
       {hov && thisMonthBdays.length > 0 && (
         <div style={{
           position:'absolute', top:'calc(100% + 8px)', left:0, right:0,
-          background: isDark ? '#1e293b' : 'white',
+          background:'var(--bg-app)',
           borderRadius:14, overflow:'hidden',
-          boxShadow: isDark ? '0 12px 40px rgba(0,0,0,0.5)' : '0 12px 40px rgba(0,0,0,0.18)',
-          border: isDark ? '1.5px solid #f59e0b44' : '1.5px solid #fde68a',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.35)',
+          border:'1.5px solid #f59e0b66',
           zIndex:999, animation:'slideUp 0.18s ease',
           minWidth:220,
         }}>
@@ -280,16 +280,16 @@ function BirthdayStatCard({ stats, bdays, idx }) {
           {thisMonthBdays.slice(0,6).map(p => (
             <div key={p.id} style={{
               display:'flex', alignItems:'center', gap:8, padding:'7px 12px',
-              borderBottom: isDark ? '1px solid #334155' : '1px solid #fef3c7',
+              borderBottom:'1px solid var(--border)',
               fontSize:12,
             }}>
               <span style={{ fontSize:16 }}>{p.gender==='male'?'👨':'👩'}</span>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontWeight:700, color: isDark?'#e2e8f0':'#1e293b', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.full_name}</div>
-                <div style={{ color: isDark?'#f59e0b':'#92400e', fontSize:10, fontWeight:600 }}>{fmtDate(p.birth_date)}</div>
+                <div style={{ fontWeight:700, color:'var(--text-primary)', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.full_name}</div>
+                <div style={{ color:'#f59e0b', fontSize:10, fontWeight:600 }}>{fmtDate(p.birth_date)}</div>
               </div>
               {daysUntil(p.birth_date) === 0 && (
-                <span style={{ fontSize:10, fontWeight:800, color:'#d97706', background: isDark?'#292001':'#fef3c7', padding:'2px 6px', borderRadius:8 }}>Bugun!</span>
+                <span style={{ fontSize:10, fontWeight:800, color:'#d97706', background:'#fef3c733', padding:'2px 6px', borderRadius:8, border:'1px solid #f59e0b55' }}>Bugun!</span>
               )}
             </div>
           ))}
