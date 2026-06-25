@@ -2221,7 +2221,9 @@ function TreeFlow({ rawPersons, stats }) {
   // Oxirgi bosilgan shaxs — modal yopilgandan keyin ham saqlanadi (Focus uchun)
   const lastClickedId = useRef(null)
   // Saqlangan pozitsiyalar (localStorage)
-  const savedPosRef = useRef(loadSavedPos())
+  const savedPosRef = useRef({})
+  // Eski saqlangan pozitsiyalarni o'chirish — layout har doim markazlangan bo'lsin
+  useEffect(() => { try { localStorage.removeItem(POS_KEY) } catch {} }, [])
   const { isDark } = useThemeStore()
   const { fitView, zoomIn, zoomOut } = useReactFlow()
   const nodesInitialized = useNodesInitialized()
@@ -2332,11 +2334,7 @@ function TreeFlow({ rawPersons, stats }) {
     const filtered = focusFilter(pool, focusId, focusGen)
     const { nodes: n, edges: e } = buildLayout(filtered, collapsed, toggleCouple, dimDeceased, handlePersonClick, focusId, handleFocusClick)
     // Saqlangan pozitsiyalarni qo'llash (focus rejimida emas — focus layout o'z pozitsiyalarini beradi)
-    const pm = savedPosRef.current
-    const nodesWithSaved = focusId
-      ? n
-      : n.map(node => pm[node.id] ? { ...node, position: pm[node.id] } : node)
-    setNodes(nodesWithSaved)
+    setNodes(n)
     setEdges(e)
     setVisibleCount(n.filter(x => x.type === 'personNode').length)
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, handleFocusClick,
