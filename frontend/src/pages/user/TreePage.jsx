@@ -3290,7 +3290,8 @@ function TreeFlow({ rawPersons, stats }) {
 
             {/* LEFT — Tiriklar */}
             <div style={{
-              position:'fixed', left:280, top:60,
+              position:'fixed', left:190, top:'50%',
+              transform:'translateY(calc(-50% + 54px))',
               zIndex:9999, pointerEvents:'none',
               display:'flex', flexDirection:'column', gap:10,
               animation:'statSlideL 0.55s cubic-bezier(.16,1,.3,1) both',
@@ -3311,7 +3312,8 @@ function TreeFlow({ rawPersons, stats }) {
 
             {/* RIGHT — Vafot etganlar */}
             <div style={{
-              position:'fixed', right:200, top:60,
+              position:'fixed', right:16, top:'50%',
+              transform:'translateY(calc(-50% + 54px))',
               zIndex:9999, pointerEvents:'none',
               display:'flex', flexDirection:'column', gap:10,
               animation:'statSlideR 0.55s cubic-bezier(.16,1,.3,1) both',
