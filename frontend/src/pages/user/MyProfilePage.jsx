@@ -5,11 +5,40 @@ import { useState } from 'react'
 import { updateMe } from '../../api/users'
 import useAuthStore from '../../store/authStore'
 import useThemeStore from '../../store/themeStore'
+import AuthModal from '../../components/AuthModal'
 import toast from 'react-hot-toast'
 
 export default function MyProfilePage() {
   const { user, login } = useAuthStore()
   const { isDark }      = useThemeStore()
+  const [showAuth, setShowAuth] = useState(false)
+
+  if (!user) return (
+    <>
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '60vh', gap: 20, padding: 24,
+      }}>
+        <div style={{ fontSize: 64 }}>🔒</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: isDark ? '#f1f5f9' : '#1e293b' }}>
+          Kirish talab etiladi
+        </div>
+        <div style={{ fontSize: 14, color: isDark ? '#94a3b8' : '#64748b', textAlign: 'center', maxWidth: 320 }}>
+          Profilingizni ko'rish uchun akkauntga kiring yoki ro'yxatdan o'ting
+        </div>
+        <button
+          onClick={() => setShowAuth(true)}
+          style={{
+            padding: '12px 32px', borderRadius: 14, border: 'none', cursor: 'pointer',
+            background: 'linear-gradient(135deg,#6366f1,#7c3aed)', color: 'white',
+            fontSize: 15, fontWeight: 700, boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
+          }}>
+          🔑 Kirish / Ro'yxatdan o'tish
+        </button>
+      </div>
+    </>
+  )
 
   const [form, setForm] = useState({
     first_name: user?.first_name || '',

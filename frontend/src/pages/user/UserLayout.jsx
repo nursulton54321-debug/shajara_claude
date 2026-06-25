@@ -263,6 +263,12 @@ export default function UserLayout() {
                     color: isActive ? 'white' : txt2,
                     fontSize: 13, fontWeight: isActive ? 700 : 500,
                   })}
+                  onClick={e => {
+                    if (to === '/my-profile' && !user) {
+                      e.preventDefault()
+                      setShowAuthModal(true)
+                    }
+                  }}
                   onMouseEnter={e => {
                     if (!e.currentTarget.classList.contains('active'))
                       e.currentTarget.style.background = hov
