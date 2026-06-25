@@ -897,6 +897,28 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     }
   })
 
+  // Center the entire tree around x=0 so no generation drifts left/right
+  {
+    let treeMinX = Infinity, treeMaxX = -Infinity
+    persons.forEach(p => {
+      if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+      const nx = g.node(`p-${p.id}`).x
+      if (nx < treeMinX) treeMinX = nx
+      if (nx > treeMaxX) treeMaxX = nx
+    })
+    if (isFinite(treeMinX) && isFinite(treeMaxX)) {
+      const treeCenter = (treeMinX + treeMaxX) / 2
+      persons.forEach(p => {
+        if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+        g.node(`p-${p.id}`).x -= treeCenter
+      })
+      Object.keys(coupleInfo).forEach(cid => {
+        if (!g.hasNode(cid)) return
+        g.node(cid).x -= treeCenter
+      })
+    }
+  }
+
   // Snap CC to midpoint (runs after final spacing so X positions are settled)
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid)) return
