@@ -102,101 +102,200 @@ function AnimCount({ target = 0, duration = 900 }) {
 /* ══════════════════════════════════════════════════════════
    STAT CARDS — premium animated
 ══════════════════════════════════════════════════════════ */
-function StatCards({ stats }) {
+function StatCards({ stats, persons, bdays }) {
   const navigate = useNavigate()
-  const cards = [
-    {
-      label:"Jami a'zo", value: stats.total,
-      icon:'👥', sub:`${stats.male}♂  ${stats.female}♀`,
-      grad:'linear-gradient(135deg,#3b82f6 0%,#6366f1 100%)',
-      glow:'rgba(99,102,241,.45)', to:'/persons',
-      anim:'floatY 2.8s ease infinite',
-    },
-    {
-      label:'Erkaklar', value: stats.male,
-      icon:'👨', sub: stats.total ? `${Math.round(stats.male/stats.total*100)}%` : '—',
-      grad:'linear-gradient(135deg,#6366f1 0%,#7c3aed 100%)',
-      glow:'rgba(124,58,237,.45)', to:'/persons',
-      anim:'floatY 3.1s ease infinite 0.3s',
-    },
-    {
-      label:'Ayollar', value: stats.female,
-      icon:'👩', sub: stats.total ? `${Math.round(stats.female/stats.total*100)}%` : '—',
-      grad:'linear-gradient(135deg,#ec4899 0%,#db2777 100%)',
-      glow:'rgba(236,72,153,.45)', to:'/persons',
-      anim:'floatY 2.6s ease infinite 0.6s',
-    },
-    {
-      label:"Bu oy tug'ilgan", value: stats.this_month_birthdays,
-      icon:'🎂', sub:`${stats.alive} tirik a'zo`,
-      grad:'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
-      glow:'rgba(245,158,11,.45)', to: null,
-      anim:'wiggle 2.5s ease infinite 1s',
-    },
-  ]
+
+  const maleAlive   = persons.filter(p => p.gender==='male'   && !p.death_date && !p.is_deceased && !p.deceased).length
+  const maleDec     = Math.max(0, stats.male   - maleAlive)
+  const femaleAlive = persons.filter(p => p.gender==='female' && !p.death_date && !p.is_deceased && !p.deceased).length
+  const femaleDec   = Math.max(0, stats.female - femaleAlive)
 
   return (
     <div className="dash-stat-grid">
-      {cards.map((c, ci) => <StatCard key={c.label} {...c} idx={ci} navigate={navigate} />)}
+      {/* 1 — Jami */}
+      <StatCardBase
+        grad="linear-gradient(135deg,#3b82f6 0%,#6366f1 100%)"
+        glow="rgba(99,102,241,.45)" idx={0} onClick={() => navigate('/persons')}>
+        <StatIcon icon="👥" anim="floatY 2.8s ease infinite"/>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:28, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-0.5px' }}>
+            <AnimCount target={stats.total||0}/>
+          </div>
+          <div style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.9)', marginTop:3 }}>Jami a'zo</div>
+          <div style={{ display:'flex', gap:10, marginTop:5 }}>
+            <span style={{ fontSize:13, fontWeight:800, color:'white' }}>
+              👨 <AnimCount target={stats.male||0}/>
+            </span>
+            <span style={{ fontSize:13, fontWeight:800, color:'rgba(255,255,255,0.85)' }}>
+              👩 <AnimCount target={stats.female||0}/>
+            </span>
+          </div>
+        </div>
+      </StatCardBase>
+
+      {/* 2 — Erkaklar */}
+      <StatCardBase
+        grad="linear-gradient(135deg,#6366f1 0%,#7c3aed 100%)"
+        glow="rgba(124,58,237,.45)" idx={1} onClick={() => navigate('/persons')}>
+        <StatIcon icon="👨" anim="floatY 3.1s ease infinite 0.3s"/>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:28, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-0.5px' }}>
+            <AnimCount target={stats.male||0}/>
+          </div>
+          <div style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.9)', marginTop:3 }}>
+            Erkaklar · {stats.total ? Math.round(stats.male/stats.total*100) : 0}%
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:5 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'#a7f3d0' }}>💚 {maleAlive} tirik</span>
+            <span style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.55)' }}>🌿 {maleDec} vafot</span>
+          </div>
+        </div>
+      </StatCardBase>
+
+      {/* 3 — Ayollar */}
+      <StatCardBase
+        grad="linear-gradient(135deg,#ec4899 0%,#db2777 100%)"
+        glow="rgba(236,72,153,.45)" idx={2} onClick={() => navigate('/persons')}>
+        <StatIcon icon="👩" anim="floatY 2.6s ease infinite 0.6s"/>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:28, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-0.5px' }}>
+            <AnimCount target={stats.female||0}/>
+          </div>
+          <div style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.9)', marginTop:3 }}>
+            Ayollar · {stats.total ? Math.round(stats.female/stats.total*100) : 0}%
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:5 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'#fbcfe8' }}>💚 {femaleAlive} tirik</span>
+            <span style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.55)' }}>🌿 {femaleDec} vafot</span>
+          </div>
+        </div>
+      </StatCardBase>
+
+      {/* 4 — Bu oy tug'ilgan */}
+      <BirthdayStatCard stats={stats} bdays={bdays} idx={3}/>
     </div>
   )
 }
 
-function StatCard({ label, value, icon, sub, grad, glow, to, anim, idx, navigate }) {
+function StatCardBase({ grad, glow, idx, onClick, children }) {
   const [hov, setHov] = useState(false)
   return (
-    <div
-      className="dash-stat-card"
+    <div className="dash-stat-card"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      onClick={() => to && navigate(to)}
+      onClick={onClick}
       style={{
-        background: grad,
-        borderRadius: 16,
-        padding: '14px 12px',
-        cursor: to ? 'pointer' : 'default',
-        position: 'relative', overflow: 'hidden',
-        display: 'flex', alignItems: 'center', gap: 10,
-        transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s',
+        background: grad, borderRadius:16, padding:'14px 12px',
+        cursor: onClick ? 'pointer' : 'default',
+        position:'relative', overflow:'hidden',
+        display:'flex', alignItems:'center', gap:10,
+        transition:'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s',
         transform: hov ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
         boxShadow: hov ? `0 16px 32px ${glow}` : `0 4px 16px ${glow}`,
-        animation: `slideUp 0.5s ease ${idx * 80}ms both`,
-      }}
-    >
+        animation: `slideUp 0.5s ease ${idx*80}ms both`,
+      }}>
       <div style={{
         position:'absolute', top:-20, right:-14, width:70, height:70, borderRadius:'50%',
         background:'rgba(255,255,255,0.1)', pointerEvents:'none',
         transition:'transform 0.35s', transform: hov ? 'scale(1.5)' : 'scale(1)',
       }}/>
+      {children}
+    </div>
+  )
+}
 
-      {/* Icon */}
-      <div className="dash-stat-icon" style={{
-        width: 44, height: 44, borderRadius: 13, flexShrink: 0,
-        background: 'rgba(255,255,255,0.22)',
-        border: '1.5px solid rgba(255,255,255,0.3)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22,
+function StatIcon({ icon, anim }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        width:44, height:44, borderRadius:13, flexShrink:0,
+        background:'rgba(255,255,255,0.22)', border:'1.5px solid rgba(255,255,255,0.3)',
+        display:'flex', alignItems:'center', justifyContent:'center', fontSize:22,
         animation: hov ? anim : 'none',
+      }}>{icon}</div>
+  )
+}
+
+function BirthdayStatCard({ stats, bdays, idx }) {
+  const [hov, setHov] = useState(false)
+  const thisMonthBdays = (bdays||[]).filter(p => {
+    if (!p.birth_date) return false
+    const bd = new Date(p.birth_date + 'T00:00:00')
+    return bd.getMonth() === new Date().getMonth()
+  })
+
+  return (
+    <div className="dash-stat-card"
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background:'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
+        borderRadius:16, padding:'14px 12px',
+        position:'relative', overflow:'visible',
+        display:'flex', alignItems:'center', gap:10,
+        transition:'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s',
+        transform: hov ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+        boxShadow: hov ? '0 16px 32px rgba(245,158,11,.55)' : '0 4px 16px rgba(245,158,11,.45)',
+        animation: `slideUp 0.5s ease ${idx*80}ms both`,
+        cursor: thisMonthBdays.length ? 'default' : 'default',
+        zIndex: hov ? 10 : 1,
       }}>
-        {icon}
+      <div style={{
+        position:'absolute', top:-20, right:-14, width:70, height:70, borderRadius:'50%',
+        background:'rgba(255,255,255,0.1)', pointerEvents:'none',
+        transition:'transform 0.35s', transform: hov ? 'scale(1.5)' : 'scale(1)',
+      }}/>
+      <div style={{
+        width:44, height:44, borderRadius:13, flexShrink:0,
+        background:'rgba(255,255,255,0.22)', border:'1.5px solid rgba(255,255,255,0.3)',
+        display:'flex', alignItems:'center', justifyContent:'center', fontSize:22,
+        animation: hov ? 'wiggle 2.5s ease infinite 1s' : 'none',
+      }}>🎂</div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:28, fontWeight:900, color:'white', lineHeight:1, letterSpacing:'-0.5px' }}>
+          <AnimCount target={stats.this_month_birthdays||0}/>
+        </div>
+        <div style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.9)', marginTop:3 }}>Bu oy tug'ilgan</div>
+        <div style={{ fontSize:10, color:'rgba(255,255,255,0.6)', marginTop:1 }}>
+          {thisMonthBdays.length ? 'Hover qiling →' : `${stats.alive} tirik a'zo`}
+        </div>
       </div>
 
-      {/* Text */}
-      <div style={{ flex:1, minWidth:0 }}>
-        <div className="dash-stat-num" style={{
-          fontSize: 28, fontWeight: 900, color: 'white', lineHeight: 1,
-          letterSpacing: '-0.5px', animation: 'countUp 0.5s ease both',
-        }}>
-          <AnimCount target={value || 0} />
-        </div>
+      {/* Hover tooltip */}
+      {hov && thisMonthBdays.length > 0 && (
         <div style={{
-          fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.92)',
-          marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>{label}</div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginTop: 1 }}>
-          {sub}
+          position:'absolute', top:'calc(100% + 8px)', left:0, right:0,
+          background:'white', borderRadius:14, overflow:'hidden',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.18)', border:'1.5px solid #fde68a',
+          zIndex:999, animation:'slideUp 0.18s ease',
+          minWidth:220,
+        }}>
+          <div style={{ padding:'8px 12px', background:'linear-gradient(135deg,#f59e0b,#d97706)', fontSize:11, fontWeight:800, color:'white' }}>
+            🎂 {thisMonthBdays.length} ta — bu oy tug'ilgan kunlar
+          </div>
+          {thisMonthBdays.slice(0,6).map(p => (
+            <div key={p.id} style={{
+              display:'flex', alignItems:'center', gap:8, padding:'7px 12px',
+              borderBottom:'1px solid #fef3c7', fontSize:12,
+            }}>
+              <span style={{ fontSize:16 }}>{p.gender==='male'?'👨':'👩'}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontWeight:700, color:'#1e293b', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.full_name}</div>
+                <div style={{ color:'#92400e', fontSize:10, fontWeight:600 }}>{fmtDate(p.birth_date)}</div>
+              </div>
+              {daysUntil(p.birth_date) === 0 && (
+                <span style={{ fontSize:10, fontWeight:800, color:'#d97706', background:'#fef3c7', padding:'2px 6px', borderRadius:8 }}>Bugun!</span>
+              )}
+            </div>
+          ))}
+          {thisMonthBdays.length > 6 && (
+            <div style={{ padding:'6px 12px', fontSize:11, color:'#d97706', fontWeight:700, textAlign:'center' }}>
+              +{thisMonthBdays.length-6} ta ko'proq
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -262,58 +361,71 @@ function ChartsRow({ stats }) {
         <CardHeader icon="⚥" grad="linear-gradient(135deg,#6366f1,#ec4899)"
           title="Jins bo'yicha" iconAnim="heartbeat 2s ease infinite" />
 
-        <div style={{ position:'relative', padding:'10px 0 4px' }}>
-          <ResponsiveContainer width="100%" height={140}>
-            <PieChart margin={{top:0,right:0,bottom:0,left:0}}>
-              <Pie
-                data={[{name:'Erkak',value:stats.male||0},{name:'Ayol',value:stats.female||0}]}
-                cx="50%" cy="50%" innerRadius={42} outerRadius={60}
-                dataKey="value" startAngle={90} endAngle={-270}
-                strokeWidth={3} stroke={isDark?'#0f172a':'#fff'}>
-                <Cell fill="#6366f1"/><Cell fill="#ec4899"/>
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: isDark?'#1e293b':'white',
-                  border:`1px solid ${isDark?'#334155':'#e2e8f0'}`,
-                  borderRadius:12, fontSize:13, fontWeight:700,
-                }}
-                formatter={(v,n)=>[`${v} kishi`,n]}/>
-            </PieChart>
-          </ResponsiveContainer>
-          {/* Center */}
-          <div style={{
-            position:'absolute', top:'50%', left:'50%',
-            transform:'translate(-50%,-50%)',
-            textAlign:'center', pointerEvents:'none', lineHeight:1.3,
-          }}>
-            <div style={{ fontSize:22, fontWeight:900, color:'var(--text-primary)' }}>{stats.total}</div>
-            <div style={{ fontSize:10, color:'var(--text-secondary)', fontWeight:700 }}>jami</div>
+        <div style={{ display:'flex', alignItems:'center', padding:'10px 12px 4px', gap:8 }}>
+          {/* Donut */}
+          <div style={{ flexShrink:0, width:130, height:130, position:'relative' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart margin={{top:0,right:0,bottom:0,left:0}}>
+                <Pie
+                  data={[
+                    {name:`👨 Erkak ${maleP}%`, value:stats.male||0},
+                    {name:`👩 Ayol ${100-maleP}%`, value:stats.female||0},
+                    {name:`💚 Tirik ${aliveP}%`, value:0},
+                  ]}
+                  cx="50%" cy="50%" innerRadius={40} outerRadius={58}
+                  dataKey="value" startAngle={90} endAngle={-270}
+                  strokeWidth={3} stroke={isDark?'#0f172a':'#fff'}>
+                  <Cell fill="#6366f1"/><Cell fill="#ec4899"/>
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: isDark?'#1e293b':'white',
+                    border:`1px solid ${isDark?'#334155':'#e2e8f0'}`,
+                    borderRadius:12, fontSize:13, fontWeight:700,
+                  }}
+                  formatter={(v,n)=>[`${v} kishi`,n]}/>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{
+              position:'absolute', inset:0, display:'flex', flexDirection:'column',
+              alignItems:'center', justifyContent:'center', pointerEvents:'none', lineHeight:1.2,
+            }}>
+              <div style={{ fontSize:20, fontWeight:900, color:'var(--text-primary)' }}>{stats.total}</div>
+              <div style={{ fontSize:9, color:'var(--text-secondary)', fontWeight:700 }}>jami</div>
+              <div style={{ fontSize:9, color:'#6366f1', fontWeight:800, marginTop:2 }}>{maleP}% ♂</div>
+              <div style={{ fontSize:9, color:'#ec4899', fontWeight:800 }}>{100-maleP}% ♀</div>
+            </div>
+          </div>
+
+          {/* Legend grid */}
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+            {[
+              { c:'#6366f1', icon:'👨', label:'Erkaklar', v:stats.male,     pct:maleP },
+              { c:'#ec4899', icon:'👩', label:'Ayollar',  v:stats.female,   pct:100-maleP },
+              { c:'#10b981', icon:'💚', label:'Tirik',    v:stats.alive,    pct:aliveP },
+              { c:'#94a3b8', icon:'🌿', label:'Vafot',    v:stats.deceased, pct:100-aliveP },
+            ].map(({c,icon,label,v,pct}) => (
+              <div key={label} style={{
+                display:'flex', alignItems:'center', gap:6,
+                padding:'5px 10px', borderRadius:10,
+                background: isDark ? `${c}15` : `${c}0d`,
+                border: `1px solid ${c}30`,
+                transition:'transform 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.transform='scale(1.03)'}
+                onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+                <div style={{ width:8, height:8, borderRadius:3, background:c, flexShrink:0 }}/>
+                <span style={{ fontSize:11.5, fontWeight:700, color:c, flex:1 }}>{icon} {label}</span>
+                <span style={{ fontSize:13, fontWeight:900, color:'var(--text-primary)' }}>{v}</span>
+                <span style={{
+                  fontSize:10, fontWeight:800, padding:'1px 5px', borderRadius:6,
+                  background: isDark?`${c}25`:`${c}15`, color:c, minWidth:36, textAlign:'center',
+                }}>{pct}%</span>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Legend */}
-        <div style={{ padding:'8px 16px 14px', display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
-          {[
-            { c:'#6366f1', icon:'👨', label:'Erkaklar', v:stats.male,   pct:stats.total?Math.round(stats.male/stats.total*100):0 },
-            { c:'#ec4899', icon:'👩', label:'Ayollar',  v:stats.female, pct:stats.total?Math.round(stats.female/stats.total*100):0 },
-          ].map(({c,icon,label,v,pct}) => (
-            <div key={label} style={{
-              display:'flex', alignItems:'center', gap:7,
-              padding:'6px 14px', borderRadius:22,
-              background: isDark ? `${c}18` : `${c}10`,
-              border: `1.5px solid ${c}35`,
-              transition: 'transform 0.2s',
-            }}
-              onMouseEnter={e => e.currentTarget.style.transform='scale(1.05)'}
-              onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
-              <div style={{ width:10, height:10, borderRadius:4, background:c, flexShrink:0 }}/>
-              <span style={{ fontSize:12, fontWeight:800, color:c }}>{icon} {label}</span>
-              <span style={{ fontSize:14, fontWeight:900, color:'var(--text-primary)' }}>{v}</span>
-              <span style={{ fontSize:11, color:'var(--text-secondary)', fontWeight:700 }}>({pct}%)</span>
-            </div>
-          ))}
-        </div>
+        <div style={{ height:10 }}/>
       </div>
 
       {/* Oila holati */}
@@ -1042,7 +1154,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <StatCards stats={stats}/>
+        <StatCards stats={stats} persons={persons} bdays={bdays}/>
         <ChartsRow stats={stats}/>
 
         {/* ── Tug'ilgan kunlar ── */}
