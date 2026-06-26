@@ -2359,7 +2359,7 @@ function TreeFlow({ rawPersons, stats }) {
   // Eski saqlangan pozitsiyalarni o'chirish — layout har doim markazlangan bo'lsin
   useEffect(() => { try { localStorage.removeItem(POS_KEY) } catch {} }, [])
   const { isDark } = useThemeStore()
-  const { fitView, zoomIn, zoomOut } = useReactFlow()
+  const { fitView, zoomIn, zoomOut, getViewport } = useReactFlow()
   const nodesInitialized = useNodesInitialized()
   const flowRef = useRef(null)
 
