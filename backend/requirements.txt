@@ -20,7 +20,7 @@ gunicorn==22.0.0
 whitenoise==6.12.0
 
 # Telegram bot
-python-telegram-bot==20.7
+python-telegram-bot==21.9
 
 # Push notifications
 pywebpush==2.3.0

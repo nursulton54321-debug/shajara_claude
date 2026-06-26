@@ -55,6 +55,7 @@ def _ensure_app():
                 Application.builder()
                 .token(token)
                 .updater(None)
+                .job_queue(None)
                 .build()
             )
             _register_handlers(app)

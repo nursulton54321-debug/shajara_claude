@@ -57,7 +57,14 @@ def build_app():
         write_timeout=60,
         media_write_timeout=120,
     )
-    app = Application.builder().token(token).request(request).post_init(_scheduler_post_init).build()
+    app = (
+        Application.builder()
+        .token(token)
+        .request(request)
+        .job_queue(None)
+        .post_init(_scheduler_post_init)
+        .build()
+    )
 
     # /start va shaxs qo'shish ConversationHandlerlar (birinchi)
     app.add_handler(get_start_conversation())
