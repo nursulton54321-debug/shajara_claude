@@ -27,7 +27,7 @@ pywebpush==2.3.0
 py-vapid==1.9.4
 
 # AI
-google-generativeai>=2.0.0
+google-genai>=1.0.0
 groq==1.4.0
 
 # Scheduler
