@@ -611,7 +611,15 @@ export default function RelationshipPage() {
         setGptSource(r.data.source || '')
       }
     } catch (err) {
-      setGptText("ChatGPT javob bermadi. Bir ozdan keyin urinib ko'ring.")
+      const status = err?.response?.status
+      const errData = err?.response?.data
+      if (status === 503 || errData?.source === 'no_key') {
+        setGptText('⚠️ OPENAI_API_KEY Render serverida sozlanmagan. Render Dashboard → backend service → Environment → OPENAI_API_KEY qo\'shing.')
+      } else if (errData?.error) {
+        setGptText(`❌ Xato: ${errData.error}`)
+      } else {
+        setGptText(`❌ ChatGPT javob bermadi (${status || 'network error'}). Qaytadan urinib ko'ring.`)
+      }
       setGptSource('')
     } finally {
       setGptLoading(false)
