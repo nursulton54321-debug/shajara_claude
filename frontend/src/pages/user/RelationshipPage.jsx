@@ -601,7 +601,7 @@ export default function RelationshipPage() {
   const gradeColor = result?.rel?.color || '#6366f1'
 
   return (
-    <div style={{ minHeight: '100vh', background: isDark ? '#0f172a' : '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', background: isDark ? '#0f172a' : '#f8fafc', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
@@ -674,13 +674,13 @@ export default function RelationshipPage() {
         </div>
       </div>
 
-      <div className="rel-wrap" style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 24px 80px' }}>
+      <div className="rel-wrap" style={{ width: '100%', boxSizing: 'border-box', padding: '20px 20px 80px' }}>
 
         {/* ── Selector panel ── */}
         <div className="rel-selector" style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '20px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
           border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: 20,
-          position: 'relative' }}>
+          position: 'relative', width: '100%', boxSizing: 'border-box' }}>
           {/* Decorative gradient strip */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3,
             background: 'linear-gradient(90deg,#6366f1,#ec4899)', borderRadius: '24px 24px 0 0' }} />
