@@ -45,6 +45,8 @@ urlpatterns = [
     path('ai/chat/',     views.AiChatView.as_view()),
     # AI kalit holati tekshirish
     path('ai/status/',   views.AiStatusView.as_view()),
+    # 13. Real-time SSE
+    path('events/', views.PersonEventsView.as_view()),
     # Reminders
     path('reminders/', views.ReminderListCreateView.as_view()),
     path('reminders/auto/', views.AutoCreateRemindersView.as_view()),

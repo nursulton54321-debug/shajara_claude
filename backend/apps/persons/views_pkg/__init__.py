@@ -44,3 +44,4 @@ from .ai import (
     AiChatView,
     AiStatusView,
 )
+from .sse import PersonEventsView

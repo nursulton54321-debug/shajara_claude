@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getPersons } from '../../api/persons'
 import useAuthStore from '../../store/authStore'
@@ -6,6 +6,7 @@ import useThemeStore from '../../store/themeStore'
 import AnimCount from '../../components/AnimCount'
 import { SkeletonRow } from '../../components/Skeleton'
 import ErrorCard from '../../components/ErrorCard'
+import useSSE from '../../hooks/useSSE'
 
 // ── Saralash parametrlari ──────────────────────────────────────
 const SORT_OPTIONS = [
@@ -84,6 +85,17 @@ export default function PersonsListPage() {
   }, [search, gender])
 
   useEffect(() => { load() }, [load])
+
+  // SSE — boshqa foydalanuvchi/tab da o'zgartirish bo'lsa ro'yxatni yangilaydi
+  const { lastEvent } = useSSE()
+  const lastEventRef = useRef(null)
+  useEffect(() => {
+    if (!lastEvent || lastEvent === lastEventRef.current) return
+    if (['person_created', 'person_updated', 'person_deleted'].includes(lastEvent.type)) {
+      lastEventRef.current = lastEvent
+      load()
+    }
+  }, [lastEvent, load])
 
   const sorted = useMemo(() => sortPersons(persons, sort), [persons, sort])
 
