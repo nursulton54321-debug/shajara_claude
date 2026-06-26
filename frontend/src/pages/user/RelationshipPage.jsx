@@ -605,7 +605,7 @@ export default function RelationshipPage() {
       <style>{`
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-        /* Full-width wrapper — override any leftover constraints */
+        /* Full-width wrapper */
         .rel-wrap {
           width: 100% !important;
           max-width: 100% !important;
@@ -613,19 +613,10 @@ export default function RelationshipPage() {
           box-sizing: border-box !important;
         }
 
-        /* Desktop 2-column result layout */
-        .rel-result-cols {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          align-items: start;
-        }
-        .rel-result-left  { display: flex; flex-direction: column; gap: 20px; }
-        .rel-result-right { display: flex; flex-direction: column; gap: 20px; }
-
-        @media (max-width: 900px) {
-          .rel-result-cols { grid-template-columns: 1fr !important; }
-        }
+        /* Single-column stacked layout */
+        .rel-result-cols  { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .rel-result-left  { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .rel-result-right { display: flex; flex-direction: column; gap: 20px; width: 100%; }
         @media (max-width: 640px) {
           .rel-topbar { padding: 10px 12px !important; gap: 8px !important; }
           .rel-topbar-title { font-size: 13px !important; }
@@ -648,7 +639,6 @@ export default function RelationshipPage() {
           .rel-path-section { padding: 14px 12px !important; }
           .rel-ai-section { padding: 12px 14px !important; }
           .rel-degree-grid { grid-template-columns: 1fr 1fr !important; }
-          .rel-result-cols { grid-template-columns: 1fr !important; gap: 14px !important; }
         }
       `}</style>
 
