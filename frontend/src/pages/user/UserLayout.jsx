@@ -632,8 +632,11 @@ export default function UserLayout() {
           {navItems.map(({ to, label, icon, end }) => {
             const isActive = end ? location.pathname===to : location.pathname.startsWith(to)
             const shortLabel = label.split(' ')[0].substring(0, 7)
+            const needsAuth = !user && (to === '/my-profile' || to === '/notifications' || to === '/persons' || to === '/statistics')
             return (
-              <NavLink key={to} to={to} end={end} style={{ textDecoration:'none', flexShrink:0 }}>
+              <NavLink key={to} to={needsAuth ? '#' : to} end={end}
+                style={{ textDecoration:'none', flexShrink:0 }}
+                onClick={needsAuth ? (e) => { e.preventDefault(); setShowAuthModal(true) } : undefined}>
                 <div style={{
                   display:'flex', flexDirection:'column', alignItems:'center', gap:1,
                   padding:'4px 8px', borderRadius:10,
