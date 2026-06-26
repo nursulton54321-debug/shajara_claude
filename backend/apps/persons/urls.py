@@ -38,7 +38,8 @@ urlpatterns = [
     path('share/',                views.ShareLinkListCreateView.as_view()),
     path('share/<uuid:token>/',   views.PublicTreeView.as_view()),
     # 15. AI relationship explainer
-    path('ai/explain/',  views.AiExplainView.as_view()),
+    path('ai/explain/',     views.AiExplainView.as_view()),
+    path('ai/explain/gpt/', views.AiExplainGptView.as_view()),
     # 16. OCR hujjat
     path('ai/ocr/',      views.OcrView.as_view()),
     # AI Chat (global)

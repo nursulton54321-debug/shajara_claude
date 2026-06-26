@@ -10,7 +10,7 @@
  */
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getPersons, aiExplain } from '../../api/persons'
+import { getPersons, aiExplain, aiExplainGpt } from '../../api/persons'
 import useThemeStore from '../../store/themeStore'
 
 // ─── Yordamchi funksiyalar ────────────────────────────────────
@@ -453,10 +453,17 @@ export default function RelationshipPage() {
   const [history, setHistory]   = useState([])
   // 15. AI explain
   const [aiText, setAiText]         = useState('')
-  const [aiSource, setAiSource]     = useState('')  // 'template' | 'gemini/...' | 'groq/...'
+  const [aiSource, setAiSource]     = useState('')
   const [aiLoading, setAiLoading]   = useState(false)
-  const [aiDisplayed, setAiDisplayed] = useState('')  // typewriter effect
+  const [aiDisplayed, setAiDisplayed] = useState('')
   const aiTimerRef                  = useRef(null)
+
+  // GPT panel
+  const [gptText, setGptText]       = useState('')
+  const [gptSource, setGptSource]   = useState('')
+  const [gptLoading, setGptLoading] = useState(false)
+  const [gptDisplayed, setGptDisplayed] = useState('')
+  const gptTimerRef                 = useRef(null)
 
   const { isDark } = useThemeStore()
   const { map, childrenOf } = useMemo(() => {
@@ -565,6 +572,51 @@ export default function RelationshipPage() {
     }, 18)
     return () => clearInterval(aiTimerRef.current)
   }, [aiText])
+
+  // GPT typewriter
+  useEffect(() => {
+    if (!gptText) { setGptDisplayed(''); return }
+    setGptDisplayed('')
+    let i = 0
+    clearInterval(gptTimerRef.current)
+    gptTimerRef.current = setInterval(() => {
+      i++
+      setGptDisplayed(gptText.slice(0, i))
+      if (i >= gptText.length) clearInterval(gptTimerRef.current)
+    }, 18)
+    return () => clearInterval(gptTimerRef.current)
+  }, [gptText])
+
+  const handleGptExplain = async () => {
+    if (!result || gptLoading) return
+    setGptLoading(true)
+    setGptText('')
+    try {
+      const payload = {
+        name_a:         result.pA?.full_name || '',
+        name_b:         result.pB?.full_name || '',
+        relation_label: result.rel?.label || '',
+        lca_name:       result.lca ? (map[result.lca.id]?.full_name || '') : '',
+        depth_a:        result.lca?.depthA ?? 0,
+        depth_b:        result.lca?.depthB ?? 0,
+        path_names:     (result.path || []).map(n => map[n.id]?.full_name).filter(Boolean),
+      }
+      const r = await aiExplainGpt(payload)
+      if (r.data.error) {
+        setGptText(r.data.error === 'OPENAI_API_KEY sozlanmagan'
+          ? '⚠️ ChatGPT kaliti sozlanmagan. Admin OPENAI_API_KEY ni o\'rnating.'
+          : `Xato: ${r.data.error}`)
+      } else {
+        setGptText(r.data.text)
+        setGptSource(r.data.source || '')
+      }
+    } catch (err) {
+      setGptText("ChatGPT javob bermadi. Bir ozdan keyin urinib ko'ring.")
+      setGptSource('')
+    } finally {
+      setGptLoading(false)
+    }
+  }
 
   const handleAiExplain = async () => {
     if (!result || aiLoading) return
@@ -1164,6 +1216,92 @@ export default function RelationshipPage() {
                 <div style={{ padding: '12px 20px 16px', textAlign: 'center',
                   fontSize: 12, color: isDark ? '#475569' : '#94a3b8' }}>
                   Yuqoridagi "✨ AI orqali tushuntir" tugmasini bosib, qarindoshlik munosabatini tabiiy tilda tushuntirishni oling
+                </div>
+              )}
+            </div>
+
+            {/* ── ChatGPT tushuntirish ── */}
+            <div style={{
+              borderRadius: 20, overflow: 'hidden',
+              border: `1.5px solid ${gptText ? '#10b98130' : (isDark ? '#334155' : '#e2e8f0')}`,
+              boxShadow: gptText ? '0 4px 20px rgba(16,185,129,0.10)' : 'none',
+              background: isDark ? '#1e293b' : 'white',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 20px',
+                background: gptText ? 'linear-gradient(135deg,#10b98108,#059669 05)' : 'transparent',
+                borderBottom: gptText ? '1px solid #10b98115' : 'none',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 11, flexShrink: 0,
+                    background: 'linear-gradient(135deg,#10b981,#059669)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18, boxShadow: '0 3px 10px rgba(16,185,129,0.35)',
+                  }}>🤖</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: isDark ? '#f1f5f9' : '#0f172a' }}>
+                      ChatGPT tushuntirish
+                    </div>
+                    <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>
+                      {gptSource
+                        ? (gptSource.startsWith('openai')
+                            ? `🟢 OpenAI · ${gptSource.split('/')[1] || 'gpt'}`
+                            : gptSource)
+                        : 'OpenAI · ChatGPT · Bepul emas'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleGptExplain}
+                  disabled={gptLoading || !result}
+                  style={{
+                    padding: '8px 16px', borderRadius: 12, border: 'none', cursor: gptLoading ? 'default' : 'pointer',
+                    background: gptLoading ? '#334155' : 'linear-gradient(135deg,#10b981,#059669)',
+                    color: 'white', fontSize: 12, fontWeight: 700, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    opacity: (!result || gptLoading) ? 0.6 : 1,
+                    transition: 'all 0.2s',
+                    boxShadow: gptLoading ? 'none' : '0 3px 12px rgba(16,185,129,0.35)',
+                  }}>
+                  {gptLoading
+                    ? <><span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⟳</span> Kutilmoqda...</>
+                    : <>🟢 ChatGPT orqali tushuntir</>}
+                </button>
+              </div>
+
+              {(gptText || gptLoading) && (
+                <div style={{ padding: '14px 20px' }}>
+                  {gptLoading && !gptText ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: isDark ? '#64748b' : '#94a3b8', fontSize: 13 }}>
+                      <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
+                      ChatGPT javob tayyorlamoqda...
+                    </div>
+                  ) : (
+                    <div style={{
+                      fontSize: 14, lineHeight: 1.7,
+                      color: isDark ? '#cbd5e1' : '#374151',
+                      background: isDark ? '#0f172a' : '#f8fafc',
+                      borderRadius: 14, padding: '14px 18px',
+                      border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                      wordBreak: 'break-word',
+                    }}>
+                      {gptDisplayed.length < gptText.length && (
+                        <span style={{ display: 'inline-block', width: 2, height: '1em',
+                          background: '#10b981', marginLeft: 2, verticalAlign: 'text-bottom',
+                          animation: 'pulse 0.8s ease-in-out infinite' }} />
+                      )}
+                      {gptDisplayed}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!gptText && !gptLoading && (
+                <div style={{ padding: '12px 20px 16px', textAlign: 'center',
+                  fontSize: 12, color: isDark ? '#475569' : '#94a3b8' }}>
+                  "🟢 ChatGPT orqali tushuntir" tugmasini bosib, ChatGPT modelidan tushuntirish oling
                 </div>
               )}
             </div>

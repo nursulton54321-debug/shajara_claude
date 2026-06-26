@@ -171,6 +171,36 @@ def _groq_chat(system_prompt, history, message):
     raise last_err
 
 
+OPENAI_MODELS_PRIORITY = [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'gpt-3.5-turbo',
+]
+
+
+def _openai_call(prompt, system_prompt=None):
+    from openai import OpenAI
+    api_key = getattr(settings, 'OPENAI_API_KEY', '')
+    if not api_key:
+        raise Exception('OPENAI_API_KEY sozlanmagan')
+    client = OpenAI(api_key=api_key)
+    messages = []
+    if system_prompt:
+        messages.append({'role': 'system', 'content': system_prompt})
+    messages.append({'role': 'user', 'content': prompt})
+    last_err = None
+    for model in OPENAI_MODELS_PRIORITY:
+        try:
+            resp = client.chat.completions.create(
+                model=model, messages=messages, max_tokens=512, temperature=0.7
+            )
+            return resp.choices[0].message.content.strip(), f'openai/{model}'
+        except Exception as e:
+            last_err = e
+            continue
+    raise last_err
+
+
 def _ai_call(prompt, system_prompt=None, img_bytes=None, img_mime=None):
     gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
     if gemini_key:
@@ -292,6 +322,48 @@ class AiExplainView(APIView):
         except Exception:
             text = f"{name_a} va {name_b} o'rtasida '{relation_label}' munosabati aniqlandi."
         return Response({'text': text, 'source': 'template'})
+
+
+class AiExplainGptView(APIView):
+    """ChatGPT orqali qarindoshlik tushuntirishi."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        d = request.data
+        name_a         = d.get('name_a') or 'Shaxs A'
+        name_b         = d.get('name_b') or 'Shaxs B'
+        relation_label = d.get('relation_label') or ''
+        lca_name       = d.get('lca_name') or ''
+        try:
+            depth_a = int(d.get('depth_a') or 0)
+        except (TypeError, ValueError):
+            depth_a = 0
+        try:
+            depth_b = int(d.get('depth_b') or 0)
+        except (TypeError, ValueError):
+            depth_b = 0
+        path_names = d.get('path_names') or []
+
+        openai_key = getattr(settings, 'OPENAI_API_KEY', '')
+        if not openai_key:
+            return Response({'error': 'OPENAI_API_KEY sozlanmagan', 'source': 'no_key'}, status=503)
+
+        try:
+            chain_str = ' → '.join(str(n) for n in path_names) if path_names else '—'
+            prompt = (
+                f"O'zbek tilida 2-3 ta qisqa, do'stona gap yoz (emoji ishlatma):\n"
+                f"Ikki shaxs: {name_a} va {name_b}.\n"
+                f"Munosabat: {relation_label}.\n"
+                f"Umumiy ajdod: {lca_name or 'mavjud emas'}.\n"
+                f"{name_a} ajdodgacha: {depth_a} pog'ona, {name_b} ajdodgacha: {depth_b} pog'ona.\n"
+                f"Oila zanjiri: {chain_str}.\n"
+                f"Oddiy, tushunarli tarzda tushuntir. Faqat asosiy ma'lumot."
+            )
+            text, used_model = _openai_call(prompt)
+            return Response({'text': text, 'source': used_model})
+        except Exception as e:
+            log.warning(f"[AiExplainGpt] xato: {e}")
+            return Response({'error': str(e)[:200], 'source': 'error'}, status=502)
 
 
 class OcrView(APIView):

@@ -70,7 +70,8 @@ export const aiChat    = (data) => api.post('/persons/ai/chat/', data)
 export const aiStatus  = ()     => api.get('/persons/ai/status/')
 
 // 15. AI relationship explainer
-export const aiExplain = (data) => api.post('/persons/ai/explain/', data)
+export const aiExplain    = (data) => api.post('/persons/ai/explain/', data)
+export const aiExplainGpt = (data) => api.post('/persons/ai/explain/gpt/', data)
 // 16. OCR — hujjatdan ma'lumot o'qish
 export const ocrDocument = (file) => {
   const fd = new FormData(); fd.append('image', file)

@@ -101,6 +101,8 @@ CRON_SECRET = config('CRON_SECRET', default='shajara-cron-2024')
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 # Groq AI (bepul fallback: https://console.groq.com/keys)
 GROQ_API_KEY   = config('GROQ_API_KEY',   default='')
+# OpenAI ChatGPT (https://platform.openai.com/api-keys)
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

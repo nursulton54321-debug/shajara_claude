@@ -40,6 +40,7 @@ from .push import (
 )
 from .ai import (
     AiExplainView,
+    AiExplainGptView,
     OcrView,
     AiChatView,
     AiStatusView,
