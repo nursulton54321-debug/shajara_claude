@@ -172,8 +172,9 @@ def _groq_chat(system_prompt, history, message):
 
 
 OPENAI_MODELS_PRIORITY = [
-    'gpt-4o-mini',
+    'gpt-5',
     'gpt-4o',
+    'gpt-4o-mini',
     'gpt-3.5-turbo',
 ]
 
