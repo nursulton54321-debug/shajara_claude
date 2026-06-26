@@ -5,6 +5,7 @@ import {
   ReactFlow, Background, MiniMap,
   useNodesState, useEdgesState, useReactFlow, useNodesInitialized,
   ReactFlowProvider, Handle, Position, Panel,
+  useNodes,
 } from '@xyflow/react'
 import dagre from 'dagre'
 import { toPng } from 'html-to-image'
@@ -2473,19 +2474,25 @@ function TreeFlow({ rawPersons, stats }) {
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, handleFocusClick,
       focusId, focusGen, filterAlive, filterGender, filterGen])
 
-  // PNG export
+  // PNG export — katta daraxtlar uchun adaptive pixelRatio
   const handleExport = useCallback(async () => {
     const el = document.querySelector('.react-flow__viewport')?.closest('.react-flow')
     if (!el) return
     setExporting(true)
     try {
-      await fitView({ padding: 0.1, duration: 300 })
-      await new Promise(r => setTimeout(r, 400))
+      await fitView({ padding: 0.08, duration: 400 })
+      await new Promise(r => setTimeout(r, 500))
+      // Joriy zoom darajasiga qarab pixelRatio ni kuchaytirish
+      // kichik zoom = kichik kartalar → pixelRatio oshiramiz
+      const { zoom } = getViewport()
+      const adaptiveRatio = Math.max(2, Math.min(6, Math.round(1.2 / zoom)))
       const dataUrl = await toPng(el, {
         quality: 1.0,
-        pixelRatio: 3,
+        pixelRatio: adaptiveRatio,
         backgroundColor: isDark ? '#0f172a' : '#f1f5fd',
-        filter: node => !node.classList?.contains('react-flow__minimap') && !node.classList?.contains('react-flow__controls') && !node.classList?.contains('react-flow__attribution'),
+        filter: node => !node.classList?.contains('react-flow__minimap') &&
+                        !node.classList?.contains('react-flow__controls') &&
+                        !node.classList?.contains('react-flow__attribution'),
         style: { fontFamily: 'system-ui, -apple-system, sans-serif' },
       })
       const a = document.createElement('a')
@@ -2495,19 +2502,21 @@ function TreeFlow({ rawPersons, stats }) {
     } finally {
       setExporting(false)
     }
-  }, [fitView])
+  }, [fitView, isDark, getViewport])
 
-  // PDF export
+  // PDF export — adaptive pixel ratio, A3 max formatga to'g'ridan qo'yish
   const handleExportPDF = useCallback(async () => {
     const el = document.querySelector('.react-flow__viewport')?.closest('.react-flow')
     if (!el) return
     setExporting(true)
     try {
-      await fitView({ padding: 0.1, duration: 300 })
-      await new Promise(r => setTimeout(r, 400))
+      await fitView({ padding: 0.08, duration: 400 })
+      await new Promise(r => setTimeout(r, 500))
+      const { zoom } = getViewport()
+      const adaptiveRatio = Math.max(2, Math.min(5, Math.round(1.0 / zoom)))
       const dataUrl = await toPng(el, {
-        quality: 1.0, pixelRatio: 2,
-        backgroundColor: isDark ? '#0f172a' : '#f1f5fd',
+        quality: 1.0, pixelRatio: adaptiveRatio,
+        backgroundColor: isDark ? '#0f172a' : '#f8f9ff',
         filter: node => !node.classList?.contains('react-flow__minimap') &&
                         !node.classList?.contains('react-flow__controls') &&
                         !node.classList?.contains('react-flow__attribution'),
@@ -2517,14 +2526,22 @@ function TreeFlow({ rawPersons, stats }) {
       img.src = dataUrl
       await new Promise(r => { img.onload = r })
       const pw = img.naturalWidth, ph = img.naturalHeight
-      const landscape = pw > ph
-      const pdf = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'px', format: [pw, ph] })
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pw, ph)
+      // PDF sahifa o'lchami: har doim mm formatida hisoblash
+      const mmW = pw * 0.2646, mmH = ph * 0.2646  // px → mm (96dpi)
+      const landscape = mmW > mmH
+      const pdf = new jsPDF({
+        orientation: landscape ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [Math.min(mmW, 594), Math.min(mmH, 420)],  // max A2
+      })
+      const pW = pdf.internal.pageSize.getWidth()
+      const pH = pdf.internal.pageSize.getHeight()
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pW, pH, undefined, 'FAST')
       pdf.save(`shajara-${new Date().toISOString().slice(0, 10)}.pdf`)
     } finally {
       setExporting(false)
     }
-  }, [fitView, isDark])
+  }, [fitView, isDark, getViewport])
 
   // 5.3 — max generation for dropdown
   const maxGen = rawPersons.length
@@ -3320,6 +3337,33 @@ function TreeFlow({ rawPersons, stats }) {
             </Panel>
           )}
         </ReactFlow>
+
+        {/* ── Mobile FAB: tree view'da shaxs qo'shish tugmasi ── */}
+        {isMobile && viewMode === 'tree' && createPortal(
+          <button
+            onClick={() => navigate('/persons/add')}
+            style={{
+              position: 'fixed', right: 16, bottom: 80, zIndex: 9998,
+              width: 52, height: 52, borderRadius: '50%',
+              background: 'linear-gradient(135deg,#6366f1,#7c3aed)',
+              border: 'none', cursor: 'pointer', color: 'white',
+              fontSize: 26, fontWeight: 900,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(99,102,241,0.55)',
+              animation: 'fabBounce 0.4s cubic-bezier(.16,1,.3,1) both',
+            }}
+            title="Yangi shaxs qo'shish"
+          >
+            <style>{`
+              @keyframes fabBounce {
+                from { opacity:0; transform:scale(0.5) }
+                to   { opacity:1; transform:scale(1) }
+              }
+            `}</style>
+            +
+          </button>,
+          document.body
+        )}
 
         {/* ── Deceased stat panels — rendered into document.body so position:fixed works ── */}
         {dimDeceased && extraStats && viewMode === 'tree' && createPortal(

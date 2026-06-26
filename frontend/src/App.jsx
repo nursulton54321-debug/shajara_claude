@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import api from './api/axios'
 import useAuthStore from './store/authStore'
@@ -37,6 +37,7 @@ import InstallPrompt      from './components/InstallPrompt'
 import PublicTreePage     from './pages/PublicTreePage'
 import ThemeToggleFloat   from './components/ThemeToggleFloat'
 import AiChatWidget       from './components/AiChatWidget'
+import Onboarding         from './components/Onboarding'
 
 function PrivateRoute({ children, adminOnly = false }) {
   const { user } = useAuthStore()
@@ -47,6 +48,9 @@ function PrivateRoute({ children, adminOnly = false }) {
 
 export default function App() {
   const { user, logout } = useAuthStore()
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => user && !localStorage.getItem('onboarding_done')
+  )
 
   // Sahifa yangilanganda: user bor lekin token yo'q → refresh qilib tokenni tiklash
   useEffect(() => {
@@ -65,6 +69,7 @@ export default function App() {
 
   return (
     <PinGate>
+    {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
     <InstallPrompt />
     <ThemeToggleFloat />
     <AiChatWidget />
