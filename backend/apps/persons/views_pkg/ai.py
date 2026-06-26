@@ -249,7 +249,7 @@ def _rel_template(name_a, name_b, relation_label, lca_name, depth_a, depth_b, pa
 # ── Views ─────────────────────────────────────────────────────────
 
 class AiExplainView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         d = request.data

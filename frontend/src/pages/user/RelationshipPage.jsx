@@ -583,8 +583,15 @@ export default function RelationshipPage() {
       const r = await aiExplain(payload)
       setAiText(r.data.text)
       setAiSource(r.data.source || '')
-    } catch {
-      setAiText("Kechirasiz, AI tushuntirishda xato yuz berdi. Qaytadan urinib ko'ring.")
+    } catch (err) {
+      const status = err?.response?.status
+      if (status === 401 || status === 403) {
+        setAiText('AI tushuntirish uchun akkauntga kirish kerak.')
+      } else if (status >= 500) {
+        setAiText(`Server xatosi (${status}). Bir ozdan keyin urinib ko'ring.`)
+      } else {
+        setAiText("Kechirasiz, AI tushuntirishda xato yuz berdi. Qaytadan urinib ko'ring.")
+      }
       setAiSource('')
     } finally {
       setAiLoading(false)
