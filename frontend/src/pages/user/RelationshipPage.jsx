@@ -1180,8 +1180,8 @@ export default function RelationshipPage() {
                 ))}
               </div>
             </div>
-          </div>{/* end rel-result-right */}
-        </div>{/* end rel-result-cols */}
+          </div>
+        </div>
         )}
 
         {/* Error state */}
