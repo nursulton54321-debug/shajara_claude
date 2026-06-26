@@ -665,7 +665,10 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     d       = _d(context)
     caption = _build_caption(d)
 
-    req_key = f"pp_{tg_user.telegram_id}_{int(time.time())}"
+    # callback_data uchun 64-bayt chegarasi: "addp_approve_" (13b) + req_key ≤ 51b
+    import hashlib as _hs
+    _raw = f"{tg_user.telegram_id}_{int(time.time())}"
+    req_key = f"pp_{_hs.md5(_raw.encode()).hexdigest()[:16]}"  # 3+16=19 bayt, jami 32b
     context.bot_data.setdefault('pending_persons', {})[req_key] = {
         'submitter_tg_id': tg_user.telegram_id,
         'submitter_name':  tg_user.full_name,

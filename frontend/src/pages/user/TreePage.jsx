@@ -692,25 +692,37 @@ function computeGenerations(persons) {
   const gen = {}
   persons.forEach(p => { gen[p.id] = 0 })
 
-  // 1-o'tish: ota-ona → farzand orqali avlodlarni hisoblash
-  let changed = true
-  while (changed) {
-    changed = false
-    persons.forEach(c => {
-      let mx = -1
-      if (c.father_id && pm[c.father_id]) mx = Math.max(mx, gen[c.father_id])
-      if (c.mother_id && pm[c.mother_id]) mx = Math.max(mx, gen[c.mother_id])
-      if (mx >= 0 && gen[c.id] < mx + 1) { gen[c.id] = mx + 1; changed = true }
+  // Topological sort (Kahn's algorithm) — iterative'dan robustroq,
+  // murakkab graflar va cross-generation nikohlarida to'g'ri ishlaydi.
+  const childrenOf = {}
+  const inDegree = {}
+  persons.forEach(p => { childrenOf[p.id] = []; inDegree[p.id] = 0 })
+  persons.forEach(c => {
+    if (c.father_id && pm[c.father_id]) {
+      childrenOf[c.father_id].push(c.id)
+      inDegree[c.id]++
+    }
+    if (c.mother_id && pm[c.mother_id]) {
+      childrenOf[c.mother_id].push(c.id)
+      inDegree[c.id]++
+    }
+  })
+
+  const queue = persons.filter(p => inDegree[p.id] === 0).map(p => p.id)
+  while (queue.length) {
+    const id = queue.shift()
+    childrenOf[id].forEach(childId => {
+      gen[childId] = Math.max(gen[childId], gen[id] + 1)
+      if (--inDegree[childId] === 0) queue.push(childId)
     })
   }
 
   // 2-o'tish: Oilaga kirgan shaxslar (ota/ona yo'q) — juftining avlodini oladi
-  // Masalan: Nargizabonu (father_id/mother_id yo'q) → Elyor bilan nikohda → Elyor avlodi = 2 → Nargizabonu ham 2
-  changed = true
+  let changed = true
   while (changed) {
     changed = false
     persons.forEach(p => {
-      if (p.father_id || p.mother_id) return // o'z avlodi bor, o'zgartirmaymiz
+      if (p.father_id || p.mother_id) return
       ;(p.families || []).forEach(f => {
         const spouseGen = gen[f.partner_id]
         if (f.partner_id && spouseGen !== undefined && gen[p.id] < spouseGen) {

@@ -276,28 +276,31 @@ function PersonCard({ person, label, accent, onClick, selected }) {
   )
 }
 
-function SearchInput({ label, persons, selectedId, onSelect, accent }) {
+// SearchInput — server-side qidiruv (debounce, page_size: 20)
+// Barcha shaxslarni oldindan yuklamaydi — faqat yozilganda API chaqiriladi.
+function SearchInput({ label, selectedId, selectedPerson, onSelect, accent }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
   const { isDark } = useThemeStore()
   const wrapRef = useRef(null)
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
+  const debounceRef = useRef(null)
 
-  const filtered = useMemo(() => {
-    if (!Array.isArray(persons)) return []
-    const lower = q.trim().toLowerCase()
-    if (!lower) return persons.slice(0, 20)
-    return persons.filter(p =>
-      p.full_name?.toLowerCase().includes(lower) ||
-      p.first_name?.toLowerCase().includes(lower) ||
-      p.last_name?.toLowerCase().includes(lower) ||
-      p.middle_name?.toLowerCase().includes(lower)
-    ).slice(0, 20)
-  }, [q, persons])
+  const fetchResults = (val) => {
+    clearTimeout(debounceRef.current)
+    const params = val.trim().length >= 1 ? { search: val.trim(), page_size: 20 } : { page_size: 20 }
+    debounceRef.current = setTimeout(() => {
+      setSearching(true)
+      getPersons(params)
+        .then(r => { setResults(r.data.results || r.data || []); setSearching(false) })
+        .catch(() => setSearching(false))
+    }, val.trim().length >= 1 ? 280 : 0)
+  }
 
-  const selected = Array.isArray(persons) ? persons.find(p => p.id === selectedId) : null
+  const selected = selectedPerson || null
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return
     const handler = (e) => {
@@ -312,6 +315,7 @@ function SearchInput({ label, persons, selectedId, onSelect, accent }) {
       const r = wrapRef.current.getBoundingClientRect()
       setDropPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
     }
+    if (!open) fetchResults(q)
     setOpen(o => !o)
   }
 
@@ -379,7 +383,7 @@ function SearchInput({ label, persons, selectedId, onSelect, accent }) {
               autoFocus
               placeholder="Ism yoki familiya..."
               value={q}
-              onChange={e => setQ(e.target.value)}
+              onChange={e => { setQ(e.target.value); fetchResults(e.target.value) }}
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: 10,
                 border: isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
@@ -391,13 +395,15 @@ function SearchInput({ label, persons, selectedId, onSelect, accent }) {
             />
           </div>
           <div style={{ maxHeight: 260, overflowY: 'auto' }}>
-            {filtered.length === 0 ? (
+            {searching ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Qidirilmoqda...</div>
+            ) : results.length === 0 ? (
               <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
                 Topilmadi
               </div>
-            ) : filtered.map(p => (
+            ) : results.map(p => (
               <div key={p.id}
-                onClick={() => { onSelect(p.id); setOpen(false); setQ('') }}
+                onClick={() => { onSelect(p.id, p); setOpen(false); setQ('') }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px',
                   cursor: 'pointer', background: p.id === selectedId ? `${accent}10` : 'transparent',
@@ -437,14 +443,17 @@ function SearchInput({ label, persons, selectedId, onSelect, accent }) {
 export default function RelationshipPage() {
   const navigate = useNavigate()
   const [persons, setPersons]   = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [loading, setLoading]   = useState(false)  // faqat hisoblash vaqtida yuklaydi
   const [idA, setIdA]           = useState(null)
   const [idB, setIdB]           = useState(null)
-  const [result, setResult]     = useState(null)  // { rel, path, spouseDirect }
+  const [personA, setPersonA]   = useState(null)  // SearchInput tanlagan to'liq object
+  const [personB, setPersonB]   = useState(null)
+  const [result, setResult]     = useState(null)
   const [calculating, setCalc]  = useState(false)
-  const [history, setHistory]   = useState([])    // [{labelA, labelB, rel, ts}]
+  const [history, setHistory]   = useState([])
   // 15. AI explain
   const [aiText, setAiText]         = useState('')
+  const [aiSource, setAiSource]     = useState('')  // 'template' | 'gemini/...' | 'groq/...'
   const [aiLoading, setAiLoading]   = useState(false)
   const [aiDisplayed, setAiDisplayed] = useState('')  // typewriter effect
   const aiTimerRef                  = useRef(null)
@@ -455,16 +464,29 @@ export default function RelationshipPage() {
     return buildGraph(persons)
   }, [persons])
 
-  useEffect(() => {
-    getPersons({ page_size: 9999 })
+  // Barcha shaxslarni faqat hisoblash kerak bo'lganda yuklaymiz (lazy).
+  // Selector o'zi server-side qidiruv ishlatadi — mount'da hech narsa yuklanmaydi.
+  const loadGraph = () => {
+    if (persons.length > 0) return Promise.resolve()
+    setLoading(true)
+    return getPersons({ page_size: 9999 })
       .then(r => { setPersons(r.data.results || r.data); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [])
+  }
 
   // Avtomatik hisoblash (ikkala shaxs tanlanganda)
   useEffect(() => {
-    if (idA && idB) calculate(idA, idB)
-    else setResult(null)
+    if (idA && idB) {
+      loadGraph().then(() => {
+        // map persons.length > 0 bo'lgandan keyin yangilanadi → keyingi render da calculate
+      })
+    } else {
+      setResult(null)
+    }
+  }, [idA, idB])
+
+  useEffect(() => {
+    if (idA && idB && persons.length > 0) calculate(idA, idB)
   }, [idA, idB, map])
 
   const calculate = (a, b) => {
@@ -522,7 +544,10 @@ export default function RelationshipPage() {
     ])
   }
 
-  const swap = () => { setIdA(idB); setIdB(idA) }
+  const swap = () => {
+    setIdA(idB); setIdB(idA)
+    setPersonA(personB); setPersonB(personA)
+  }
 
   // Natija o'zgarganda AI textni tozalash
   useEffect(() => { setAiText(''); setAiDisplayed('') }, [idA, idB])
@@ -557,8 +582,10 @@ export default function RelationshipPage() {
       }
       const r = await aiExplain(payload)
       setAiText(r.data.text)
+      setAiSource(r.data.source || '')
     } catch {
       setAiText("Kechirasiz, AI tushuntirishda xato yuz berdi. Qaytadan urinib ko'ring.")
+      setAiSource('')
     } finally {
       setAiLoading(false)
     }
@@ -621,7 +648,7 @@ export default function RelationshipPage() {
         <div className="rel-topbar-count" style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8',
           background: isDark ? '#1e293b' : '#f1f5f9', padding: '4px 10px', borderRadius: 20,
           whiteSpace: 'nowrap', flexShrink: 0 }}>
-          {loading ? '⏳' : `${persons.length} ta`}
+          {loading ? '⏳ Yuklanmoqda...' : persons.length > 0 ? `${persons.length} ta` : 'Tanlang'}
         </div>
       </div>
 
@@ -639,9 +666,9 @@ export default function RelationshipPage() {
           <div className="rel-inputs-row" style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
             <SearchInput
               label="👤 Birinchi shaxs (A)"
-              persons={persons}
               selectedId={idA}
-              onSelect={setIdA}
+              selectedPerson={personA}
+              onSelect={(id, p) => { setIdA(id); setPersonA(p || null) }}
               accent="#6366f1"
             />
 
@@ -663,9 +690,9 @@ export default function RelationshipPage() {
 
             <SearchInput
               label="👤 Ikkinchi shaxs (B)"
-              persons={persons}
               selectedId={idB}
-              onSelect={setIdB}
+              selectedPerson={personB}
+              onSelect={(id, p) => { setIdB(id); setPersonB(p || null) }}
               accent="#ec4899"
             />
           </div>
@@ -676,7 +703,7 @@ export default function RelationshipPage() {
               padding: '16px 20px', borderRadius: 16,
               background: isDark ? '#0f172a' : '#f8fafc',
               border: isDark ? '1px solid #334155' : '1px solid #f1f5f9' }}>
-              <PersonCard person={map[idA]} label="A" accent="#6366f1" selected />
+              <PersonCard person={personA || map[idA]} label="A" accent="#6366f1" selected />
               <div style={{ flex: 1, textAlign: 'center' }}>
                 {calculating ? (
                   <div style={{ animation: 'spin 1s linear infinite', fontSize: 28 }}>⚙️</div>
@@ -691,7 +718,7 @@ export default function RelationshipPage() {
                   </div>
                 )}
               </div>
-              <PersonCard person={map[idB]} label="B" accent="#ec4899" selected />
+              <PersonCard person={personB || map[idB]} label="B" accent="#ec4899" selected />
             </div>
           )}
         </div>
@@ -1019,7 +1046,13 @@ export default function RelationshipPage() {
                       AI tushuntirish
                     </div>
                     <div style={{ fontSize: 11, color: isDark ? '#64748b' : '#94a3b8' }}>
-                      Gemini · Tabiiy til · Bepul
+                      {aiSource
+                        ? (aiSource === 'template'
+                            ? '📝 Shablon javob (AI kalit yo\'q)'
+                            : aiSource.startsWith('groq')
+                              ? `⚡ Groq · ${aiSource.split('/')[1] || ''}`
+                              : `✨ Gemini · ${aiSource}`)
+                        : 'Gemini · Tabiiy til · Bepul'}
                     </div>
                   </div>
                 </div>
