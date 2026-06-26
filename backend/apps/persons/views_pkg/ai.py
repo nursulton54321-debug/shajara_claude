@@ -23,21 +23,52 @@ GROQ_MODELS_PRIORITY = [
 
 
 def _gemini_client():
-    from google import genai as google_genai
     api_key = getattr(settings, 'GEMINI_API_KEY', '')
-    return google_genai.Client(api_key=api_key)
+    try:
+        # google-generativeai >= 2.0 (yangi SDK)
+        from google import genai as google_genai
+        return google_genai.Client(api_key=api_key)
+    except (ImportError, AttributeError):
+        # google-generativeai 0.x (eski SDK) — wrapper
+        import google.generativeai as old_genai
+        old_genai.configure(api_key=api_key)
+        return old_genai
 
 
 def _gemini_call(client, prompt, img_bytes=None, img_mime=None):
-    from google.genai import types as gt
     last_err = None
+    # Yangi SDK (google.genai.Client instance)
+    try:
+        from google.genai import types as gt
+        for model in GEMINI_MODELS_PRIORITY:
+            try:
+                contents = (
+                    [gt.Part.from_bytes(data=img_bytes, mime_type=img_mime or 'image/jpeg'), prompt]
+                    if img_bytes else prompt
+                )
+                resp = client.models.generate_content(model=model, contents=contents)
+                text = resp.text
+                if not text:
+                    raise Exception(f"{model}: bo'sh javob")
+                return text.strip(), model
+            except Exception as e:
+                last_err = e
+                continue
+        if last_err:
+            raise last_err
+    except ImportError:
+        pass
+
+    # Eski SDK (google.generativeai module)
     for model in GEMINI_MODELS_PRIORITY:
         try:
-            contents = (
-                [gt.Part.from_bytes(data=img_bytes, mime_type=img_mime or 'image/jpeg'), prompt]
-                if img_bytes else prompt
-            )
-            resp = client.models.generate_content(model=model, contents=contents)
+            m = client.GenerativeModel(model)
+            if img_bytes:
+                import PIL.Image, io
+                img = PIL.Image.open(io.BytesIO(img_bytes))
+                resp = m.generate_content([img, prompt])
+            else:
+                resp = m.generate_content(prompt)
             text = resp.text
             if not text:
                 raise Exception(f"{model}: bo'sh javob")
@@ -49,20 +80,44 @@ def _gemini_call(client, prompt, img_bytes=None, img_mime=None):
 
 
 def _gemini_chat(client, system_prompt, history, message):
-    from google.genai import types as gt
     last_err = None
+    # Yangi SDK
+    try:
+        from google.genai import types as gt
+        for model in GEMINI_MODELS_PRIORITY:
+            try:
+                chat_history = [
+                    gt.Content(role='user' if h['role'] == 'user' else 'model',
+                               parts=[gt.Part(text=h['text'])])
+                    for h in history
+                ]
+                chat = client.chats.create(
+                    model=model,
+                    config=gt.GenerateContentConfig(system_instruction=system_prompt),
+                    history=chat_history,
+                )
+                resp = chat.send_message(message)
+                text = resp.text
+                if not text:
+                    raise Exception(f"{model}: bo'sh javob")
+                return text.strip(), model
+            except Exception as e:
+                last_err = e
+                continue
+        if last_err:
+            raise last_err
+    except ImportError:
+        pass
+
+    # Eski SDK
     for model in GEMINI_MODELS_PRIORITY:
         try:
-            chat_history = [
-                gt.Content(role='user' if h['role'] == 'user' else 'model',
-                           parts=[gt.Part(text=h['text'])])
-                for h in history
-            ]
-            chat = client.chats.create(
-                model=model,
-                config=gt.GenerateContentConfig(system_instruction=system_prompt),
-                history=chat_history,
-            )
+            m = client.GenerativeModel(model, system_instruction=system_prompt)
+            hist = []
+            for h in history:
+                hist.append({'role': 'user' if h['role'] == 'user' else 'model',
+                             'parts': [h['text']]})
+            chat = m.start_chat(history=hist)
             resp = chat.send_message(message)
             text = resp.text
             if not text:
