@@ -605,6 +605,14 @@ export default function RelationshipPage() {
       <style>{`
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
+        /* Full-width wrapper — override any leftover constraints */
+        .rel-wrap {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          box-sizing: border-box !important;
+        }
+
         /* Desktop 2-column result layout */
         .rel-result-cols {
           display: grid;
