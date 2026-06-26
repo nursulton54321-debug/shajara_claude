@@ -40,6 +40,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def _scheduler_post_init(application):
+    from apps.bot.scheduler import start_scheduler
+    start_scheduler(application.bot)
+
+
 def build_app():
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     if not token:
@@ -52,7 +57,7 @@ def build_app():
         write_timeout=60,
         media_write_timeout=120,
     )
-    app = Application.builder().token(token).request(request).build()
+    app = Application.builder().token(token).request(request).post_init(_scheduler_post_init).build()
 
     # /start va shaxs qo'shish ConversationHandlerlar (birinchi)
     app.add_handler(get_start_conversation())

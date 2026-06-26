@@ -29,3 +29,6 @@ py-vapid==1.9.4
 # AI
 google-generativeai==0.8.6
 groq==1.4.0
+
+# Scheduler
+APScheduler==3.10.4
