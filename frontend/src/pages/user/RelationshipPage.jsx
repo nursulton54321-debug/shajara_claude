@@ -604,6 +604,20 @@ export default function RelationshipPage() {
     <div style={{ minHeight: '100vh', background: isDark ? '#0f172a' : '#f8fafc' }}>
       <style>{`
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+        /* Desktop 2-column result layout */
+        .rel-result-cols {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+        .rel-result-left  { display: flex; flex-direction: column; gap: 20px; }
+        .rel-result-right { display: flex; flex-direction: column; gap: 20px; }
+
+        @media (max-width: 900px) {
+          .rel-result-cols { grid-template-columns: 1fr !important; }
+        }
         @media (max-width: 640px) {
           .rel-topbar { padding: 10px 12px !important; gap: 8px !important; }
           .rel-topbar-title { font-size: 13px !important; }
@@ -626,6 +640,7 @@ export default function RelationshipPage() {
           .rel-path-section { padding: 14px 12px !important; }
           .rel-ai-section { padding: 12px 14px !important; }
           .rel-degree-grid { grid-template-columns: 1fr 1fr !important; }
+          .rel-result-cols { grid-template-columns: 1fr !important; gap: 14px !important; }
         }
       `}</style>
 
@@ -659,7 +674,7 @@ export default function RelationshipPage() {
         </div>
       </div>
 
-      <div className="rel-wrap" style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px 80px' }}>
+      <div className="rel-wrap" style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 24px 80px' }}>
 
         {/* ── Selector panel ── */}
         <div className="rel-selector" style={{ background: isDark ? '#1e293b' : 'white', borderRadius: 24, padding: '20px',
@@ -732,8 +747,9 @@ export default function RelationshipPage() {
 
         {/* ── Natija ── */}
         {result && !result.error && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="rel-result-cols">
 
+          <div className="rel-result-left">
             {/* Main result card */}
             <div style={{
               borderRadius: 24, overflow: 'hidden',
@@ -1025,6 +1041,9 @@ export default function RelationshipPage() {
               })()}
             </div>
 
+          </div>{/* end rel-result-left */}
+
+          <div className="rel-result-right">
             {/* ── 15. AI tushuntirish ── */}
             <div style={{
               borderRadius: 20, overflow: 'hidden',
@@ -1153,7 +1172,8 @@ export default function RelationshipPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </div>{/* end rel-result-right */}
+        </div>{/* end rel-result-cols */}
         )}
 
         {/* Error state */}
