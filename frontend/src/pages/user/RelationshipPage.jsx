@@ -611,34 +611,58 @@ export default function RelationshipPage() {
           max-width: 100% !important;
           margin: 0 !important;
           box-sizing: border-box !important;
+          overflow-x: hidden !important;
         }
+        /* Prevent any child from overflowing horizontally */
+        .rel-wrap * { box-sizing: border-box; }
+        .rel-wrap > * { width: 100%; }
 
         /* Single-column stacked layout */
-        .rel-result-cols  { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-        .rel-result-left  { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-        .rel-result-right { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .rel-result-cols  { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .rel-result-left  { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .rel-result-right { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+
+        /* Path scroll container — horizontal scroll only inside */
+        .rel-path-scroll {
+          overflow-x: auto !important;
+          overflow-y: visible !important;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 8px;
+        }
+        .rel-path-scroll::-webkit-scrollbar { height: 4px; }
+        .rel-path-scroll::-webkit-scrollbar-track { background: transparent; }
+        .rel-path-scroll::-webkit-scrollbar-thumb { background: #6366f140; border-radius: 4px; }
+
+        /* Text overflow prevention */
+        .rel-overflow-text {
+          overflow: hidden;
+          word-break: break-word;
+          overflow-wrap: break-word;
+        }
+
         @media (max-width: 640px) {
-          .rel-topbar { padding: 10px 12px !important; gap: 8px !important; }
-          .rel-topbar-title { font-size: 13px !important; }
+          .rel-topbar { padding: 8px 10px !important; gap: 6px !important; }
+          .rel-topbar-title { font-size: 12px !important; }
           .rel-topbar-sub { display: none !important; }
-          .rel-topbar-count { font-size: 10px !important; padding: 3px 8px !important; }
-          .rel-wrap { padding: 12px 10px 80px !important; }
-          .rel-selector { padding: 16px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
-          .rel-inputs-row { flex-direction: column !important; align-items: stretch !important; }
+          .rel-topbar-count { font-size: 10px !important; padding: 3px 7px !important; }
+          .rel-wrap { padding: 10px 8px 80px !important; }
+          .rel-selector { padding: 12px !important; border-radius: 16px !important; margin-bottom: 10px !important; }
+          .rel-inputs-row { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
           .rel-swap-btn { flex-direction: row !important; gap: 8px !important; padding-bottom: 0 !important; align-self: center !important; }
-          .rel-swap-inner { width: 38px !important; height: 38px !important; }
+          .rel-swap-inner { width: 36px !important; height: 36px !important; }
           .rel-search-wrap { min-width: unset !important; width: 100% !important; }
-          .rel-preview { padding: 12px 14px !important; margin-top: 14px !important; }
-          .rel-result-header { padding: 16px 16px 14px !important; }
-          .rel-result-hero { gap: 12px !important; }
-          .rel-result-icon { width: 52px !important; height: 52px !important; font-size: 26px !important; border-radius: 16px !important; }
-          .rel-result-title { font-size: 16px !important; }
-          .rel-lca-row { flex-direction: column !important; gap: 10px !important; padding: 14px 14px !important; }
-          .rel-lca-nums { flex-direction: row !important; gap: 16px !important; justify-content: center !important; }
-          .rel-empty-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-          .rel-path-section { padding: 14px 12px !important; }
-          .rel-ai-section { padding: 12px 14px !important; }
-          .rel-degree-grid { grid-template-columns: 1fr 1fr !important; }
+          .rel-preview { padding: 10px 12px !important; margin-top: 10px !important; }
+          .rel-result-header { padding: 12px 12px 10px !important; }
+          .rel-result-hero { gap: 8px !important; flex-wrap: wrap !important; }
+          .rel-result-icon { width: 44px !important; height: 44px !important; font-size: 22px !important; border-radius: 14px !important; }
+          .rel-result-title { font-size: 15px !important; }
+          .rel-lca-row { flex-direction: column !important; gap: 8px !important; padding: 12px !important; }
+          .rel-lca-nums { flex-direction: row !important; gap: 12px !important; justify-content: center !important; }
+          .rel-empty-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+          .rel-path-section { padding: 10px 10px !important; }
+          .rel-ai-section { padding: 10px 12px !important; }
+          .rel-degree-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          .rel-result-cols, .rel-result-left, .rel-result-right { gap: 10px !important; }
         }
       `}</style>
 
@@ -797,8 +821,10 @@ export default function RelationshipPage() {
                 </div>
 
                 <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 12,
-                  background: `${result.rel.color}10`, border: `1px solid ${result.rel.color}20` }}>
-                  <div style={{ fontSize: 13, color: isDark ? '#cbd5e1' : '#374151', lineHeight: 1.5 }}>
+                  background: `${result.rel.color}10`, border: `1px solid ${result.rel.color}20`,
+                  wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                  <div style={{ fontSize: 13, color: isDark ? '#cbd5e1' : '#374151', lineHeight: 1.6,
+                    wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     <strong style={{ color: result.rel.color }}>{result.pA?.full_name}</strong>
                     {' '}—{' '}
                     <strong style={{ color: '#ec4899' }}>{result.pB?.full_name}</strong>
@@ -875,7 +901,7 @@ export default function RelationshipPage() {
                   </div>
 
                   {/* Path — scrollable row */}
-                  <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+                  <div className="rel-path-scroll">
                     <div style={{ display: 'flex', alignItems: 'center', minWidth: 'max-content', gap: 0 }}>
                       {result.path.map((node, i) => {
                         const p = map[node.id]
