@@ -1033,42 +1033,6 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
-  // Qadam 3.5: Qadam 3 dan KEYIN har qatorda er-xotinlarni yonma-yon qilib qayta tartiblaymiz.
-  // Bu interleaving muammosini hal qiladi (masalan: Ulugbek [oila A] + Sitora [oila B]
-  // orasida Xoldor [oila C] kirib qolgan holat).
-  const postRows = new Map()
-  persons.forEach(p => {
-    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-    const yn = Math.round(g.node(`p-${p.id}`).y)
-    if (!postRows.has(yn)) postRows.set(yn, [])
-    postRows.get(yn).push(p.id)
-  })
-  postRows.forEach(pids => {
-    if (pids.length < 2) return
-    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-    const placed = new Set(), ordered = []
-    pids.forEach(pid => {
-      if (placed.has(pid)) return
-      ordered.push(pid); placed.add(pid)
-      ;(personCouples[pid] || []).forEach(ccid => {
-        const { fatherId, motherId } = coupleInfo[ccid]
-        const sid = fatherId === pid ? motherId : fatherId
-        if (sid && !placed.has(sid) && pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
-      })
-    })
-    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
-    // Qadam 3 dan keyingi eng chap X ni anchor sifatida ishlatamiz
-    const startX = g.node(`p-${ordered[0]}`).x
-    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = startX + i * (PW + NODE_SEP) })
-  })
-  // Er har doim CHAP, xotin har doim O'NG
-  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
-    if (!fatherId || !motherId) return
-    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
-    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
-    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
-  })
-
   // Qadam 4: Qolgan ustma-ust chiqishlarni bartaraf etish
   const overlapRows = new Map()
   persons.forEach(p => {
