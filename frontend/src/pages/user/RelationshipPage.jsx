@@ -615,6 +615,8 @@ export default function RelationshipPage() {
       const errData = err?.response?.data
       if (status === 503 || errData?.source === 'no_key') {
         setGptText('⚠️ OPENAI_API_KEY Render serverida sozlanmagan. Render Dashboard → backend service → Environment → OPENAI_API_KEY qo\'shing.')
+      } else if (status === 429 || errData?.source === 'quota_exceeded' || (errData?.error || '').toLowerCase().includes('quota')) {
+        setGptText('⚠️ OpenAI API kredit tugagan. platform.openai.com/billing saytiga kiring va hisobingizni to\'ldiring.')
       } else if (errData?.error) {
         setGptText(`❌ Xato: ${errData.error}`)
       } else {

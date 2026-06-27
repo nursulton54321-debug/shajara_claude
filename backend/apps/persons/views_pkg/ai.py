@@ -362,8 +362,11 @@ class AiExplainGptView(APIView):
             text, used_model = _openai_call(prompt)
             return Response({'text': text, 'source': used_model})
         except Exception as e:
+            err_str = str(e)
             log.warning(f"[AiExplainGpt] xato: {e}")
-            return Response({'error': str(e)[:200], 'source': 'error'}, status=502)
+            if '429' in err_str or 'quota' in err_str.lower() or 'RateLimitError' in err_str:
+                return Response({'error': 'OpenAI API kredit tugagan. platform.openai.com/billing', 'source': 'quota_exceeded'}, status=429)
+            return Response({'error': err_str[:200], 'source': 'error'}, status=502)
 
 
 class OcrView(APIView):
