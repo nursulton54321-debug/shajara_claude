@@ -992,31 +992,85 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     mNode.y = targetY
   })
 
-  // Final spacing enforcement: dagre + Y alignment dan keyin hali ham yaqin
-  // turgan cardlarni o'ngga siljitadi. Ota-ona ostidagi joylashuvni saqlab qoladi.
-  const finalYGroups = new Map()
+  // ── Family-centered positioning ──────────────────────────────
+  // Maqsad: har bir oila farzandlari ota-ona CC markazi ostiga joylashsin.
+  // Dagre bizga tugunlar TARTIBINI beradi (crossing minimization),
+  // lekin X pozitsiyalarini biz qayta hisoblaymiz.
+
+  // 1-qadam: CC x ni ota-ona o'rtasiga snap qilish (farzand joylashuvidan oldin)
+  Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
+    if (!g.hasNode(cid) || orphanedCC.has(cid)) return
+    const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
+    const mNode = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
+    if (!fNode && !mNode) return
+    g.node(cid).x = fNode && mNode ? (fNode.x + mNode.x) / 2 : (fNode || mNode).x
+  })
+
+  // 2-qadam: Farzandlarni CC ostiga joylashtirish (asosiy algoritm)
+  // Bir Y darajasidagi barcha oilalarni CC.x bo'yicha tartiblab,
+  // chapdan o'ngga joylashtiramiz — zarur bo'lganda o'ngga siljitamiz.
+  const familyRows = new Map() // yn → [{cid, ccX, children:[pid]}]
+  Object.entries(coupleInfo).forEach(([cid]) => {
+    if (!g.hasNode(cid) || orphanedCC.has(cid)) return
+    const kids = (coupleChildren[cid] || []).filter(pid =>
+      !hiddenP.has(pid) && g.hasNode(`p-${pid}`)
+    )
+    if (!kids.length) return
+    const ccX = g.node(cid).x
+    const yn  = Math.round(g.node(`p-${kids[0]}`).y)
+    if (!familyRows.has(yn)) familyRows.set(yn, [])
+    familyRows.get(yn).push({ cid, ccX, children: kids })
+  })
+
+  familyRows.forEach(families => {
+    // CC x bo'yicha chapdan o'ngga tartiblash
+    families.sort((a, b) => a.ccX - b.ccX)
+
+    // Har oila uchun ideal boshlang'ich X ni hisoblash (CC markazi ostida)
+    families.forEach(f => {
+      f.children.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
+      f.totalW   = f.children.length * PW + (f.children.length - 1) * NODE_SEP
+      f.startX   = f.ccX - f.totalW / 2
+    })
+
+    // Chapdan o'ngga — oldingi oila bilan ustma-ust kelsa o'ngga siljit
+    for (let i = 1; i < families.length; i++) {
+      const prev    = families[i - 1]
+      const minStart = prev.startX + prev.totalW + NODE_SEP
+      if (families[i].startX < minStart) families[i].startX = minStart
+    }
+
+    // Pozitsiyalarni qo'llash
+    families.forEach(f => {
+      f.children.forEach((pid, i) => {
+        g.node(`p-${pid}`).x = f.startX + i * (PW + NODE_SEP)
+      })
+    })
+  })
+
+  // 3-qadam: Oila guruhiga kirmagan tugunlar (o'z ota-onasi chiziqdan tashqari,
+  // turmushga chiqqan shaxslar) ham bir-biriga tegmasligini ta'minlash
+  const allYLevels = new Map()
   persons.forEach(p => {
     if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
     const yn = Math.round(g.node(`p-${p.id}`).y)
-    if (!finalYGroups.has(yn)) finalYGroups.set(yn, [])
-    finalYGroups.get(yn).push(p.id)
+    if (!allYLevels.has(yn)) allYLevels.set(yn, [])
+    allYLevels.get(yn).push(p.id)
   })
-  finalYGroups.forEach(pids => {
+  allYLevels.forEach(pids => {
     if (pids.length < 2) return
     pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
     for (let i = 1; i < pids.length; i++) {
       const prev = g.node(`p-${pids[i - 1]}`)
       const curr = g.node(`p-${pids[i]}`)
-      const minX = prev.x + PW + NODE_SEP
-      if (curr.x < minX) {
-        const delta = minX - curr.x
-        // Shift this node and all to the right of it
+      if (curr.x < prev.x + PW + NODE_SEP) {
+        const delta = prev.x + PW + NODE_SEP - curr.x
         for (let j = i; j < pids.length; j++) g.node(`p-${pids[j]}`).x += delta
       }
     }
   })
 
-  // Snap CC to midpoint (runs after final spacing so X positions are settled)
+  // 4-qadam: CC ni ota-ona o'rtasiga (X) va ularning ostiga (Y) snap qilish
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid)) return
     const cc    = g.node(cid)
