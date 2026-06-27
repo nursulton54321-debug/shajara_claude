@@ -996,40 +996,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
   // Dagre tartibni (crossing minimization) beradi.
   // Biz X pozitsiyalarini to'g'ri hisoblaymiz.
 
-  // Qadam 1: Har qatorda er-xotinlarni yonma-yon joylashtirish (farzand joylashuvidan OLDIN)
-  const preRows = new Map()
-  persons.forEach(p => {
-    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-    const yn = Math.round(g.node(`p-${p.id}`).y)
-    if (!preRows.has(yn)) preRows.set(yn, [])
-    preRows.get(yn).push(p.id)
-  })
-  preRows.forEach(pids => {
-    if (pids.length < 2) return
-    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-    const placed = new Set(), ordered = []
-    pids.forEach(pid => {
-      if (placed.has(pid)) return
-      ordered.push(pid); placed.add(pid)
-      ;(personCouples[pid] || []).forEach(ccid => {
-        const { fatherId, motherId } = coupleInfo[ccid]
-        const sid = fatherId === pid ? motherId : fatherId
-        if (sid && !placed.has(sid) && pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
-      })
-    })
-    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
-    const anchor = g.node(`p-${ordered[0]}`).x
-    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = anchor + i * (PW + NODE_SEP) })
-  })
-  // Er har doim CHAP, xotin har doim O'NG
-  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
-    if (!fatherId || !motherId) return
-    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
-    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
-    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
-  })
-
-  // Qadam 2: CC x ni er-xotin o'rtasiga snap qilish (farzand joylashuvidan oldin)
+  // Qadam 1: CC x ni er-xotin o'rtasiga snap qilish (farzand joylashuvidan oldin)
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid) || orphanedCC.has(cid)) return
     const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
@@ -1064,6 +1031,36 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     families.forEach(f => {
       f.children.forEach((pid, i) => { g.node(`p-${pid}`).x = f.startX + i * (PW + NODE_SEP) })
     })
+  })
+
+  // Qadam 3.5: Qadam 3 dan keyin ajralib qolgan juftlarni yaqinlashtirish.
+  // Faqat "tashqaridan kelgan" (daraxtda ota-onasi yo'q) juftni partner yoniga ko'chiramiz.
+  // Family-placed (Qadam 3 joylashtirgan) shaxslar o'z joyida qoladi.
+  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
+    if (!fatherId || !motherId) return
+    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
+    const gap = Math.abs(fNode.x - mNode.x)
+    if (gap <= PW + NODE_SEP * 2) {
+      // Yaqin — faqat er-chap/xotin-o'ng tartibini ta'minlaymiz
+      if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
+      return
+    }
+    // Uzoq — "tashqaridan kelgan"ni aniqlash: daraxtda ota-onasi yo'q = childCouple yo'q
+    const fIsFamily = !!(childCouple[fatherId] && !orphanedCC.has(childCouple[fatherId]))
+    const mIsFamily = !!(childCouple[motherId] && !orphanedCC.has(childCouple[motherId]))
+    if (fIsFamily && !mIsFamily) {
+      // Ota daraxtdan, ona tashqaridan → onani otaning yoniga olib kelamiz
+      mNode.x = fNode.x + PW + NODE_SEP
+    } else if (mIsFamily && !fIsFamily) {
+      // Ona daraxtdan, ota tashqaridan → otani onaning yoniga olib kelamiz
+      fNode.x = mNode.x - PW - NODE_SEP
+    } else {
+      // Ikkalasi ham tashqaridan yoki ikkalasi ham daraxtdan → eng chapdan joylashtir
+      const leftX = Math.min(fNode.x, mNode.x)
+      fNode.x = leftX; mNode.x = leftX + PW + NODE_SEP
+    }
+    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
   })
 
   // Qadam 4: Qolgan ustma-ust chiqishlarni bartaraf etish
