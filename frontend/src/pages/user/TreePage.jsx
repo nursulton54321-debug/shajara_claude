@@ -1024,6 +1024,17 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = anchor + i * (PW + NODE_SEP) })
   })
 
+  // Qadam 1.5: Er (ota) har doim CHAP, xotin (ona) har doim O'NG
+  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
+    if (!fatherId || !motherId) return
+    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+    const fNode = g.node(`p-${fatherId}`)
+    const mNode = g.node(`p-${motherId}`)
+    if (fNode.x > mNode.x) {
+      const tmp = fNode.x; fNode.x = mNode.x; mNode.x = tmp
+    }
+  })
+
   // Qadam 2: CC x ni ota-ona o'rtasiga snap qilish
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid) || orphanedCC.has(cid)) return
