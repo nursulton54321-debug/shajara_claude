@@ -1063,6 +1063,37 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
   })
 
+  // Qadam 3.6: Qadam 3.5 dan keyin CC.x ni yangilab, farzandlarni qayta markazlashtirish
+  // (juftlar pozitsiyasiga tegmaymiz, faqat farzandlar qayta joylashtiriladi)
+  const familyRows2 = new Map()
+  Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
+    if (!g.hasNode(cid) || orphanedCC.has(cid)) return
+    const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
+    const mNode = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
+    if (!fNode && !mNode) return
+    g.node(cid).x = fNode && mNode ? (fNode.x + mNode.x) / 2 : (fNode || mNode).x
+    const kids = (coupleChildren[cid] || []).filter(pid => !hiddenP.has(pid) && g.hasNode(`p-${pid}`))
+    if (!kids.length) return
+    const yn = Math.round(g.node(`p-${kids[0]}`).y)
+    if (!familyRows2.has(yn)) familyRows2.set(yn, [])
+    familyRows2.get(yn).push({ cid, ccX: g.node(cid).x, children: kids })
+  })
+  familyRows2.forEach(families => {
+    families.sort((a, b) => a.ccX - b.ccX)
+    families.forEach(f => {
+      f.children.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
+      f.totalW = f.children.length * PW + (f.children.length - 1) * NODE_SEP
+      f.startX = f.ccX - f.totalW / 2
+    })
+    for (let i = 1; i < families.length; i++) {
+      const minStart = families[i - 1].startX + families[i - 1].totalW + NODE_SEP
+      if (families[i].startX < minStart) families[i].startX = minStart
+    }
+    families.forEach(f => {
+      f.children.forEach((pid, i) => { g.node(`p-${pid}`).x = f.startX + i * (PW + NODE_SEP) })
+    })
+  })
+
   // Qadam 4: Qolgan ustma-ust chiqishlarni bartaraf etish
   const overlapRows = new Map()
   persons.forEach(p => {
