@@ -992,50 +992,11 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     mNode.y = targetY
   })
 
-  // ── Post-layout positioning (5 qadam) ──────────────────────────
+  // ── Post-layout positioning ─────────────────────────────────────
   // Dagre tartibni (crossing minimization) beradi.
-  // Biz esa X pozitsiyalarini to'g'ri hisoblaymiz.
+  // Biz X pozitsiyalarini to'g'ri hisoblaymiz.
 
-  // Qadam 1: Har avlod qatorida er-xotinni yonma-yon joylashtirish
-  // (yGroups mantiqini saqlaymiz, lekin markazlashtirmay, chap anchor dan)
-  const rowGroups = new Map()
-  persons.forEach(p => {
-    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-    const yn = Math.round(g.node(`p-${p.id}`).y)
-    if (!rowGroups.has(yn)) rowGroups.set(yn, [])
-    rowGroups.get(yn).push(p.id)
-  })
-  rowGroups.forEach(pids => {
-    if (pids.length < 2) return
-    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-    const placed = new Set(), ordered = []
-    pids.forEach(pid => {
-      if (placed.has(pid)) return
-      ordered.push(pid); placed.add(pid)
-      ;(personCouples[pid] || []).forEach(ccid => {
-        const { fatherId, motherId } = coupleInfo[ccid]
-        const sid = fatherId === pid ? motherId : fatherId
-        if (sid && !placed.has(sid) && pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
-      })
-    })
-    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
-    // Eng chap tugunning dagre X sini anchor sifatida ishlatamiz (markazlashtirmaymiz)
-    const anchor = g.node(`p-${ordered[0]}`).x
-    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = anchor + i * (PW + NODE_SEP) })
-  })
-
-  // Qadam 1.5: Er (ota) har doim CHAP, xotin (ona) har doim O'NG
-  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
-    if (!fatherId || !motherId) return
-    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
-    const fNode = g.node(`p-${fatherId}`)
-    const mNode = g.node(`p-${motherId}`)
-    if (fNode.x > mNode.x) {
-      const tmp = fNode.x; fNode.x = mNode.x; mNode.x = tmp
-    }
-  })
-
-  // Qadam 2: CC x ni ota-ona o'rtasiga snap qilish
+  // Qadam 1: CC x ni ota-ona o'rtasiga snap qilish (farzand joylashuvidan oldin)
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid) || orphanedCC.has(cid)) return
     const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
@@ -1072,37 +1033,39 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
-  // Qadam 3.5: Qadam 3 ba'zi juftlarni ajratib qo'yadi —
-  // (family-placed shaxs yangi X ga ko'chadi, turmush o'rtog'i eski joyda qoladi)
-  // Ularni qayta yonma-yon qilamiz, keyin er chap / xotin o'ng tartibini ta'minlaymiz.
+  // Qadam 3.5: Qadam 3 dan KEYIN har qatorda er-xotinlarni yonma-yon qilib qayta tartiblaymiz.
+  // Bu interleaving muammosini hal qiladi (masalan: Ulugbek [oila A] + Sitora [oila B]
+  // orasida Xoldor [oila C] kirib qolgan holat).
+  const postRows = new Map()
+  persons.forEach(p => {
+    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+    const yn = Math.round(g.node(`p-${p.id}`).y)
+    if (!postRows.has(yn)) postRows.set(yn, [])
+    postRows.get(yn).push(p.id)
+  })
+  postRows.forEach(pids => {
+    if (pids.length < 2) return
+    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
+    const placed = new Set(), ordered = []
+    pids.forEach(pid => {
+      if (placed.has(pid)) return
+      ordered.push(pid); placed.add(pid)
+      ;(personCouples[pid] || []).forEach(ccid => {
+        const { fatherId, motherId } = coupleInfo[ccid]
+        const sid = fatherId === pid ? motherId : fatherId
+        if (sid && !placed.has(sid) && pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
+      })
+    })
+    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
+    // Qadam 3 dan keyingi eng chap X ni anchor sifatida ishlatamiz
+    const startX = g.node(`p-${ordered[0]}`).x
+    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = startX + i * (PW + NODE_SEP) })
+  })
+  // Er har doim CHAP, xotin har doim O'NG
   Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
     if (!fatherId || !motherId) return
     if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
-    const fNode = g.node(`p-${fatherId}`)
-    const mNode = g.node(`p-${motherId}`)
-    const gap = Math.abs(fNode.x - mNode.x)
-    if (gap <= PW + NODE_SEP * 2) {
-      // Yaqin — faqat tartibni to'g'irlaymiz (er chap, xotin o'ng)
-      if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
-      return
-    }
-    // Uzoq — kim "o'z ota-onasidan" kelgan (family-placed)?
-    const fFixed = !!(childCouple[fatherId] && !orphanedCC.has(childCouple[fatherId]))
-    const mFixed = !!(childCouple[motherId] && !orphanedCC.has(childCouple[motherId]))
-    if (fFixed && !mFixed) {
-      // Ota joylashtirilgan, onani yoniga olib kelamiz
-      mNode.x = fNode.x + PW + NODE_SEP
-    } else if (mFixed && !fFixed) {
-      // Ona joylashtirilgan, otani yoniga olib kelamiz
-      fNode.x = mNode.x - PW - NODE_SEP
-    } else {
-      // Ikkalasi ham tashqaridan yoki ikkalasi ham o'z daraxtidan —
-      // eng chap nuqtaga anchor qilib yonma-yon joylashtiramiz
-      const leftX = Math.min(fNode.x, mNode.x)
-      fNode.x = leftX
-      mNode.x = leftX + PW + NODE_SEP
-    }
-    // Yakuniy tartib: er chap, xotin o'ng
+    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
     if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
   })
 
