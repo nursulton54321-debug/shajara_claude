@@ -992,107 +992,122 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     mNode.y = targetY
   })
 
-  // ── Post-layout positioning ─────────────────────────────────────
-  // Dagre tartibni (crossing minimization) beradi.
-  // Biz X pozitsiyalarini to'g'ri hisoblaymiz.
+  // ── Toza X layout: yuqoridan pastga, oila tartibida, er-xotin yonma-yon ────────
+  // Dagre faqat Y (avlod daraja) uchun ishlatiladi. X dan qayta hisoblanadi.
+  const personMap = new Map(persons.map(p => [p.id, p]))
 
-  // Qadam 1: CC x ni er-xotin o'rtasiga snap qilish (farzand joylashuvidan oldin)
-  Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
-    if (!g.hasNode(cid) || orphanedCC.has(cid)) return
-    const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
-    const mNode = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
-    if (!fNode && !mNode) return
-    g.node(cid).x = fNode && mNode ? (fNode.x + mNode.x) / 2 : (fNode || mNode).x
+  const rowMap = new Map()
+  persons.forEach(p => {
+    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+    const yn = Math.round(g.node(`p-${p.id}`).y)
+    if (!rowMap.has(yn)) rowMap.set(yn, [])
+    rowMap.get(yn).push(p.id)
   })
 
-  // Qadam 3: Farzandlarni ota-ona CC ostiga joylashtirish
-  // Bir Y darajasidagi oilalarni CC.x tartibida chapdan o'ngga joylashtiramiz
-  const familyRows = new Map()
-  Object.entries(coupleInfo).forEach(([cid]) => {
-    if (!g.hasNode(cid) || orphanedCC.has(cid)) return
-    const kids = (coupleChildren[cid] || []).filter(pid => !hiddenP.has(pid) && g.hasNode(`p-${pid}`))
-    if (!kids.length) return
-    const yn = Math.round(g.node(`p-${kids[0]}`).y)
-    if (!familyRows.has(yn)) familyRows.set(yn, [])
-    familyRows.get(yn).push({ cid, ccX: g.node(cid).x, children: kids })
-  })
-  familyRows.forEach(families => {
-    families.sort((a, b) => a.ccX - b.ccX)
-    families.forEach(f => {
-      f.children.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-      f.totalW = f.children.length * PW + (f.children.length - 1) * NODE_SEP
-      f.startX = f.ccX - f.totalW / 2
-    })
-    // Oilalar ustma-ust kelsa o'ngga siljit
-    for (let i = 1; i < families.length; i++) {
-      const minStart = families[i - 1].startX + families[i - 1].totalW + NODE_SEP
-      if (families[i].startX < minStart) families[i].startX = minStart
-    }
-    families.forEach(f => {
-      f.children.forEach((pid, i) => { g.node(`p-${pid}`).x = f.startX + i * (PW + NODE_SEP) })
-    })
+  const sortedYs = [...rowMap.keys()].sort((a, b) => a - b)
+  const ccXLive = new Map()
+  Object.keys(coupleInfo).forEach(cid => {
+    if (g.hasNode(cid)) ccXLive.set(cid, g.node(cid).x)
   })
 
-  // Qadam 3.5: Ajralib qolgan juftlarni yaqinlashtirish.
-  // Tashqaridan kelgan juftni partner yoniga ko'chiramiz.
-  // Ikkalasi ham family-placed bo'lsa: CHAPDA qolaveradi, O'NGDAGI yoniga keladi.
-  const adjustedCouples = new Set()
-  Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
-    if (!fatherId || !motherId) return
-    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
-    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
-    const gap = Math.abs(fNode.x - mNode.x)
-    if (gap <= PW + NODE_SEP * 2) {
-      if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
-      return
-    }
-    const fIsFamily = !!(childCouple[fatherId] && !orphanedCC.has(childCouple[fatherId]))
-    const mIsFamily = !!(childCouple[motherId] && !orphanedCC.has(childCouple[motherId]))
-    if (fIsFamily && !mIsFamily) {
-      mNode.x = fNode.x + PW + NODE_SEP
-    } else if (mIsFamily && !fIsFamily) {
-      fNode.x = mNode.x - PW - NODE_SEP
-    } else {
-      // Ikkalasi ham family-placed: chapda turganini o'z joyida qoldir, o'ngdagini yoniga olib kel
-      if (fNode.x < mNode.x) { mNode.x = fNode.x + PW + NODE_SEP }
-      else { fNode.x = mNode.x + PW + NODE_SEP }
-    }
-    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
-    adjustedCouples.add(cid)
-  })
+  sortedYs.forEach(yn => {
+    const pids = rowMap.get(yn)
+    const pidsSet = new Set(pids)
 
-  // Qadam 3.6: Faqat Qadam 3.5 siljitgan juftlarning farzandlarini qayta markazlashtir
-  if (adjustedCouples.size > 0) {
-    const familyRows2 = new Map()
-    adjustedCouples.forEach(cid => {
-      const { fatherId, motherId } = coupleInfo[cid]
-      if (!g.hasNode(cid)) return
-      const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
-      const mNode = motherId && g.hasNode(`p-${motherId}`) ? g.node(`p-${motherId}`) : null
-      if (!fNode && !mNode) return
-      g.node(cid).x = fNode && mNode ? (fNode.x + mNode.x) / 2 : (fNode || mNode).x
-      const kids = (coupleChildren[cid] || []).filter(pid => !hiddenP.has(pid) && g.hasNode(`p-${pid}`))
-      if (!kids.length) return
-      const yn = Math.round(g.node(`p-${kids[0]}`).y)
-      if (!familyRows2.has(yn)) familyRows2.set(yn, [])
-      familyRows2.get(yn).push({ cid, ccX: g.node(cid).x, children: kids })
-    })
-    familyRows2.forEach(families => {
-      families.sort((a, b) => a.ccX - b.ccX)
-      families.forEach(f => {
-        f.children.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-        f.totalW = f.children.length * PW + (f.children.length - 1) * NODE_SEP
-        f.startX = f.ccX - f.totalW / 2
-      })
-      for (let i = 1; i < families.length; i++) {
-        const minStart = families[i - 1].startX + families[i - 1].totalW + NODE_SEP
-        if (families[i].startX < minStart) families[i].startX = minStart
+    // Oila guruhlarini to'plash
+    const famMap = new Map()
+    const noParent = []
+    pids.forEach(pid => {
+      const ccid = childCouple[pid]
+      if (ccid && !orphanedCC.has(ccid) && g.hasNode(ccid)) {
+        if (!famMap.has(ccid)) famMap.set(ccid, [])
+        famMap.get(ccid).push(pid)
+      } else {
+        noParent.push(pid)
       }
-      families.forEach(f => {
-        f.children.forEach((pid, i) => { g.node(`p-${pid}`).x = f.startX + i * (PW + NODE_SEP) })
+    })
+
+    // Oilalarni CC.x tartibida saralash
+    const sortedFams = [...famMap.entries()].sort(([a], [b]) => (ccXLive.get(a) ?? 0) - (ccXLive.get(b) ?? 0))
+
+    // Farzandlarni tartib raqami → tug'ilgan sana bo'yicha saralash
+    sortedFams.forEach(([, kids]) => {
+      kids.sort((a, b) => {
+        const pa = personMap.get(a), pb = personMap.get(b)
+        const ta = pa?.tartib ?? null, tb = pb?.tartib ?? null
+        if (ta != null && tb != null) return ta - tb
+        if (ta != null) return -1
+        if (tb != null) return 1
+        const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
+        const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
+        return da - db
       })
     })
-  }
+    noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
+
+    // Tartibli ro'yxat: har bir kishidan keyin juftini yonma-yon qo'yamiz
+    const placed = new Set()
+    const ordered = []
+    const place = (pid) => {
+      if (placed.has(pid)) return
+      ordered.push(pid); placed.add(pid)
+      ;(personCouples[pid] || []).forEach(spCCid => {
+        const { fatherId, motherId } = coupleInfo[spCCid]
+        const sid = fatherId === pid ? motherId : fatherId
+        if (sid && !placed.has(sid) && pidsSet.has(sid)) { ordered.push(sid); placed.add(sid) }
+      })
+    }
+    noParent.forEach(place)
+    sortedFams.forEach(([, kids]) => kids.forEach(place))
+    pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
+
+    if (!ordered.length) return
+
+    // startX: birinchi oilaning CC.x ga nisbatan anchor
+    let startX = 0
+    if (sortedFams.length > 0) {
+      const [firstCCid, firstKids] = sortedFams[0]
+      const firstCCx = ccXLive.get(firstCCid) ?? 0
+      const firstKidIdx = ordered.indexOf(firstKids[0])
+      if (firstKidIdx >= 0) {
+        const nKids = firstKids.length
+        const groupLeft = firstCCx - (nKids * PW + (nKids - 1) * NODE_SEP) / 2
+        startX = groupLeft - firstKidIdx * (PW + NODE_SEP)
+      }
+    } else {
+      startX = g.node(`p-${ordered[0]}`).x
+    }
+
+    // X pozitsiyalarini belgilash
+    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = startX + i * (PW + NODE_SEP) })
+
+    // Er chap / xotin o'ng
+    Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
+      if (!fatherId || !motherId) return
+      if (!pidsSet.has(fatherId) || !pidsSet.has(motherId)) return
+      if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+      const fn = g.node(`p-${fatherId}`), mn = g.node(`p-${motherId}`)
+      if (fn.x > mn.x) { const t = fn.x; fn.x = mn.x; mn.x = t }
+    })
+
+    // Ota-ona CC.x ni farzandlar markaziga snap qilish
+    sortedFams.forEach(([ccid, kids]) => {
+      if (!g.hasNode(ccid)) return
+      const xs = kids.filter(p => g.hasNode(`p-${p}`)).map(p => g.node(`p-${p}`).x)
+      if (!xs.length) return
+      const cx = (Math.min(...xs) + Math.max(...xs) + PW) / 2
+      g.node(ccid).x = cx; ccXLive.set(ccid, cx)
+    })
+
+    // Juft CC.x ni er-xotin o'rtasiga snap qilish (keyingi avlod uchun)
+    Object.entries(coupleInfo).forEach(([ccid, { fatherId, motherId }]) => {
+      if (!g.hasNode(ccid) || orphanedCC.has(ccid)) return
+      if (!pidsSet.has(fatherId) || !pidsSet.has(motherId)) return
+      if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+      const cx = (g.node(`p-${fatherId}`).x + g.node(`p-${motherId}`).x) / 2
+      g.node(ccid).x = cx; ccXLive.set(ccid, cx)
+    })
+  })
 
   // Qadam 4: Qolgan ustma-ust chiqishlarni bartaraf etish
   const overlapRows = new Map()
