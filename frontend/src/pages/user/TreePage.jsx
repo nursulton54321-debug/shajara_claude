@@ -30,7 +30,7 @@ const PW          = 210
 const PH          = 88
 const CW          = 28
 const RANK_SEP    = 18
-const NODE_SEP    = 22
+const NODE_SEP    = 16
 const CC_GAP      = 6
 
 const fmtDate = (d) => globalFmtDate(d) === '—' ? '' : globalFmtDate(d)
@@ -571,22 +571,31 @@ function CoupleEdge({ sourceX, sourceY, targetX, targetY, data }) {
   const ccTopY    = data?.ccTopY
   const childless = data?.childless
   const stemEndY  = childless ? sourceY : (ccTopY ?? sourceY + 10)
+  const dist      = Math.abs(targetX - sourceX)
+  // Egri chiziq — er-xotin aloqasi uchun yoy shakli
+  const cy        = sourceY - Math.min(18, dist * 0.08)
+  const curve     = `M ${sourceX} ${sourceY} Q ${midX} ${cy} ${targetX} ${targetY}`
   return (
     <>
-      <path d={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`}
-        stroke="#f43f5e" strokeWidth={8} fill="none" opacity={0.04} className="tree-edge-glow" />
-      <path d={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`}
-        stroke="#fca5a5" strokeWidth={2} fill="none"
-        strokeDasharray="7 4" strokeLinecap="round" className="tree-edge-spouse" />
+      {/* Glow */}
+      <path d={curve} stroke="#f43f5e" strokeWidth={10} fill="none" opacity={0.06} />
+      {/* Asosiy chiziq — qizg'ish yoy */}
+      <path d={curve} stroke="#fda4af" strokeWidth={2} fill="none"
+        strokeDasharray="6 3" strokeLinecap="round" />
+      {/* Farzandga tushuvchi vertikal chiziq */}
       {!childless && (
         <path d={`M ${midX} ${sourceY} L ${midX} ${stemEndY}`}
-          stroke="#f97316" strokeWidth={2.2} fill="none" opacity={0.75} />
+          stroke="#fb923c" strokeWidth={2.4} fill="none" opacity={0.85}
+          strokeLinecap="round" />
       )}
-      <rect x={midX - 13} y={sourceY - 11} width={26} height={22} rx={7}
-        fill="white" stroke="#fca5a5" strokeWidth={1.5}
-        style={{ filter:'drop-shadow(0 1px 4px rgba(244,63,94,0.14))' }} />
+      {/* Nikoh belgisi — doira + ⚭ */}
+      <circle cx={midX} cy={sourceY} r={13}
+        fill="#fff1f2" stroke="#f43f5e" strokeWidth={1.8}
+        style={{ filter:'drop-shadow(0 2px 6px rgba(244,63,94,0.22))' }} />
+      <circle cx={midX} cy={sourceY} r={11} fill="none"
+        stroke="#fda4af" strokeWidth={0.8} />
       <text x={midX} y={sourceY + 5} textAnchor="middle"
-        fontSize={14} fill="#f43f5e" fontWeight={700}
+        fontSize={13} fill="#f43f5e" fontWeight={800}
         style={{ userSelect:'none', pointerEvents:'none' }}>⚭</text>
     </>
   )
@@ -606,32 +615,29 @@ function StemEdge({ sourceX, sourceY, targetX, targetY, data }) {
 }
 
 // ── ChildEdge ──────────────────────────────────────────────────
-// Ota-ona CC → farzand. Cubic bezier egri chiziq.
-// Arrow yo'nalishi bezier'ning oxiridagi haqiqiy tangent bo'yicha
-// hisoblanadi (t=0.85 nuqtasidan endpoint'gacha yo'nalish).
 function ChildEdge({ sourceX, sourceY, targetX, targetY, data }) {
   const clr  = data?.color || '#6366f1'
   const midY = (sourceY + targetY) / 2
   const curve = `M ${sourceX} ${sourceY} C ${sourceX} ${midY}, ${targetX} ${midY}, ${targetX} ${targetY}`
 
-  // Egri chiziqning oxirgi yo'nalishini t=0.85 nuqtasidan hisoblash
   const t = 0.85, mt = 1 - t
   const px = mt**3*sourceX + 3*mt**2*t*sourceX + 3*mt*t**2*targetX + t**3*targetX
   const py = mt**3*sourceY + 3*mt**2*t*midY    + 3*mt*t**2*midY    + t**3*targetY
   const adx = targetX - px, ady = targetY - py
   const alen = Math.sqrt(adx*adx + ady*ady) || 1
-  const ux = adx / alen, uy = ady / alen  // arrow direction unit vector
-  const nx = -uy,         ny = ux          // perpendicular
+  const ux = adx / alen, uy = ady / alen
+  const nx = -uy, ny = ux
 
-  const AL = 10, AW = 5
+  const AL = 9, AW = 4.5
   const bx = targetX - AL*ux, by = targetY - AL*uy
   const pts = `${targetX},${targetY} ${bx + AW*nx},${by + AW*ny} ${bx - AW*nx},${by - AW*ny}`
 
   return (
     <>
-      <path d={curve} stroke={clr} strokeWidth={7} fill="none" opacity={0.06} />
-      <path d={curve} stroke={clr} strokeWidth={2.2} fill="none" strokeLinecap="round" />
-      <polygon points={pts} fill={clr} />
+      <path d={curve} stroke={clr} strokeWidth={8} fill="none" opacity={0.05} />
+      <path d={curve} stroke={clr} strokeWidth={1.8} fill="none"
+        strokeLinecap="round" opacity={0.9} />
+      <polygon points={pts} fill={clr} opacity={0.9} />
     </>
   )
 }
@@ -986,40 +992,8 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     mNode.y = targetY
   })
 
-  // Post-layout rank reorder
-  const yGroups = new Map()
-  persons.forEach(p => {
-    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
-    const yn = Math.round(g.node(`p-${p.id}`).y)
-    if (!yGroups.has(yn)) yGroups.set(yn, [])
-    yGroups.get(yn).push(p.id)
-  })
-
-  yGroups.forEach(pids => {
-    if (pids.length < 2) return
-    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
-    const placed = new Set()
-    const ordered = []
-    pids.forEach(pid => {
-      if (placed.has(pid)) return
-      ordered.push(pid)
-      placed.add(pid)
-      for (const ccid of (personCouples[pid] || [])) {
-        const { fatherId, motherId } = coupleInfo[ccid]
-        const sid = fatherId === pid ? motherId : fatherId
-        if (!sid || placed.has(sid) || !pids.includes(sid)) continue
-        if (pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
-      }
-    })
-    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
-    const origCenter = pids.reduce((s, id) => s + g.node(`p-${id}`).x, 0) / pids.length
-    const startX = origCenter - (ordered.length - 1) * (PW + NODE_SEP) / 2
-    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = startX + i * (PW + NODE_SEP) })
-  })
-
-  // Final spacing enforcement: guarantee no person cards overlap at the same Y level.
-  // This is the last resort after dagre + Y alignment + yGroups reorder — if any two
-  // nodes are still closer than PW+NODE_SEP we push them apart.
+  // Final spacing enforcement: dagre + Y alignment dan keyin hali ham yaqin
+  // turgan cardlarni o'ngga siljitadi. Ota-ona ostidagi joylashuvni saqlab qoladi.
   const finalYGroups = new Map()
   persons.forEach(p => {
     if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
