@@ -1072,6 +1072,40 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     })
   })
 
+  // Qadam 3.5: Qadam 3 ba'zi juftlarni ajratib qo'yadi —
+  // (family-placed shaxs yangi X ga ko'chadi, turmush o'rtog'i eski joyda qoladi)
+  // Ularni qayta yonma-yon qilamiz, keyin er chap / xotin o'ng tartibini ta'minlaymiz.
+  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
+    if (!fatherId || !motherId) return
+    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+    const fNode = g.node(`p-${fatherId}`)
+    const mNode = g.node(`p-${motherId}`)
+    const gap = Math.abs(fNode.x - mNode.x)
+    if (gap <= PW + NODE_SEP * 2) {
+      // Yaqin — faqat tartibni to'g'irlaymiz (er chap, xotin o'ng)
+      if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
+      return
+    }
+    // Uzoq — kim "o'z ota-onasidan" kelgan (family-placed)?
+    const fFixed = !!(childCouple[fatherId] && !orphanedCC.has(childCouple[fatherId]))
+    const mFixed = !!(childCouple[motherId] && !orphanedCC.has(childCouple[motherId]))
+    if (fFixed && !mFixed) {
+      // Ota joylashtirilgan, onani yoniga olib kelamiz
+      mNode.x = fNode.x + PW + NODE_SEP
+    } else if (mFixed && !fFixed) {
+      // Ona joylashtirilgan, otani yoniga olib kelamiz
+      fNode.x = mNode.x - PW - NODE_SEP
+    } else {
+      // Ikkalasi ham tashqaridan yoki ikkalasi ham o'z daraxtidan —
+      // eng chap nuqtaga anchor qilib yonma-yon joylashtiramiz
+      const leftX = Math.min(fNode.x, mNode.x)
+      fNode.x = leftX
+      mNode.x = leftX + PW + NODE_SEP
+    }
+    // Yakuniy tartib: er chap, xotin o'ng
+    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
+  })
+
   // Qadam 4: Qolgan ustma-ust chiqishlarni bartaraf etish
   const overlapRows = new Map()
   persons.forEach(p => {
