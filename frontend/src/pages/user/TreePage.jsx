@@ -996,7 +996,40 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
   // Dagre tartibni (crossing minimization) beradi.
   // Biz X pozitsiyalarini to'g'ri hisoblaymiz.
 
-  // Qadam 1: CC x ni ota-ona o'rtasiga snap qilish (farzand joylashuvidan oldin)
+  // Qadam 1: Har qatorda er-xotinlarni yonma-yon joylashtirish (farzand joylashuvidan OLDIN)
+  const preRows = new Map()
+  persons.forEach(p => {
+    if (hiddenP.has(p.id) || !g.hasNode(`p-${p.id}`)) return
+    const yn = Math.round(g.node(`p-${p.id}`).y)
+    if (!preRows.has(yn)) preRows.set(yn, [])
+    preRows.get(yn).push(p.id)
+  })
+  preRows.forEach(pids => {
+    if (pids.length < 2) return
+    pids.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
+    const placed = new Set(), ordered = []
+    pids.forEach(pid => {
+      if (placed.has(pid)) return
+      ordered.push(pid); placed.add(pid)
+      ;(personCouples[pid] || []).forEach(ccid => {
+        const { fatherId, motherId } = coupleInfo[ccid]
+        const sid = fatherId === pid ? motherId : fatherId
+        if (sid && !placed.has(sid) && pids.includes(sid)) { ordered.push(sid); placed.add(sid) }
+      })
+    })
+    pids.forEach(p => { if (!placed.has(p)) ordered.push(p) })
+    const anchor = g.node(`p-${ordered[0]}`).x
+    ordered.forEach((pid, i) => { g.node(`p-${pid}`).x = anchor + i * (PW + NODE_SEP) })
+  })
+  // Er har doim CHAP, xotin har doim O'NG
+  Object.entries(coupleInfo).forEach(([, { fatherId, motherId }]) => {
+    if (!fatherId || !motherId) return
+    if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
+    const fNode = g.node(`p-${fatherId}`), mNode = g.node(`p-${motherId}`)
+    if (fNode.x > mNode.x) { const t = fNode.x; fNode.x = mNode.x; mNode.x = t }
+  })
+
+  // Qadam 2: CC x ni er-xotin o'rtasiga snap qilish (farzand joylashuvidan oldin)
   Object.entries(coupleInfo).forEach(([cid, { fatherId, motherId }]) => {
     if (!g.hasNode(cid) || orphanedCC.has(cid)) return
     const fNode = fatherId && g.hasNode(`p-${fatherId}`) ? g.node(`p-${fatherId}`) : null
