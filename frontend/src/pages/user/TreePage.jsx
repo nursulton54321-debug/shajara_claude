@@ -1073,30 +1073,41 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     // 2. Qolgan joylashtirilmaganlar (married-in, noParent) oxirida
     const placed = new Set()
     const ordered = []
-    const placeWithSpouse = (pid) => {
+    const placeWithSpouse = (pid, allowBioSpouse = false) => {
       if (placed.has(pid)) return
       ordered.push(pid); placed.add(pid)
       ;(personCouples[pid] || []).forEach(spCCid => {
         const { fatherId, motherId } = coupleInfo[spCCid]
         const sid = fatherId === pid ? motherId : fatherId
-        if (sid && !placed.has(sid) && pidsSet.has(sid)) { ordered.push(sid); placed.add(sid) }
+        if (!sid || placed.has(sid) || !pidsSet.has(sid)) return
+        // Agar juft boshqa oilaning biologik farzandi bo'lsa (o'z CC si bor), uni hozir qo'shmaymiz —
+        // u o'z klasterida joylashtiriladi. Faqat "married-in" (noParent) juftlarni darhol qo'shamiz.
+        const spCC = childCouple[sid]
+        const spouseIsMarriedIn = !spCC || orphanedCC.has(spCC) || !g.hasNode(spCC)
+        if (spouseIsMarriedIn || allowBioSpouse) {
+          ordered.push(sid); placed.add(sid)
+        }
       })
     }
-    // Birinchi: oila farzandlari (cluster tartibida)
-    clusterList.forEach(({ kids }) => kids.forEach(placeWithSpouse))
-    // Ikkinchi: qolgan hammasi (noParent, orphaned va boshqalar)
-    pids.forEach(pid => placeWithSpouse(pid))
+    // Birinchi: oila farzandlari (cluster tartibida), married-in juftlar darhol qo'shiladi
+    clusterList.forEach(({ kids }) => kids.forEach(pid => placeWithSpouse(pid, false)))
+    // Ikkinchi: qolgan hammasi (noParent, orphaned va boshqalar).
+    // Bu yerda allowBioSpouse=true: agar bio-farzand juft hali joylashtirilmagan bo'lsa, yoniga qo'yiladi.
+    pids.forEach(pid => placeWithSpouse(pid, true))
 
     if (!ordered.length) return
 
     // startX: birinchi oilaning CC.x ga nisbatan anchor
     let startX = 0
     if (sortedFams.length > 0) {
-      const [firstCCid, firstKids] = sortedFams[0]
+      const [firstCCid, firstFamKids] = sortedFams[0]
       const firstCCx = ccXLive.get(firstCCid) ?? 0
-      const firstKidIdx = ordered.indexOf(firstKids[0])
+      // firstKids[0] famMap insertion orderida bo'lishi mumkin (child_number tartibida emas).
+      // ordered listi child_number bo'yicha tartiblanadi, shuning uchun set membership ishlatamiz.
+      const firstCCkidSet = new Set(famMap.get(firstCCid) || [])
+      const firstKidIdx = ordered.findIndex(pid => firstCCkidSet.has(pid))
       if (firstKidIdx >= 0) {
-        const nKids = firstKids.length
+        const nKids = firstFamKids.length
         const groupLeft = firstCCx - (nKids * PW + (nKids - 1) * NODE_SEP) / 2
         startX = groupLeft - firstKidIdx * (PW + NODE_SEP)
       }
@@ -1131,6 +1142,19 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       if (!pidsSet.has(fatherId) || !pidsSet.has(motherId)) return
       if (!g.hasNode(`p-${fatherId}`) || !g.hasNode(`p-${motherId}`)) return
       const cx = (g.node(`p-${fatherId}`).x + g.node(`p-${motherId}`).x) / 2
+      g.node(ccid).x = cx; ccXLive.set(ccid, cx)
+    })
+
+    // Yagona ota-ona CC.x ni yangilash (faqat bittasi shu qatorda, ikkinchisi yo'q).
+    // Masalan: faqat otasi bor (onasi yo'q) yoki faqat onasi bor CC lar.
+    // Yuqoridagi "juft CC" loop bu holni qoplamaydi (ikkalasi ham pidsSet da bo'lishi kerak deydi).
+    Object.entries(coupleInfo).forEach(([ccid, { fatherId, motherId }]) => {
+      if (!g.hasNode(ccid) || orphanedCC.has(ccid)) return
+      const fInRow = fatherId && pidsSet.has(fatherId) && g.hasNode(`p-${fatherId}`)
+      const mInRow = motherId && pidsSet.has(motherId) && g.hasNode(`p-${motherId}`)
+      if (fInRow && mInRow) return  // yuqorida allaqachon ishlov berildi
+      if (!fInRow && !mInRow) return // ikkalasi ham shu qatorda emas
+      const cx = fInRow ? g.node(`p-${fatherId}`).x : g.node(`p-${motherId}`).x
       g.node(ccid).x = cx; ccXLive.set(ccid, cx)
     })
   })
