@@ -1027,21 +1027,35 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       }
     })
 
-    // Oilalarni CC.x tartibida saralash
+    // Oilalarni CC.x tartibida saralash (CC.x yangilash uchun kerak)
     const sortedFams = [...famMap.entries()].sort(([a], [b]) => (ccXLive.get(a) ?? 0) - (ccXLive.get(b) ?? 0))
 
-    // Farzandlarni tartib raqami → tug'ilgan sana bo'yicha saralash
-    sortedFams.forEach(([, kids]) => {
-      kids.sort((a, b) => {
-        const pa = personMap.get(a), pb = personMap.get(b)
-        const ta = pa?.child_number ?? null, tb = pb?.child_number ?? null
-        if (ta != null && tb != null) return ta - tb
-        if (ta != null) return -1
-        if (tb != null) return 1
-        const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
-        const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
-        return da - db
-      })
+    // Bir xil ota (fatherId) bo'lgan CC larni birlashtirib saralash.
+    // Bu bir otaning farzandlari boshqa-boshqa CC larda bo'lsa ham to'g'ri tartibda kelishini ta'minlaydi.
+    const fatherGroups = new Map() // fatherId → [pid, ...]
+    famMap.forEach((kids, ccid) => {
+      const fid = coupleInfo[ccid]?.fatherId || ccid
+      if (!fatherGroups.has(fid)) fatherGroups.set(fid, [])
+      fatherGroups.get(fid).push(...kids)
+    })
+    // Guruhlarga tegishli bo'lmagan (noParent) — o'z joyida qoladi
+    const childNumSort = (a, b) => {
+      const pa = personMap.get(a), pb = personMap.get(b)
+      const ta = pa?.child_number ?? null, tb = pb?.child_number ?? null
+      if (ta != null && tb != null) return ta - tb
+      if (ta != null) return -1
+      if (tb != null) return 1
+      const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
+      const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
+      return da - db
+    }
+    // Har bir guruh ichida child_number tartibida saralash
+    fatherGroups.forEach(kids => kids.sort(childNumSort))
+    // Guruhlarni min CC.x bo'yicha saralash
+    const sortedFatherGroups = [...fatherGroups.entries()].sort(([fidA, kidsA], [fidB, kidsB]) => {
+      const minXA = Math.min(...[...famMap.entries()].filter(([ccid]) => (coupleInfo[ccid]?.fatherId || ccid) === fidA).map(([ccid]) => ccXLive.get(ccid) ?? 0))
+      const minXB = Math.min(...[...famMap.entries()].filter(([ccid]) => (coupleInfo[ccid]?.fatherId || ccid) === fidB).map(([ccid]) => ccXLive.get(ccid) ?? 0))
+      return minXA - minXB
     })
     noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
 
@@ -1058,7 +1072,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       })
     }
     noParent.forEach(place)
-    sortedFams.forEach(([, kids]) => kids.forEach(place))
+    sortedFatherGroups.forEach(([, kids]) => kids.forEach(place))
     pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
 
     if (!ordered.length) return
