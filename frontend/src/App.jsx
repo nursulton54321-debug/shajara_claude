@@ -63,9 +63,11 @@ function GuestWelcomeModal() {
       padding:'16px',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e1b4b 100%)',
+        background:'rgba(255,255,255,0.08)',
+        backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
+        border:'1px solid rgba(255,255,255,0.15)',
         borderRadius:20, padding:'32px 28px', maxWidth:420, width:'100%',
-        boxShadow:'0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3)',
+        boxShadow:'0 25px 60px rgba(0,0,0,0.3)',
         textAlign:'center', color:'white', position:'relative',
       }}>
         <div style={{ fontSize:48, marginBottom:12 }}>🌳</div>
