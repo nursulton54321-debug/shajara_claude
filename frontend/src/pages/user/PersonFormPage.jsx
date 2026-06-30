@@ -305,8 +305,9 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
   // Inline field validatsiya
   const validateField = (key, value) => {
     const v = (value == null ? '' : String(value)).trim()
-    if (key === 'last_name')  return v.length < 2 ? 'Familiya kamida 2 harf bo\'lishi kerak' : ''
-    if (key === 'first_name') return v.length < 2 ? 'Ism kamida 2 harf bo\'lishi kerak' : ''
+    if (key === 'last_name')    return v.length < 2 ? 'Familiya kamida 2 harf bo\'lishi kerak' : ''
+    if (key === 'first_name')   return v.length < 2 ? 'Ism kamida 2 harf bo\'lishi kerak' : ''
+    if (key === 'child_number') return !v ? 'Nechanchi farzand ekanligini kiriting' : (parseInt(v) < 1 ? 'Kamida 1 bo\'lishi kerak' : '')
     if (key === 'birth_date' && form.death_date && value) {
       return new Date(value) > new Date(form.death_date) ? 'Tug\'ilgan sana vafot sanasidan keyin bo\'lishi mumkin emas' : ''
     }
@@ -335,11 +336,11 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
 
     // Validation
     const newErrors = {}
-    ;['last_name', 'first_name'].forEach(k => {
+    ;['last_name', 'first_name', 'child_number'].forEach(k => {
       const err = validateField(k, form[k])
       if (err) newErrors[k] = err
     })
-    ;['birth_date', 'death_date', 'phone', 'child_number'].forEach(k => {
+    ;['birth_date', 'death_date', 'phone'].forEach(k => {
       const err = validateField(k, form[k])
       if (err) newErrors[k] = err
     })
@@ -1012,7 +1013,7 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
                 </Field>
               )}
 
-              <Field label="🔢 Nechanchi farzand" error={fieldErrors.child_number || (childNumWarning ? 'Bu raqamli farzand allaqachon kiritilgan!' : '')}>
+              <Field label="🔢 Nechanchi farzand *" error={fieldErrors.child_number || (childNumWarning ? 'Bu raqamli farzand allaqachon kiritilgan!' : '')}>
                 <input type="number" min="1" max="99" value={form.child_number}
                   onChange={e => setField('child_number', e.target.value)}
                   className="form-input" placeholder="1"
