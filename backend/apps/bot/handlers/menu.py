@@ -787,11 +787,11 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         today = timezone.now().date()
 
         # ── Barcha ma'lumotlarni VALUES orqali bir queryset bilan ──────
-        # id, gender, birth_date, death_date, deceased, father_id, last_name, first_name, photo
+        # id, gender, birth_date, death_date, deceased, father_id, last_name, first_name, photo, mother_id
         rows = []
         async for row in Person.objects.values_list(
             'id', 'gender', 'birth_date', 'death_date', 'deceased',
-            'father_id', 'last_name', 'first_name', 'photo'
+            'father_id', 'last_name', 'first_name', 'photo', 'mother_id'
         ):
             rows.append(row)
 
@@ -860,21 +860,61 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 bname = f"{best_row[6] or ''} {best_row[7] or ''}".strip()
                 most_ch = (ch_counts[best_id], bname)
 
-        # ── Avlod chuqurligi (iterativ, sikldan himoyalangan) ─────────
-        id_to_fid = {r[0]: r[5] for r in rows}
+        # ── Avlod chuqurligi — frontend computeGenerations kabi Kahn BFS ──
+        from collections import deque
+        from apps.persons.models import Family
+
+        id_set = {r[0] for r in rows}
+        children_of: dict[int, list[int]] = {r[0]: [] for r in rows}
+        in_degree:   dict[int, int]       = {r[0]: 0  for r in rows}
+        has_parent:  set[int]             = set()
+
+        for r in rows:
+            pid, fid, mid = r[0], r[5], r[9]
+            if fid and fid in id_set:
+                children_of[fid].append(pid)
+                in_degree[pid] += 1
+                has_parent.add(pid)
+            if mid and mid in id_set:
+                children_of[mid].append(pid)
+                in_degree[pid] += 1
+                has_parent.add(pid)
+
+        # BFS: ildiz shaxslar (in_degree=0) 1-avlod, farzandlari 2-avlod, va h.k.
+        gen_num: dict[int, int] = {r[0]: 1 for r in rows}
+        queue = deque(pid for pid in in_degree if in_degree[pid] == 0)
+        in_deg_work = dict(in_degree)  # BFS uchun nusxa
+
+        while queue:
+            pid = queue.popleft()
+            for child in children_of[pid]:
+                gen_num[child] = max(gen_num[child], gen_num[pid] + 1)
+                in_deg_work[child] -= 1
+                if in_deg_work[child] == 0:
+                    queue.append(child)
+
+        # Nikohga kirgan shaxslar (bazada ota/ona yo'q) → juftining avlodini oladi
+        spouse_map: dict[int, int] = {}
+        async for fam in Family.objects.filter(is_active=True).values_list('husband_id', 'wife_id'):
+            h_id, w_id = fam
+            if h_id in id_set and w_id in id_set:
+                spouse_map[h_id] = w_id
+                spouse_map[w_id] = h_id
+
+        changed = True
+        while changed:
+            changed = False
+            for pid in list(gen_num):
+                if pid in has_parent:
+                    continue  # ota/onasi bor → o'zgartirmaylik
+                sp = spouse_map.get(pid)
+                if sp and gen_num.get(sp, 1) > gen_num[pid]:
+                    gen_num[pid] = gen_num[sp]
+                    changed = True
+
         gen_map: dict[int, int] = {}
-        for pid in id_to_fid:
-            depth = 1
-            cur = pid
-            visited = set()
-            while True:
-                fid = id_to_fid.get(cur)
-                if not fid or fid not in id_to_fid or fid in visited:
-                    break
-                visited.add(cur)
-                cur = fid
-                depth += 1
-            gen_map[depth] = gen_map.get(depth, 0) + 1
+        for g in gen_num.values():
+            gen_map[g] = gen_map.get(g, 0) + 1
 
         gen_data = [(f"{g}-avlod", cnt) for g, cnt in sorted(gen_map.items())]
         age_group_list = list(age_groups_raw.items())

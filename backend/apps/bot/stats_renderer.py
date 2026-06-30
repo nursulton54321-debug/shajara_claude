@@ -516,9 +516,12 @@ def render_generations(gen_data: list[tuple[str, int]],
 
     d_cx, d_cy = 620*S, 290*S
     d_r = 90*S
-    _donut(draw, d_cx, d_cy, d_r, int(d_r*0.55),
+    d_r_in = int(d_r * 0.55)
+    _donut(draw, d_cx, d_cy, d_r, d_r_in,
            list(zip(a_vals, a_cols)), gap_deg=3)
     _donut_label(draw, d_cx, d_cy, str(sum(a_vals)), "kishi", fn_h, fn_s)
+    _donut_segment_labels(draw, d_cx, d_cy, d_r, d_r_in,
+                          list(zip(a_vals, a_cols)), fn_s, gap_deg=3)
 
     # Legend
     leg_y = d_cy + d_r + 20*S
