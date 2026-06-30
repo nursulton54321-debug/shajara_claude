@@ -839,35 +839,6 @@ export default function PersonFormPage({ isAdmin: isAdminProp }) {
               className="text-xs text-red-400 hover:text-red-600">✕ Rasmni o'chirish</button>
           )}
 
-          {/* 16. OCR button */}
-          <div className="pf-left-ocr" style={{ width: '100%', marginTop: 4 }}>
-            <label style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              width: '100%', padding: '7px 10px', borderRadius: 10, cursor: 'pointer',
-              border: '1.5px dashed #a78bfa',
-              background: ocrLoading ? '#f5f3ff' : 'transparent',
-              color: '#7c3aed', fontSize: 11.5, fontWeight: 700,
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { if (!ocrLoading) { e.currentTarget.style.background='#f5f3ff'; e.currentTarget.style.borderStyle='solid' } }}
-            onMouseLeave={e => { if (!ocrLoading) { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderStyle='dashed' } }}
-            >
-              <input type="file" accept="image/*,.pdf" style={{ display: 'none' }}
-                onChange={e => { if (e.target.files[0]) handleOcr(e.target.files[0]); e.target.value = '' }}
-                disabled={ocrLoading} />
-              {ocrLoading ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⚙️</span>
-                  {ocrProgress > 0 ? `${ocrProgress}%` : 'O\'qilmoqda...'}
-                </>
-              ) : (
-                <>📄 Hujjatdan o'qish</>
-              )}
-            </label>
-            <div style={{ fontSize: 9.5, color: '#94a3b8', textAlign: 'center', marginTop: 3 }}>
-              Metrika, pasport, guvohnoma
-            </div>
-          </div>
 
           {/* Upload progress bar */}
           {uploadPct > 0 && uploadPct < 100 && (
