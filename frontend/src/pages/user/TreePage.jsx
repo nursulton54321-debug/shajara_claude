@@ -2502,20 +2502,23 @@ function TreeFlow({ rawPersons, stats }) {
 
   // Node'lar o'lchanib tayyor bo'lganda (useNodesInitialized → true):
   //   1. fitView — viewport'ni to'g'ri joyga qo'yadi
-  //   2. requestAnimationFrame ichida har bir edge uchun yangi object yaratib
-  //      ChildEdge'ni qayta render qilishga majbur qilinadi.
+  //   2. setTimeout(0) + setTimeout(80) — ChildEdge polygon (strelka) ko'rinishi uchun
+  //      edges qayta render qilinadi.
   //
-  // Sabab: setEdges chaqirilganda ReactFlow node o'lchamlarini hali o'lchamagan
-  // bo'ladi → handle koordinatalari (0,0) → polygon ko'rinmaydi.
-  // setEdges([...e]) bir xil object referencelar berib React bailout qiladi,
-  // shuning uchun e.map(x=>({...x})) bilan yangi objectlar yaratiladi.
+  // Sabab: setEdges chaqirilganda handle koordinatalari hali 0,0 bo'lishi mumkin
+  // (birinchi yuklanishda). requestAnimationFrame yetarli emas — u handle
+  // hisoblashdan oldin ishlaydi. setTimeout(0) keyingi event loop iteratsiyasida
+  // ishlaydi; setTimeout(80) esa zaxira sifatida qo'shilgan.
   useEffect(() => {
     if (!nodesInitialized) return
     fitView({ padding: 0.12, duration: 600 })
-    const id = requestAnimationFrame(() => {
+    const id1 = setTimeout(() => {
       setEdges(e => e.map(x => ({ ...x })))
-    })
-    return () => cancelAnimationFrame(id)
+    }, 0)
+    const id2 = setTimeout(() => {
+      setEdges(e => e.map(x => ({ ...x })))
+    }, 80)
+    return () => { clearTimeout(id1); clearTimeout(id2) }
   }, [nodesInitialized, fitView, setEdges])
 
   // viewMode 'tree' ga o'tganda fitView — faqat shu trigger uchun.
@@ -2604,6 +2607,11 @@ function TreeFlow({ rawPersons, stats }) {
     setNodes(centered)
     setEdges(e)
     setVisibleCount(centered.filter(x => x.type === 'personNode').length)
+    // Layout qayta qurilganda edge strelkalarini majburan qayta render qilamiz.
+    // nodesInitialized effekti ham buni qiladi, lekin bu zaxira sifatida kerak
+    // (birinchi yuklanishda handle koordinatalari kechroq tayyor bo'lishi mumkin).
+    const _edgeRefId = setTimeout(() => setEdges(prev => prev.map(x => ({ ...x }))), 120)
+    return () => clearTimeout(_edgeRefId)
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, handleFocusClick,
       focusId, focusGen, filterAlive, filterGender, filterGen])
 
