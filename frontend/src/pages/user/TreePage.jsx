@@ -1030,30 +1030,43 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     // Oilalarni CC.x tartibida saralash (CC.x yangilash uchun kerak)
     const sortedFams = [...famMap.entries()].sort(([a], [b]) => (ccXLive.get(a) ?? 0) - (ccXLive.get(b) ?? 0))
 
-    // Oila farzandlarini to'g'ri tartibda saralash:
-    // Asosiy kalit: otaning X pozitsiyasi (bir xil ota = bir xil X ≈ aka-uka/opa-singillar)
-    // Ikkilamchi kalit: child_number → tug'ilgan sana
-    const familyChildren = []
-    pids.forEach(pid => {
-      const ccid = childCouple[pid]
-      if (ccid && !orphanedCC.has(ccid)) familyChildren.push(pid)
+    // Bir xil ota yoki ona bo'lgan CC larni klasterga birlashtirish.
+    // Har bir klaster ichida farzandlar child_number → tug'ilgan sana bo'yicha tartiblanadi.
+    const ccidsInRow = [...famMap.keys()]
+    const clusterMap = new Map()
+    const clusterList = []
+    ccidsInRow.forEach(ccid => {
+      if (clusterMap.has(ccid)) return
+      const clCC = new Set([ccid])
+      let changed = true
+      while (changed) {
+        changed = false
+        ccidsInRow.forEach(other => {
+          if (clCC.has(other)) return
+          const { fatherId: fo, motherId: mo } = coupleInfo[other] || {}
+          for (const c of clCC) {
+            const { fatherId: fc, motherId: mc } = coupleInfo[c] || {}
+            if ((fc && fc === fo) || (mc && mc === mo)) { clCC.add(other); changed = true; break }
+          }
+        })
+      }
+      const idx = clusterList.length
+      clCC.forEach(c => clusterMap.set(c, idx))
+      const kids = [...clCC].flatMap(c => famMap.get(c) || [])
+      kids.sort((a, b) => {
+        const pa = personMap.get(a), pb = personMap.get(b)
+        const na = pa?.child_number ?? null, nb = pb?.child_number ?? null
+        if (na != null && nb != null) return na - nb
+        if (na != null) return -1
+        if (nb != null) return 1
+        const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
+        const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
+        return da - db
+      })
+      const minX = Math.min(...[...clCC].map(c => ccXLive.get(c) ?? 0))
+      clusterList.push({ minX, kids })
     })
-    familyChildren.sort((a, b) => {
-      const ccA = childCouple[a], ccB = childCouple[b]
-      const fidA = coupleInfo[ccA]?.fatherId, fidB = coupleInfo[ccB]?.fatherId
-      const fxA = fidA && g.hasNode(`p-${fidA}`) ? g.node(`p-${fidA}`).x : (ccXLive.get(ccA) ?? 0)
-      const fxB = fidB && g.hasNode(`p-${fidB}`) ? g.node(`p-${fidB}`).x : (ccXLive.get(ccB) ?? 0)
-      if (Math.abs(fxA - fxB) > 5) return fxA - fxB  // boshqa ota → chapdan o'ngga
-      // Bir xil ota → child_number bo'yicha
-      const pa = personMap.get(a), pb = personMap.get(b)
-      const na = pa?.child_number ?? null, nb = pb?.child_number ?? null
-      if (na != null && nb != null) return na - nb
-      if (na != null) return -1
-      if (nb != null) return 1
-      const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
-      const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
-      return da - db
-    })
+    clusterList.sort((a, b) => a.minX - b.minX)
     noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
 
     // Tartibli ro'yxat: har bir kishidan keyin juftini yonma-yon qo'yamiz
@@ -1069,7 +1082,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       })
     }
     noParent.forEach(place)
-    familyChildren.forEach(place)
+    clusterList.forEach(({ kids }) => kids.forEach(place))
     pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
 
     if (!ordered.length) return
