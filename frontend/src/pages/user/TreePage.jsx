@@ -2988,50 +2988,40 @@ function TreeFlow({ rawPersons, stats }) {
 
         {/* Right side buttons */}
         <div className="tree-toolbar-right" style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto', flexWrap:'wrap' }}>
-          {/* Reset view */}
-          <button onClick={() => fitView({ padding:0.12, duration:400 })} title="Ko'rinishni tiklash"
-            style={{ width:30, height:30, borderRadius:9, background:'#f1f5f9', color:'#475569',
-              border:'1px solid #e2e8f0', cursor:'pointer', display:'flex', alignItems:'center',
-              justifyContent:'center', fontSize:17, fontWeight:700 }}>↺</button>
-          {/* Reset positions */}
-          <button onClick={resetPositions} title="Tartibni qayta hisoblash"
-            style={{ width:30, height:30, borderRadius:9, background: isDark ? '#1e293b' : '#f8fafc',
-              color: isDark ? '#94a3b8' : '#64748b',
-              border:`1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-              cursor:'pointer', display:'flex', alignItems:'center',
-              justifyContent:'center', fontSize:14 }}>⚙️</button>
 
           {/* Add person — faqat login qilganlarga */}
           {user && (
             <button onClick={() => navigate('/persons/add')}
-              style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px',
-                borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
+              style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px',
+                borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
                 background:'linear-gradient(135deg,#10b981,#059669)', color:'white',
-                boxShadow:'0 3px 10px rgba(16,185,129,0.35)' }}>
+                boxShadow:'0 3px 10px rgba(16,185,129,0.35)', whiteSpace:'nowrap' }}>
               ➕ <span className="hide-mobile">Yangi shaxs</span>
             </button>
           )}
 
-          {/* Export PNG */}
-          <button onClick={handleExport} disabled={exporting}
-            className="png-export-btn"
-            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px',
-              borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
-              background: exporting ? '#e2e8f0' : 'linear-gradient(135deg,#3b82f6,#6366f1)',
-              color: exporting ? '#94a3b8' : 'white',
-              boxShadow: exporting ? 'none' : '0 3px 10px rgba(59,130,246,0.35)' }}>
-            {exporting ? '⏳' : '📷'} <span>{exporting ? 'Export...' : 'PNG'}</span>
-          </button>
-
-          {/* Export PDF */}
-          <button onClick={handleExportPDF} disabled={exporting}
-            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px',
-              borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
-              background: exporting ? '#e2e8f0' : 'linear-gradient(135deg,#ef4444,#dc2626)',
-              color: exporting ? '#94a3b8' : 'white',
-              boxShadow: exporting ? 'none' : '0 3px 10px rgba(239,68,68,0.35)' }}>
-            {exporting ? '⏳' : '📄'} <span className="hide-mobile">{exporting ? 'Export...' : 'PDF'}</span>
-          </button>
+          {/* Export buttons group */}
+          <div style={{ display:'flex', gap:4 }}>
+            <button onClick={handleExport} disabled={exporting}
+              className="png-export-btn"
+              title="PNG sifatida yuklab olish"
+              style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 11px',
+                borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
+                background: exporting ? (isDark?'#1e293b':'#e2e8f0') : 'linear-gradient(135deg,#3b82f6,#6366f1)',
+                color: exporting ? '#94a3b8' : 'white',
+                boxShadow: exporting ? 'none' : '0 3px 10px rgba(59,130,246,0.35)' }}>
+              {exporting ? '⏳' : '📷'} <span className="hide-mobile">{exporting ? '...' : 'PNG'}</span>
+            </button>
+            <button onClick={handleExportPDF} disabled={exporting}
+              title="PDF sifatida yuklab olish"
+              style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 11px',
+                borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
+                background: exporting ? (isDark?'#1e293b':'#e2e8f0') : 'linear-gradient(135deg,#ef4444,#dc2626)',
+                color: exporting ? '#94a3b8' : 'white',
+                boxShadow: exporting ? 'none' : '0 3px 10px rgba(239,68,68,0.35)' }}>
+              {exporting ? '⏳' : '📄'} <span className="hide-mobile">{exporting ? '...' : 'PDF'}</span>
+            </button>
+          </div>
 
           {/* Focus mode */}
           {focusId ? (
