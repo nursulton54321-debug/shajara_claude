@@ -25,6 +25,21 @@ export default function AdminSettings() {
   })
   const [pwd, setPwd] = useState({ old: '', new1: '', new2: '' })
   const [pwdLoading, setPwdLoading] = useState(false)
+  const [pin, setPin] = useState('')
+  const [pinLoading, setPinLoading] = useState(false)
+
+  const savePin = async (e) => {
+    e.preventDefault()
+    const p = pin.trim()
+    if (!/^\d{4}$/.test(p)) { toast.error('❌ PIN aynan 4 ta raqamdan iborat bo\'lishi kerak'); return }
+    setPinLoading(true)
+    try {
+      await api.patch('/auth/site-settings/', { site_pin: p })
+      toast.success('✅ PIN muvaffaqiyatli o\'zgartirildi')
+      setPin('')
+    } catch { toast.error('❌ Xato yuz berdi') }
+    finally { setPinLoading(false) }
+  }
 
   const bg      = isDark ? '#1e293b' : '#ffffff'
   const pageBg  = isDark ? '#0f172a' : '#f1f5f9'
@@ -347,6 +362,34 @@ export default function AdminSettings() {
             </div>
           ))}
         </div>
+
+        {/* PIN o'zgartirish — faqat superadmin */}
+        {user?.is_superuser && (
+          <div style={{ background:isDark?'#0f172a':'#f8fafc',
+            border:`1px solid ${border}`, borderRadius:16, padding:16 }}>
+            <div style={{ fontSize:12, color:text2, fontWeight:700, marginBottom:12,
+              textTransform:'uppercase', letterSpacing:'0.08em' }}>🔒 Sayt kirish PIN kodi</div>
+            <form onSubmit={savePin} style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              <div style={{ fontSize:12, color:text2 }}>
+                Faqat 4 ta raqam kiriting. Bu PIN saytga kirish uchun ishlatiladi.
+              </div>
+              <input
+                type="password" inputMode="numeric" maxLength={4}
+                value={pin} onChange={e => setPin(e.target.value.replace(/\D/g,'').slice(0,4))}
+                placeholder="● ● ● ●"
+                style={{ padding:'12px 14px', borderRadius:12, fontSize:22, letterSpacing:'0.5em',
+                  textAlign:'center', width:'100%', border:`1.5px solid ${inputBr}`,
+                  background:inputBg, color:text1, outline:'none', boxSizing:'border-box' }}
+              />
+              <button type="submit" disabled={pinLoading || pin.length !== 4} style={{
+                padding:'11px', borderRadius:12, border:'none', cursor: pin.length===4 ? 'pointer' : 'not-allowed',
+                background: pin.length===4 ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : (isDark?'#334155':'#e2e8f0'),
+                color: pin.length===4 ? 'white' : text2, fontWeight:800, fontSize:14,
+                transition:'all 0.2s',
+              }}>{pinLoading ? '⏳ Saqlanmoqda...' : '💾 PIN ni saqlash'}</button>
+            </form>
+          </div>
+        )}
 
         {/* Current design summary */}
         <div style={{ background:isDark?'#0f172a':'#f8fafc',
