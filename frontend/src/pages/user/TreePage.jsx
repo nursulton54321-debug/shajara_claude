@@ -1899,7 +1899,7 @@ function PersonDetailModal({ personId, onClose, navigate, onFocus, isFocused }) 
               <button
                 onClick={() => { onFocus(personId); onClose() }}
                 style={{
-                  width:'100%', padding:'10px', borderRadius:13, border:'none', cursor:'pointer',
+                  width:'100%', padding:'10px', borderRadius:13, cursor:'pointer',
                   fontSize:13, fontWeight:800, transition:'all 0.18s',
                   background: isFocused
                     ? 'linear-gradient(135deg,#f59e0b,#d97706)'
@@ -2860,7 +2860,7 @@ function TreeFlow({ rawPersons, stats }) {
               display:'flex', alignItems:'center', justifyContent:'center',
               fontSize:22, boxShadow:'0 5px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.3)',
               animation:'treePulse 3.5s ease infinite',
-              position:'relative', zIndex:1, flexShrink:0,
+              position:'relative', zIndex:1,
             }}>🌳</div>
             <div style={{ position:'relative', zIndex:1 }}>
               <div style={{
