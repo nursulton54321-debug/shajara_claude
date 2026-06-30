@@ -1067,14 +1067,13 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       clusterList.push({ minX, kids })
     })
     clusterList.sort((a, b) => a.minX - b.minX)
-    // DEBUG
-    if (yn > 0) console.log(`[ROW y=${yn}] clusters:`, clusterList.map(cl => cl.kids.map(k => { const p=personMap.get(k); return `${p?.first_name}(cn=${p?.child_number})` })))
-    noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
 
-    // Tartibli ro'yxat: har bir kishidan keyin juftini yonma-yon qo'yamiz
+    // Tartibli ro'yxat:
+    // 1. Avval oila farzandlari child_number tartibida, har biridan keyin juftini qo'shish
+    // 2. Qolgan joylashtirilmaganlar (married-in, noParent) oxirida
     const placed = new Set()
     const ordered = []
-    const place = (pid) => {
+    const placeWithSpouse = (pid) => {
       if (placed.has(pid)) return
       ordered.push(pid); placed.add(pid)
       ;(personCouples[pid] || []).forEach(spCCid => {
@@ -1083,11 +1082,10 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
         if (sid && !placed.has(sid) && pidsSet.has(sid)) { ordered.push(sid); placed.add(sid) }
       })
     }
-    noParent.forEach(place)
-    clusterList.forEach(({ kids }) => kids.forEach(place))
-    pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
-    // DEBUG
-    if (yn > 0) console.log(`[ROW y=${yn}] ordered:`, ordered.map(k => { const p=personMap.get(k); return `${p?.first_name}(cn=${p?.child_number})` }))
+    // Birinchi: oila farzandlari (cluster tartibida)
+    clusterList.forEach(({ kids }) => kids.forEach(placeWithSpouse))
+    // Ikkinchi: qolgan hammasi (noParent, orphaned va boshqalar)
+    pids.forEach(pid => placeWithSpouse(pid))
 
     if (!ordered.length) return
 
