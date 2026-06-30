@@ -1030,32 +1030,29 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     // Oilalarni CC.x tartibida saralash (CC.x yangilash uchun kerak)
     const sortedFams = [...famMap.entries()].sort(([a], [b]) => (ccXLive.get(a) ?? 0) - (ccXLive.get(b) ?? 0))
 
-    // Bir xil ota (fatherId) bo'lgan CC larni birlashtirib saralash.
-    // Bu bir otaning farzandlari boshqa-boshqa CC larda bo'lsa ham to'g'ri tartibda kelishini ta'minlaydi.
-    const fatherGroups = new Map() // fatherId → [pid, ...]
-    famMap.forEach((kids, ccid) => {
-      const fid = coupleInfo[ccid]?.fatherId || ccid
-      if (!fatherGroups.has(fid)) fatherGroups.set(fid, [])
-      fatherGroups.get(fid).push(...kids)
+    // Oila farzandlarini to'g'ri tartibda saralash:
+    // Asosiy kalit: otaning X pozitsiyasi (bir xil ota = bir xil X ≈ aka-uka/opa-singillar)
+    // Ikkilamchi kalit: child_number → tug'ilgan sana
+    const familyChildren = []
+    pids.forEach(pid => {
+      const ccid = childCouple[pid]
+      if (ccid && !orphanedCC.has(ccid)) familyChildren.push(pid)
     })
-    // Guruhlarga tegishli bo'lmagan (noParent) — o'z joyida qoladi
-    const childNumSort = (a, b) => {
+    familyChildren.sort((a, b) => {
+      const ccA = childCouple[a], ccB = childCouple[b]
+      const fidA = coupleInfo[ccA]?.fatherId, fidB = coupleInfo[ccB]?.fatherId
+      const fxA = fidA && g.hasNode(`p-${fidA}`) ? g.node(`p-${fidA}`).x : (ccXLive.get(ccA) ?? 0)
+      const fxB = fidB && g.hasNode(`p-${fidB}`) ? g.node(`p-${fidB}`).x : (ccXLive.get(ccB) ?? 0)
+      if (Math.abs(fxA - fxB) > 5) return fxA - fxB  // boshqa ota → chapdan o'ngga
+      // Bir xil ota → child_number bo'yicha
       const pa = personMap.get(a), pb = personMap.get(b)
-      const ta = pa?.child_number ?? null, tb = pb?.child_number ?? null
-      if (ta != null && tb != null) return ta - tb
-      if (ta != null) return -1
-      if (tb != null) return 1
+      const na = pa?.child_number ?? null, nb = pb?.child_number ?? null
+      if (na != null && nb != null) return na - nb
+      if (na != null) return -1
+      if (nb != null) return 1
       const da = pa?.birth_date ? new Date(pa.birth_date).getTime() : Infinity
       const db = pb?.birth_date ? new Date(pb.birth_date).getTime() : Infinity
       return da - db
-    }
-    // Har bir guruh ichida child_number tartibida saralash
-    fatherGroups.forEach(kids => kids.sort(childNumSort))
-    // Guruhlarni min CC.x bo'yicha saralash
-    const sortedFatherGroups = [...fatherGroups.entries()].sort(([fidA, kidsA], [fidB, kidsB]) => {
-      const minXA = Math.min(...[...famMap.entries()].filter(([ccid]) => (coupleInfo[ccid]?.fatherId || ccid) === fidA).map(([ccid]) => ccXLive.get(ccid) ?? 0))
-      const minXB = Math.min(...[...famMap.entries()].filter(([ccid]) => (coupleInfo[ccid]?.fatherId || ccid) === fidB).map(([ccid]) => ccXLive.get(ccid) ?? 0))
-      return minXA - minXB
     })
     noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
 
@@ -1072,7 +1069,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       })
     }
     noParent.forEach(place)
-    sortedFatherGroups.forEach(([, kids]) => kids.forEach(place))
+    familyChildren.forEach(place)
     pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
 
     if (!ordered.length) return
