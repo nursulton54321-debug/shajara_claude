@@ -7,6 +7,7 @@ Shaxs qo'shish — bosqichma-bosqich ConversationHandler.
 - Admin tasdiqlaganida bazaga saqlanadi
 """
 import logging, time
+from datetime import datetime
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup,
     ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove,
@@ -24,8 +25,47 @@ logger = logging.getLogger(__name__)
     S_LAST_NAME, S_FIRST_NAME, S_MIDDLE_NAME, S_GENDER,
     S_BIRTH_DATE, S_DECEASED, S_DEATH_DATE, S_CHILD_NUMBER,
     S_BIRTH_PLACE, S_PHONE, S_FATHER, S_MOTHER, S_SPOUSE,
-    S_PHOTO, S_CONFIRM,
-) = range(15)
+    S_PHOTO, S_CONFIRM, S_RESUME,
+) = range(16)
+
+STEP_LABELS = {
+    S_LAST_NAME:    (1,  "Familiya"),
+    S_FIRST_NAME:   (2,  "Ism"),
+    S_MIDDLE_NAME:  (3,  "Otasining ismi"),
+    S_GENDER:       (4,  "Jinsi"),
+    S_BIRTH_DATE:   (5,  "Tug'ilgan sana"),
+    S_DECEASED:     (6,  "Vafot holati"),
+    S_DEATH_DATE:   (7,  "Vafot sanasi"),
+    S_CHILD_NUMBER: (8,  "Farzand raqami"),
+    S_BIRTH_PLACE:  (9,  "Tug'ilgan joyi"),
+    S_PHONE:        (10, "Telefon"),
+    S_FATHER:       (11, "Otasi"),
+    S_MOTHER:       (12, "Onasi"),
+    S_SPOUSE:       (13, "Turmush o'rtog'i"),
+    S_PHOTO:        (14, "Rasm"),
+    S_CONFIRM:      (15, "Tasdiqlash"),
+}
+
+
+def _save_draft(context, tg_id: int, user_name: str, next_state: int):
+    """Joriy np datani bot_data['drafts']ga saqlaydi."""
+    context.bot_data.setdefault('drafts', {})
+    data = dict(context.user_data.get('np', {}))
+    step_n, step_label = STEP_LABELS.get(next_state, (1, "Boshlash"))
+    context.bot_data['drafts'][tg_id] = {
+        'data':        data,
+        'next_state':  next_state,
+        'step_n':      step_n,
+        'step_label':  step_label,
+        'user_name':   user_name,
+        'started_at':  context.bot_data['drafts'].get(tg_id, {}).get('started_at')
+                       or datetime.now().isoformat(timespec='seconds'),
+    }
+
+
+def _remove_draft(context, tg_id: int):
+    """Tugallangan yoki bekor qilingan draftni o'chiradi."""
+    context.bot_data.get('drafts', {}).pop(tg_id, None)
 
 CANCEL_TEXT = "❌ Bekor qilish"
 SKIP_TEXT   = "⏭️ O'tkazib yuborish"
@@ -217,6 +257,28 @@ async def add_person_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🔒 Kirish cheklangan.")
         return ConversationHandler.END
 
+    tg_id = update.effective_user.id
+    existing_draft = context.bot_data.get('drafts', {}).get(tg_id)
+    if existing_draft:
+        step_n = existing_draft.get('step_n', 1)
+        step_label = existing_draft.get('step_label', '')
+        d = existing_draft.get('data', {})
+        partial_name = f"{d.get('last_name', '')} {d.get('first_name', '')}".strip() or "Noma'lum"
+        kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("▶️ Davom ettirish", callback_data='draft_resume'),
+            InlineKeyboardButton("🗑 Yangidan boshlash", callback_data='draft_new'),
+        ]])
+        await update.message.reply_text(
+            f"⚠️ <b>To'ldirilmagan yozuv topildi!</b>\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"👤 {partial_name}\n"
+            f"📍 Qolib ketgan qadam: <b>{step_n}/{TOTAL} — {step_label}</b>\n\n"
+            f"Davom ettirasizmi yoki yangi boshlamoqchimisiz?",
+            parse_mode='HTML',
+            reply_markup=kb,
+        )
+        return S_RESUME
+
     context.user_data['np'] = {}
     context.user_data['np_photo_file_id'] = None
     context.user_data['preview_msg_id']   = None
@@ -250,6 +312,9 @@ async def got_last_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ 2–60 ta harf bo'lishi kerak. Qayta kiriting:")
         return S_LAST_NAME
     _d(context)['last_name'] = text
+    tg_id = update.effective_user.id
+    tg_user = await _get_tg_user(tg_id)
+    _save_draft(context, tg_id, tg_user.full_name if tg_user else '', S_FIRST_NAME)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 1)
@@ -269,6 +334,9 @@ async def got_first_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ 2–60 ta harf bo'lishi kerak. Qayta kiriting:")
         return S_FIRST_NAME
     _d(context)['first_name'] = text
+    _save_draft(context, update.effective_user.id,
+                context.bot_data.get('drafts', {}).get(update.effective_user.id, {}).get('user_name', ''),
+                S_MIDDLE_NAME)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 2)
@@ -286,6 +354,9 @@ async def got_middle_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == CANCEL_TEXT: return await _do_cancel(update, context)
     if text != SKIP_TEXT:
         _d(context)['middle_name'] = text[:60]
+    _save_draft(context, update.effective_user.id,
+                context.bot_data.get('drafts', {}).get(update.effective_user.id, {}).get('user_name', ''),
+                S_GENDER)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 3)
@@ -306,6 +377,9 @@ async def got_gender(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("⚠️ Tugmalardan birini bosing:", reply_markup=_kb_gender())
         return S_GENDER
+    _save_draft(context, update.effective_user.id,
+                context.bot_data.get('drafts', {}).get(update.effective_user.id, {}).get('user_name', ''),
+                S_BIRTH_DATE)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 4)
@@ -332,6 +406,9 @@ async def got_birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return S_BIRTH_DATE
         _d(context)['birth_date']     = d.strftime('%d.%m.%Y')
         _d(context)['birth_date_iso'] = d.isoformat()
+    _save_draft(context, update.effective_user.id,
+                context.bot_data.get('drafts', {}).get(update.effective_user.id, {}).get('user_name', ''),
+                S_DECEASED)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 5)
@@ -420,6 +497,9 @@ async def got_child_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return S_CHILD_NUMBER
     _d(context)['child_number'] = int(text)
+    _save_draft(context, update.effective_user.id,
+                context.bot_data.get('drafts', {}).get(update.effective_user.id, {}).get('user_name', ''),
+                S_BIRTH_PLACE)
     chat_id = update.effective_chat.id
     await _delete_user_msg(update)
     await _delete_step_msg(context, chat_id, 8)
@@ -716,6 +796,7 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='HTML',
     )
 
+    _remove_draft(context, tg_user.telegram_id)
     context.user_data.pop('np', None)
     context.user_data.pop('np_photo_file_id', None)
     context.user_data.pop('preview_msg_id', None)
@@ -845,19 +926,145 @@ async def _safe_edit(query, text: str):
 
 
 # ══════════════════════════════════════════════════════════════════
+#  DRAFT DAVOM ETTIRISH YOKI YANGIDAN BOSHLASH
+# ══════════════════════════════════════════════════════════════════
+
+async def _start_fresh(update_or_query, context, chat_id, send_fn, tg_id):
+    """Draft o'chirib yangi shaxs qo'shishni boshlaydi."""
+    _remove_draft(context, tg_id)
+    context.user_data['np'] = {}
+    context.user_data['np_photo_file_id'] = None
+    context.user_data['preview_msg_id']   = None
+    for i in range(1, TOTAL + 2):
+        context.user_data.pop(f'qmsg_{i}', None)
+    intro = await send_fn(
+        "🌱 <b>Yangi A'zo Qo'shish</b>\n"
+        "━━━━━━━━━━━━━━━\n\n"
+        "Har bir qadamda ma'lumot kiriting.\n"
+        "⏭️ — ixtiyoriy maydonni o'tkazib yuborish\n"
+        "❌ — istalgan vaqt bekor qilish\n",
+        parse_mode='HTML',
+        reply_markup=_kb_cancel(),
+    )
+    context.user_data['intro_msg_id'] = intro.message_id
+    await _send_step(send_fn, context, 1, "🏷️", "Familiya",
+        "Shaxsning <b>familiyasini</b> kiriting:\n<i>Masalan: Matayev</i>", _kb_cancel())
+    return S_LAST_NAME
+
+
+async def resume_choice_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query   = update.callback_query
+    await query.answer()
+    tg_id   = query.from_user.id
+    tg_user = await _get_tg_user(tg_id)
+    chat_id = query.message.chat_id
+
+    try: await query.message.delete()
+    except Exception: pass
+
+    send_fn = lambda *a, **kw: context.bot.send_message(chat_id=chat_id, *a, **kw)
+
+    if query.data == 'draft_new':
+        return await _start_fresh(query, context, chat_id, send_fn, tg_id)
+
+    # Davom ettirish
+    draft = context.bot_data.get('drafts', {}).get(tg_id)
+    if not draft:
+        return await _start_fresh(query, context, chat_id, send_fn, tg_id)
+
+    context.user_data['np'] = dict(draft.get('data', {}))
+    context.user_data['np_photo_file_id'] = None
+    context.user_data['preview_msg_id']   = None
+    for i in range(1, TOTAL + 2):
+        context.user_data.pop(f'qmsg_{i}', None)
+
+    next_state = draft.get('next_state', S_LAST_NAME)
+    step_n, step_label = STEP_LABELS.get(next_state, (1, ""))
+
+    intro = await context.bot.send_message(
+        chat_id=chat_id,
+        text=(
+            f"▶️ <b>Davom ettirilmoqda</b>\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"📍 {step_n}/{TOTAL} qadam: <b>{step_label}</b>\n"
+            f"❌ — istalgan vaqt bekor qilish\n"
+        ),
+        parse_mode='HTML',
+        reply_markup=_kb_cancel(),
+    )
+    context.user_data['intro_msg_id'] = intro.message_id
+
+    # Mos qadamni yuborish
+    state = await _send_step_prompt(next_state, chat_id, context)
+    return state
+
+
+async def _send_step_prompt(state: int, chat_id: int, context) -> int:
+    """next_state uchun savol xabarini yuboradi va o'sha stateni qaytaradi."""
+    send = lambda *a, **kw: context.bot.send_message(chat_id=chat_id, *a, **kw)
+
+    if state == S_LAST_NAME:
+        await _send_step(send, context, 1, "🏷️", "Familiya",
+            "Shaxsning <b>familiyasini</b> kiriting:", _kb_cancel())
+        return S_LAST_NAME
+    if state == S_FIRST_NAME:
+        await _send_step(send, context, 2, "✨", "Ism",
+            "Shaxsning <b>ismini</b> kiriting:", _kb_cancel())
+        return S_FIRST_NAME
+    if state == S_MIDDLE_NAME:
+        await _send_step(send, context, 3, "📝", "Otasining ismi",
+            "Shaxsning <b>otasining ismini</b> kiriting: <i>(ixtiyoriy)</i>", _kb_skip())
+        return S_MIDDLE_NAME
+    if state == S_GENDER:
+        await _send_step(send, context, 4, "⚧", "Jins",
+            "Shaxsning <b>jinsini</b> tanlang:", _kb_gender())
+        return S_GENDER
+    if state == S_BIRTH_DATE:
+        await _send_step(send, context, 5, "🎂", "Tug'ilgan sana",
+            "<b>Tug'ilgan sanasini</b> kiriting:\n<i>Format: KK.OO.YYYY</i>\n\n<i>(Ixtiyoriy)</i>", _kb_skip())
+        return S_BIRTH_DATE
+    if state == S_DECEASED:
+        await _send_step(send, context, 6, "🌿", "Vafot etgan?",
+            "Shaxs <b>vafot etganmi?</b>", _kb_deceased())
+        return S_DECEASED
+    if state == S_DEATH_DATE:
+        await _send_step(send, context, 7, "🕯️", "Vafot etgan sana",
+            "Vafot etgan sanasini kiriting:\n<i>Format: KK.OO.YYYY</i>", _kb_skip())
+        return S_DEATH_DATE
+    if state == S_CHILD_NUMBER:
+        await _send_step(send, context, 8, "🔢", "Farzand raqami",
+            "<b>Oilada nechanchi farzand</b> ekanligini kiriting:\n⚠️ <b>Majburiy maydon</b>", _kb_cancel())
+        return S_CHILD_NUMBER
+    if state == S_BIRTH_PLACE:
+        await _send_step(send, context, 9, "📍", "Tug'ilgan joyi",
+            "<b>Tug'ilgan joyini</b> kiriting: <i>(ixtiyoriy)</i>", _kb_skip())
+        return S_BIRTH_PLACE
+    if state == S_PHONE:
+        await _send_step(send, context, 10, "📞", "Telefon",
+            "<b>Telefon raqamini</b> kiriting: <i>(ixtiyoriy)</i>", _kb_skip())
+        return S_PHONE
+    # Steps 11+ (parent/spouse/photo) — return to step 9 as safe fallback
+    await _send_step(send, context, 9, "📍", "Tug'ilgan joyi",
+        "<b>Tug'ilgan joyini</b> kiriting: <i>(ixtiyoriy)</i>", _kb_skip())
+    return S_BIRTH_PLACE
+
+
+# ══════════════════════════════════════════════════════════════════
 #  BEKOR QILISH
 # ══════════════════════════════════════════════════════════════════
 
 async def _do_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
+    tg_id   = update.effective_user.id
     await _delete_all_steps(context, chat_id)
     intro_id = context.user_data.pop('intro_msg_id', None)
     if intro_id:
         try: await context.bot.delete_message(chat_id=chat_id, message_id=intro_id)
         except Exception: pass
+    _remove_draft(context, tg_id)
     context.user_data.pop('np', None)
     context.user_data.pop('np_photo_file_id', None)
-    tg_user = await _get_tg_user(update.effective_user.id)
+    tg_user = await _get_tg_user(tg_id)
     kb = admin_menu_keyboard() if (tg_user and _is_admin(tg_user)) else main_menu_keyboard()
     await update.message.reply_text(
         "❌ <b>Bekor qilindi.</b>", parse_mode='HTML', reply_markup=kb,
@@ -879,6 +1086,7 @@ def get_add_person_conversation():
             MessageHandler(filters.Regex(r"^➕ Shaxs qo'shish$"), add_person_start),
         ],
         states={
+            S_RESUME:       [CallbackQueryHandler(resume_choice_callback, pattern=r'^draft_(resume|new)$')],
             S_LAST_NAME:    [MessageHandler(txt, got_last_name)],
             S_FIRST_NAME:   [MessageHandler(txt, got_first_name)],
             S_MIDDLE_NAME:  [MessageHandler(txt, got_middle_name)],

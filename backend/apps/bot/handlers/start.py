@@ -51,6 +51,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='Markdown',
             reply_markup=kb,
         )
+        # Yarim qolgan yozuv borligini eslatish
+        draft = context.bot_data.get('drafts', {}).get(tg_id)
+        if draft:
+            d          = draft.get('data', {})
+            step_n     = draft.get('step_n', 1)
+            step_label = draft.get('step_label', '')
+            partial    = f"{d.get('last_name', '')} {d.get('first_name', '')}".strip() or "Noma'lum"
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            kb2 = InlineKeyboardMarkup([[
+                InlineKeyboardButton("▶️ Davom ettirish", callback_data='draft_resume_start'),
+            ]])
+            await update.message.reply_text(
+                f"⏸ <b>Sizda to'ldirilmagan yozuv bor!</b>\n"
+                f"👤 {partial}  •  <b>{step_n}/14 — {step_label}</b>\n\n"
+                f"Davom ettirish uchun «➕ Shaxs qo'shish» tugmasini bosing.",
+                parse_mode='HTML',
+            )
         return ConversationHandler.END
 
     # ── Rad etilgan ──────────────────────────────────────────────

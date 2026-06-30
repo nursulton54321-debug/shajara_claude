@@ -1002,15 +1002,19 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )[:1]:
             last_name = f"{p.full_name} ({p.created_at.strftime('%d.%m.%Y')})"
 
-        male_pct   = round(male / total * 100) if total else 0
-        female_pct = 100 - male_pct if total else 0
-        alive_pct  = round(alive / total * 100) if total else 0
-        photo_pct  = round(with_photo / total * 100) if total else 0
+        male_pct     = round(male / total * 100) if total else 0
+        female_pct   = 100 - male_pct if total else 0
+        alive_pct    = round(alive / total * 100) if total else 0
+        deceased_pct = 100 - alive_pct if total else 0
+        photo_pct    = round(with_photo / total * 100) if total else 0
 
         # Kutilayotgan foydalanuvchilar ro'yxati
         pending_users = []
         async for pu in TU.objects.filter(status=TU.STATUS_PENDING).order_by('created_at'):
             pending_users.append(pu)
+
+        # Yarim qolgan yozuvlar
+        drafts = context.bot_data.get('drafts', {})
 
         text = (
             f"📊 <b>ADMIN DASHBOARD</b>\n"
@@ -1022,7 +1026,7 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"  ├ 👨 Erkak:   <b>{male}</b>  ({male_pct}%)\n"
             f"  ├ 👩 Ayol:    <b>{female}</b>  ({female_pct}%)\n"
             f"  ├ 💚 Tirik:   <b>{alive}</b>  ({alive_pct}%)\n"
-            f"  ├ 🌿 Vafot:   <b>{deceased}</b>\n"
+            f"  ├ 🌿 Vafot:   <b>{deceased}</b>  ({deceased_pct}%)\n"
             f"  └ 📸 Rasmi:   <b>{with_photo}</b>  ({photo_pct}%)\n\n"
 
             f"📅 <b>FAOLLIK</b>\n"
@@ -1040,6 +1044,10 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"  ├ ✅ Tasdiqlangan: <b>{approved}</b>\n"
             f"  ├ ⏳ Kutilmoqda:  <b>{pending}</b>\n"
             f"  └ 🚫 Rad etilgan: <b>{rejected}</b>"
+            + (
+                f"\n\n⏸ <b>YARIM QOLGAN YOZUVLAR: {len(drafts)}</b>"
+                if drafts else ""
+            )
         )
         await anim.done(text)
 
@@ -1097,6 +1105,32 @@ async def handle_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton("❌ Rad etish",  callback_data=f"addp_reject_{req_key}"),
                 ]])
                 await update.message.reply_text(req_text, parse_mode='HTML', reply_markup=req_kb)
+
+        # Yarim qolgan yozuvlar bo'limi
+        if drafts:
+            await update.message.reply_text(
+                f"⏸ <b>{len(drafts)} ta yarim qolgan yozuv:</b>",
+                parse_mode='HTML',
+            )
+            for tg_id_draft, draft in drafts.items():
+                d = draft.get('data', {})
+                partial_name = f"{d.get('last_name', '')} {d.get('first_name', '')}".strip() or "Noma'lum"
+                step_n     = draft.get('step_n', 1)
+                step_label = draft.get('step_label', '')
+                user_name  = draft.get('user_name', 'Noma\'lum')
+                started_at = draft.get('started_at', '—')
+                gender_icon = "👨" if d.get('gender') == 'male' else ("👩" if d.get('gender') == 'female' else "👤")
+                user_link  = f'<a href="tg://user?id={tg_id_draft}">{user_name}</a>'
+                bar = "🟩" * step_n + "⬜" * (14 - step_n)
+                draft_text = (
+                    f"⏸ <b>Yarim qolgan yozuv</b>\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"{gender_icon} <b>{partial_name}</b>\n"
+                    f"✍️ Kirituvchi: {user_link}\n"
+                    f"📍 Qadam: {bar} <b>{step_n}/14 — {step_label}</b>\n"
+                    f"🕐 Boshlangan: {started_at[:16].replace('T', ' ')}"
+                )
+                await update.message.reply_text(draft_text, parse_mode='HTML')
 
     except Exception as e:
         logger.error(f"handle_dashboard xato: {e}", exc_info=True)
