@@ -1034,7 +1034,7 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     sortedFams.forEach(([, kids]) => {
       kids.sort((a, b) => {
         const pa = personMap.get(a), pb = personMap.get(b)
-        const ta = pa?.tartib ?? null, tb = pb?.tartib ?? null
+        const ta = pa?.child_number ?? null, tb = pb?.child_number ?? null
         if (ta != null && tb != null) return ta - tb
         if (ta != null) return -1
         if (tb != null) return 1
