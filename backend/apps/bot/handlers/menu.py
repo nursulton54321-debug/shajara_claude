@@ -821,7 +821,7 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         oldest = None; youngest = None; oldest_dec = None
 
         for r in rows:
-            pid, gender, birth, death, is_dec, father_id, lname, fname, photo = r
+            pid, gender, birth, death, is_dec, father_id, lname, fname, photo, *_ = r
             full_name = f"{lname or ''} {fname or ''}".strip()
             age = _calc_age(birth, death)
             if age is None:
