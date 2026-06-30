@@ -2502,24 +2502,27 @@ function TreeFlow({ rawPersons, stats }) {
 
   // Node'lar o'lchanib tayyor bo'lganda (useNodesInitialized → true):
   //   1. fitView — viewport'ni to'g'ri joyga qo'yadi
-  //   2. setTimeout(0) + setTimeout(80) — ChildEdge polygon (strelka) ko'rinishi uchun
-  //      edges qayta render qilinadi.
+  //   2. setNodes(n.map) → ReactFlow handle koordinatalarini qayta hisoblab,
+  //      edglar to'g'ri sourceX/targetX oladi → strelka (polygon) ko'rinadi.
   //
-  // Sabab: setEdges chaqirilganda handle koordinatalari hali 0,0 bo'lishi mumkin
-  // (birinchi yuklanishda). requestAnimationFrame yetarli emas — u handle
-  // hisoblashdan oldin ishlaydi. setTimeout(0) keyingi event loop iteratsiyasida
-  // ishlaydi; setTimeout(80) esa zaxira sifatida qo'shilgan.
+  // Sabab: faqat setEdges(e.map) yetarli emas — bu handles'ni qayta hisoblamaydi.
+  // setNodes yangi node objectlari bilan chaqirilganda ReactFlow ichki store'da
+  // handle bog'lamlarini qayta hisoblaydi va edglar avtomatik yangilanadi.
+  // setEdges(150ms) esa zaxira sifatida qo'shilgan.
+  // Birinchi yuklanishda strelkalarni avtomatik ko'rsatish uchun faqat bir marta ishlaydi.
+  // resetPositions(silent=true) layout'ni qayta qurib, handle pozitsiyalarini to'g'rilab,
+  // strelkali bog'lanishni kafolatlaydi (xuddi foydalanuvchi tugmani bosganidek).
+  const _autoArrowDone = useRef(false)
   useEffect(() => {
     if (!nodesInitialized) return
     fitView({ padding: 0.12, duration: 600 })
-    const id1 = setTimeout(() => {
-      setEdges(e => e.map(x => ({ ...x })))
-    }, 0)
-    const id2 = setTimeout(() => {
-      setEdges(e => e.map(x => ({ ...x })))
-    }, 80)
-    return () => { clearTimeout(id1); clearTimeout(id2) }
-  }, [nodesInitialized, fitView, setEdges])
+    if (!_autoArrowDone.current) {
+      _autoArrowDone.current = true
+      const id = setTimeout(() => resetPositions(true), 80)
+      return () => clearTimeout(id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodesInitialized, fitView])
 
   // viewMode 'tree' ga o'tganda fitView — faqat shu trigger uchun.
   // nodesInitialized layout rebuild'dan keyingi fitView'ni o'z zimmasiga oladi,
@@ -2574,10 +2577,10 @@ function TreeFlow({ rawPersons, stats }) {
   }, [])
 
   // Barcha saqlangan pozitsiyalarni tozalash
-  const resetPositions = useCallback(() => {
+  const resetPositions = useCallback((silent = false) => {
     savedPosRef.current = {}
     savePosToLS({})
-    toast.success('♻️ Tartib tiklandi')
+    if (!silent) toast.success('♻️ Tartib tiklandi')
     // Rebuild layout
     const pool = rawPersons
     const filtered = focusFilter(pool, null, focusGen)
@@ -2607,11 +2610,6 @@ function TreeFlow({ rawPersons, stats }) {
     setNodes(centered)
     setEdges(e)
     setVisibleCount(centered.filter(x => x.type === 'personNode').length)
-    // Layout qayta qurilganda edge strelkalarini majburan qayta render qilamiz.
-    // nodesInitialized effekti ham buni qiladi, lekin bu zaxira sifatida kerak
-    // (birinchi yuklanishda handle koordinatalari kechroq tayyor bo'lishi mumkin).
-    const _edgeRefId = setTimeout(() => setEdges(prev => prev.map(x => ({ ...x }))), 120)
-    return () => clearTimeout(_edgeRefId)
   }, [rawPersons, collapsed, dimDeceased, toggleCouple, handlePersonClick, handleFocusClick,
       focusId, focusGen, filterAlive, filterGender, filterGen])
 
