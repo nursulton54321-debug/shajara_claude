@@ -153,13 +153,16 @@ export default function UserLayout() {
             justifyContent: 'center',
             minHeight: 60,
           }}>
-            {/* Logo — faqat ikonka (har doim, markazda) */}
-            <div style={{
-              width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
-              background: 'linear-gradient(135deg,#3b82f6,#6366f1)',
-              boxShadow: '0 4px 12px rgba(99,102,241,0.4)',
-            }}>🌳</div>
+            {/* Logo — bosh sahifaga link */}
+            <a href="/" style={{ textDecoration:'none', flexShrink:0 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 11,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
+                background: 'linear-gradient(135deg,#3b82f6,#6366f1)',
+                boxShadow: '0 4px 12px rgba(99,102,241,0.4)',
+                cursor: 'pointer',
+              }}>🌳</div>
+            </a>
           </div>
 
           {/* ── Toggle tugmasi — sidebar o'ng chekkasida floating ── */}
