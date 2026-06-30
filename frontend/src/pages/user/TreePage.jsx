@@ -1067,6 +1067,8 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
       clusterList.push({ minX, kids })
     })
     clusterList.sort((a, b) => a.minX - b.minX)
+    // DEBUG
+    if (yn > 0) console.log(`[ROW y=${yn}] clusters:`, clusterList.map(cl => cl.kids.map(k => { const p=personMap.get(k); return `${p?.first_name}(cn=${p?.child_number})` })))
     noParent.sort((a, b) => g.node(`p-${a}`).x - g.node(`p-${b}`).x)
 
     // Tartibli ro'yxat: har bir kishidan keyin juftini yonma-yon qo'yamiz
@@ -1084,6 +1086,8 @@ function buildLayout(persons, collapsed, toggleFn, dimDeceased, onPersonClick, f
     noParent.forEach(place)
     clusterList.forEach(({ kids }) => kids.forEach(place))
     pids.forEach(pid => { if (!placed.has(pid)) place(pid) })
+    // DEBUG
+    if (yn > 0) console.log(`[ROW y=${yn}] ordered:`, ordered.map(k => { const p=personMap.get(k); return `${p?.first_name}(cn=${p?.child_number})` }))
 
     if (!ordered.length) return
 
